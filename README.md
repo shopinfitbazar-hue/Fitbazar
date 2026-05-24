@@ -84,6 +84,14 @@ Behavior:
 
 This project uses Prisma 7 with Neon and Prisma config-driven datasource setup.
 
+Production env rules:
+
+- Set both `DATABASE_URL` and `DIRECT_URL` in Vercel.
+- `DATABASE_URL` should be the pooled Neon connection string used by the running app.
+- `DIRECT_URL` should be the direct Neon connection string used by Prisma tooling.
+- Do not wrap values in quotes in the Vercel dashboard.
+- After changing either value, redeploy so the runtime picks up the new credentials.
+
 Useful commands:
 
 ```bash

@@ -1,15 +1,18 @@
 import path from 'path'
 import dotenv from 'dotenv'
 import { defineConfig } from 'prisma/config'
+import { resolveDatabaseUrl } from './src/lib/database-url'
 
 dotenv.config({ path: '.env.local' })
-
-const fallbackDatabaseUrl = 'postgresql://placeholder:placeholder@localhost:5432/fitbazar?schema=public'
 
 export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
   datasource: {
-    url: process.env.DIRECT_URL || process.env.DATABASE_URL || fallbackDatabaseUrl,
+    url: resolveDatabaseUrl({
+      databaseUrl: process.env.DATABASE_URL,
+      directUrl: process.env.DIRECT_URL,
+      allowPlaceholder: true,
+    }),
   },
   migrations: {
     seed: 'npx ts-node --project prisma/tsconfig.seed.json prisma/seed.ts',

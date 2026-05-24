@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { resolveDatabaseUrl } from "../src/lib/database-url";
 
 dotenv.config({ path: ".env.local" });
 
@@ -13,11 +14,10 @@ const ws = require("ws");
 neonConfig.webSocketConstructor = ws;
 neonConfig.poolQueryViaFetch = false;
 
-const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("Missing DIRECT_URL or DATABASE_URL for Prisma seed");
-}
+const connectionString = resolveDatabaseUrl({
+  databaseUrl: process.env.DATABASE_URL,
+  directUrl: process.env.DIRECT_URL,
+});
 
 const prisma = new PrismaClient({
   adapter: new PrismaNeon({ connectionString }),
