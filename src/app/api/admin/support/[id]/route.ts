@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
@@ -107,7 +108,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             <p>Hello ${ticket.name},</p>
             <p>${replyMessage.replace(/\n/g, "<br />")}</p>
             <p style="margin-top: 16px;">
-              <a href="${process.env.NEXTAUTH_URL || ""}/account/support" style="display:inline-block;background:#ff3f6c;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
+              <a href="${buildAbsoluteAppUrl("/account/support")}" style="display:inline-block;background:#ff3f6c;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
                 View Support Ticket
               </a>
             </p>

@@ -3,13 +3,14 @@ import { categoryQueryValue, normalizeCategory } from "../src/lib/categories";
 import { runCartStateTests } from "./cart-state.test";
 import { getGoogleOAuthCallbackUrls, hasConfiguredGoogleOAuth } from "../src/lib/google-auth";
 import { hasConfiguredMailTransport } from "../src/lib/mailer";
+import { getSafeImageUrl } from "../src/lib/media";
 import { hasConfiguredConnectIps, hasConfiguredEsewa, hasConfiguredFonepay, hasConfiguredKhalti, hasConfiguredLocalCards } from "../src/lib/payment-config";
 import { allocateAmountAcrossSubtotals, calculateOrderAmounts, groupItemsByVendor } from "../src/lib/order-routing";
 import { isSupportedPaymentMethod, mapProviderMethod } from "../src/lib/payment-types";
 import { deriveProductStatus } from "../src/lib/product-status";
 import { getDeliveryMessage, isValidNepalPincode, resolvePincode } from "../src/lib/pincode";
 import { getShippingAmount } from "../src/lib/shipping";
-import { hashOpaqueToken } from "../src/lib/tokens";
+import { buildAppUrl, hashOpaqueToken } from "../src/lib/tokens";
 import { t } from "../src/lib/translations";
 import { getVendorAccessState } from "../src/lib/vendor-access";
 
@@ -94,6 +95,21 @@ run("google callback urls are derived from NEXTAUTH_URL safely", () => {
   assert.equal(urls.loginPage, "http://localhost:3002/login");
 });
 
+run("absolute app urls fall back to Vercel envs safely", () => {
+  const previous = {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
+  };
+
+  delete process.env.NEXTAUTH_URL;
+  delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  process.env.VERCEL_URL = "fitbazar.vercel.app";
+  assert.equal(buildAppUrl("/verify-email"), "https://fitbazar.vercel.app/verify-email");
+
+  Object.assign(process.env, previous);
+});
+
 run("mail transport config rejects placeholders", () => {
   const previous = {
     SMTP_HOST: process.env.SMTP_HOST,
@@ -113,6 +129,14 @@ run("mail transport config rejects placeholders", () => {
   assert.equal(hasConfiguredMailTransport(), true);
 
   Object.assign(process.env, previous);
+});
+
+run("safe image urls reject local machine hosts and malformed values", () => {
+  const fallback = "https://picsum.photos/seed/fallback/900/1200";
+  assert.equal(getSafeImageUrl("http://localhost:3000/uploads/demo.jpg", fallback), fallback);
+  assert.equal(getSafeImageUrl("not-a-url", fallback), fallback);
+  assert.equal(getSafeImageUrl("/images/local-banner.jpg", fallback), "/images/local-banner.jpg");
+  assert.equal(getSafeImageUrl("https://images.example.com/banner.jpg", fallback), "https://images.example.com/banner.jpg");
 });
 
 run("token hashing is deterministic and opaque", () => {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getAppBaseUrl } from "@/lib/app-url";
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     }
 
     const { accountType } = (await req.json()) as { accountType?: Stripe.AccountCreateParams.Type };
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const baseUrl = getAppBaseUrl();
 
     const account = await stripe.accounts.create({
       type: accountType || "express",

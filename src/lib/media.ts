@@ -3,6 +3,7 @@ const KNOWN_BROKEN_IMAGE_PATTERNS = [
 ];
 
 const CLOUDINARY_HOST = "res.cloudinary.com";
+const LOCAL_IMAGE_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
 export function getSafeImageUrl(url: string | null | undefined, fallback: string) {
   if (!url) return fallback;
@@ -10,7 +11,20 @@ export function getSafeImageUrl(url: string | null | undefined, fallback: string
   const normalized = url.trim();
   if (!normalized) return fallback;
 
+  if (normalized.startsWith("/")) {
+    return normalized;
+  }
+
   if (KNOWN_BROKEN_IMAGE_PATTERNS.some((pattern) => normalized.includes(pattern))) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(normalized);
+    if (!["http:", "https:"].includes(parsed.protocol) || LOCAL_IMAGE_HOSTS.has(parsed.hostname)) {
+      return fallback;
+    }
+  } catch {
     return fallback;
   }
 

@@ -7,6 +7,10 @@ type MailPayload = {
   text?: string;
 };
 
+function normalizeSmtpPassword(value?: string) {
+  return value?.replace(/\s+/g, "") || "";
+}
+
 function hasConfiguredValue(value?: string) {
   return Boolean(value && !value.startsWith("your-") && value !== "placeholder");
 }
@@ -34,7 +38,7 @@ export async function sendMail(payload: MailPayload) {
     secure: Number(process.env.SMTP_PORT || 587) === 465,
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      pass: normalizeSmtpPassword(process.env.SMTP_PASS),
     },
   });
 

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import type { CheckoutPayload, PreparedCheckoutContext } from "@/lib/checkout-server";
+import { getAppBaseUrl } from "@/lib/app-url";
 import { hasConfiguredEsewa, hasConfiguredKhalti } from "@/lib/payment-config";
 import { createOpaqueToken, hashOpaqueToken } from "@/lib/tokens";
 import type { SupportedPaymentMethod } from "@/lib/payment-types";
@@ -28,7 +29,7 @@ export type PaymentAttemptRecord = {
 };
 
 function ensureAbsoluteBaseUrl() {
-  return (process.env.NEXTAUTH_URL || "http://localhost:3002").replace(/\/$/, "");
+  return getAppBaseUrl();
 }
 
 function normalizeStoredPayload(value: unknown): StoredPaymentPayload {

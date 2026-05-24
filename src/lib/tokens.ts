@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { buildAbsoluteAppUrl } from "./app-url";
 
 export function createOpaqueToken() {
   return crypto.randomBytes(32).toString("hex");
@@ -9,6 +10,5 @@ export function hashOpaqueToken(token: string) {
 }
 
 export function buildAppUrl(path: string) {
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3002";
-  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+  return buildAbsoluteAppUrl(path);
 }
