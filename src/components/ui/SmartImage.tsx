@@ -37,6 +37,7 @@ export default function SmartImage({
     [fallbackSrc, src],
   );
   const fallback = useMemo(() => getOptimizedImageUrl(fallbackSrc), [fallbackSrc]);
+  const currentSrcRef = useRef(initialSrc);
   const [currentSrc, setCurrentSrc] = useState(initialSrc);
 
   if (DEBUG) {
@@ -44,6 +45,7 @@ export default function SmartImage({
   }
 
   useEffect(() => {
+    currentSrcRef.current = initialSrc;
     setCurrentSrc(initialSrc);
     setLoaded(false);
     setErrored(false);
@@ -74,7 +76,8 @@ export default function SmartImage({
   }, [currentSrc]);
 
   const handleError = () => {
-    if (DEBUG) console.log("[SmartImage] error for:", currentSrc.substring(0, 60));
+    const srcAtTime = currentSrcRef.current;
+    if (DEBUG) console.log("[SmartImage] error for:", srcAtTime.substring(0, 60));
     if (!errored) {
       setErrored(true);
       setCurrentSrc(fallback);
@@ -88,7 +91,7 @@ export default function SmartImage({
   };
 
   return (
-    <div className={`relative overflow-hidden ${aspectClassName ?? ""}`}>
+    <div className={`relative overflow-hidden ${fill ? "h-full w-full" : ""} ${aspectClassName ?? ""}`}>
       <div
         className={`pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(246,240,235,0.95),rgba(255,255,255,0.55))] transition-opacity duration-300 ${loaded ? "opacity-0" : "opacity-100"}`}
       />
