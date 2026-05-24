@@ -15,12 +15,12 @@ export function getAppBaseUrl() {
     : null;
 
   return (
-    normalizeBaseUrl(process.env.NEXTAUTH_URL) ||
+    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    normalizeBaseUrl(process.env.VERCEL_URL) ||
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ||
     normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
     vercelUrl ||
-    normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-    normalizeBaseUrl(process.env.VERCEL_URL) ||
+    normalizeBaseUrl(process.env.NEXTAUTH_URL) ||
     "http://localhost:3000"
   );
 }

@@ -52,6 +52,8 @@ export async function POST(request: Request) {
       `/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`,
     );
 
+    console.log("[forgot-password] Reset URL:", resetUrl);
+
     if (!hasConfiguredMailTransport()) {
       if (process.env.NODE_ENV === "production") {
         return NextResponse.json({
