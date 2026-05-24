@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { getAppBaseUrl } from "@/lib/app-url";
+
+const baseUrl = getAppBaseUrl();
 
 export const siteConfig = {
   name: "Fit Bazzar",
@@ -6,7 +9,7 @@ export const siteConfig = {
   title: "Fit Bazzar | Premium Fashion Marketplace in Nepal",
   description:
     "Fit Bazzar is a premium Nepal-first fashion marketplace with fast discovery, elegant storefronts, and modern commerce built for mobile shoppers.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3002",
+  url: baseUrl,
   ogImage: "/opengraph-image.png",
   locale: "en_NP",
   keywords: [
@@ -24,7 +27,7 @@ export const siteConfig = {
 
 export function buildMetadata(overrides?: Metadata): Metadata {
   return {
-    metadataBase: new URL(siteConfig.url),
+    metadataBase: new URL(baseUrl),
     title: {
       default: siteConfig.title,
       template: "%s | Fit Bazzar",
@@ -50,7 +53,7 @@ export function buildMetadata(overrides?: Metadata): Metadata {
     openGraph: {
       type: "website",
       locale: siteConfig.locale,
-      url: siteConfig.url,
+      url: baseUrl,
       title: siteConfig.title,
       description: siteConfig.description,
       siteName: siteConfig.name,
@@ -70,7 +73,7 @@ export function buildMetadata(overrides?: Metadata): Metadata {
       images: [siteConfig.ogImage],
     },
     alternates: {
-      canonical: siteConfig.url,
+      canonical: baseUrl,
     },
     ...overrides,
   };

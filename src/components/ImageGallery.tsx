@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_GALLERY_IMAGE } from "@/lib/media";
 
 interface ImageGalleryProps {
   images: string[];
@@ -12,7 +12,7 @@ interface ImageGalleryProps {
 
 const defaultImages = [
   "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&auto=format&fit=crop",
-  "https://picsum.photos/seed/fitbazar-gallery-ethnic/800/1066",
+  "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800&auto=format&fit=crop",
 ];
@@ -40,8 +40,8 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
 
   const displayImages = useMemo(
     () =>
-      (images.length > 0 ? images : defaultImages).map((image, index) =>
-        getSafeImageUrl(image, `https://picsum.photos/seed/fitbazzar-gallery-${index + 1}/800/1066`),
+      (images.length > 0 ? images : defaultImages).map((image) =>
+        getSafeImageUrl(image, FALLBACK_GALLERY_IMAGE),
       ),
     [images],
   );

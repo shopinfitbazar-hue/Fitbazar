@@ -2,11 +2,16 @@
 
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LogoutPage() {
+  const router = useRouter();
+
   useEffect(() => {
-    void signOut({ callbackUrl: "/" });
-  }, []);
+    signOut({ redirect: false }).then(() => {
+      router.replace("/");
+    });
+  }, [router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-page px-6 text-center">

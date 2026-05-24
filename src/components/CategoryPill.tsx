@@ -15,7 +15,7 @@ const defaultImages: Record<string, string> = {
   men: "https://images.unsplash.com/photo-1617137968427-85924c809a1d?w=400&auto=format&fit=crop",
   women: "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&auto=format&fit=crop",
   kids: "https://images.unsplash.com/photo-1519457431-44ccd64a579b?w=400&auto=format&fit=crop",
-  ethnic: "https://picsum.photos/seed/fitbazar-category-ethnic/400/400",
+  ethnic: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=400&auto=format&fit=crop",
   sportswear: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&auto=format&fit=crop",
   accessories: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=400&auto=format&fit=crop",
 };

@@ -20,7 +20,7 @@ const editorialCards = [
   {
     title: "Pashmina, Dhaka, and Handwoven Details",
     description: "Pieces that feel local, premium, and timeless enough to stay in rotation well beyond one season.",
-    image: "https://picsum.photos/seed/fitbazar-discover-handwoven/1200/900",
+    image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1200&auto=format&fit=crop",
     href: "/products?minDiscount=20&sort=discount",
   },
 ];

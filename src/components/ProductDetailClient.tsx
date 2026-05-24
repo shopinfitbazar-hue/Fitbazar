@@ -11,7 +11,7 @@ import { useCart } from "@/lib/cart";
 import { useToast } from "@/lib/ToastContext";
 import { getDeliveryMessage } from "@/lib/pincode";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 
 interface ProductDetailClientProps {
   product: {
@@ -61,8 +61,8 @@ export default function ProductDetailClient({
   const { addToast } = useToast();
   const safeImages = useMemo(
     () =>
-      (product.images.length ? product.images : ["https://picsum.photos/seed/fitbazar-product-detail-fallback/900/1200"]).map((image, index) =>
-        getSafeImageUrl(image, `https://picsum.photos/seed/fitbazar-product-detail-${index + 1}/900/1200`),
+      (product.images.length ? product.images : [FALLBACK_PRODUCT_IMAGE]).map((image) =>
+        getSafeImageUrl(image, FALLBACK_PRODUCT_IMAGE),
       ),
     [product.images],
   );

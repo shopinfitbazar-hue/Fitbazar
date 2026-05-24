@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import HomePageClient from "@/components/HomePageClient";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard, mapVendorToCard } from "@/lib/catalog";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_BANNER_IMAGE } from "@/lib/media";
 import { ProductStatus } from "@prisma/client";
 import { buildMetadata } from "@/config/site";
 
@@ -224,7 +224,7 @@ export default async function HomePage() {
       <HomePageClient
         banners={banners.map((banner) => ({
           id: banner.id,
-          imageUrl: getSafeImageUrl(banner.imageUrl, "https://picsum.photos/seed/fitbazar-banner-fallback/1600/600"),
+          imageUrl: getSafeImageUrl(banner.imageUrl, FALLBACK_BANNER_IMAGE),
           title: banner.title,
           linkUrl: banner.linkUrl,
         }))}

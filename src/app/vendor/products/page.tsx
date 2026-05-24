@@ -207,7 +207,7 @@ export default function VendorProductsPage() {
                   <tr key={product.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
                     <td className="px-4 py-4">
                       <div className="relative h-16 w-12 overflow-hidden rounded-[4px]">
-                        <SmartImage src={product.images[0] || "https://picsum.photos/300/400?random=fitbazar"} alt={product.name} fill className="object-cover" />
+                        <SmartImage src={product.images[0] || "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=300&auto=format&fit=crop&q=60"} alt={product.name} fill className="object-cover" />
                       </div>
                     </td>
                     <td className="font-medium text-text-primary">{product.name}</td>

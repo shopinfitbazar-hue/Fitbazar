@@ -8,7 +8,6 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -33,6 +32,18 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "api.dicebear.com",
+      },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "*.cloudinary.com",
       },
     ],
   },

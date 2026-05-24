@@ -7,7 +7,7 @@ import { memo, useMemo, useState } from "react";
 import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/lib/ToastContext";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 import SmartImage from "@/components/ui/SmartImage";
 
 export interface ProductCardProps {
@@ -72,7 +72,7 @@ function ProductCard({
   const href = `/products/${slug || id}`;
   const image = getSafeImageUrl(
     images[0],
-    "https://picsum.photos/seed/fitbazar-product-fallback/900/1200",
+    FALLBACK_PRODUCT_IMAGE,
   );
   const vendorPath = `/shop/${vendorSlug || slugify(vendorName)}`;
   const wishlisted = isInWishlist(id);

@@ -10,11 +10,18 @@ function normalizeBaseUrl(value?: string | null) {
 }
 
 export function getAppBaseUrl() {
+  const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : null;
+
   return (
     normalizeBaseUrl(process.env.NEXTAUTH_URL) ||
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ||
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_VERCEL_URL) ||
+    vercelUrl ||
     normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
     normalizeBaseUrl(process.env.VERCEL_URL) ||
-    "http://localhost:3002"
+    "http://localhost:3000"
   );
 }
 

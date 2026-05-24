@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_VENDOR_IMAGE } from "@/lib/media";
 import SmartImage from "@/components/ui/SmartImage";
 
 interface VendorCardProps {
@@ -43,7 +43,7 @@ export default function VendorCard({
       <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]">
         {logo ? (
           <SmartImage
-            src={getSafeImageUrl(logo, "https://picsum.photos/seed/fitbazar-vendor-fallback/200/200")}
+            src={getSafeImageUrl(logo, FALLBACK_VENDOR_IMAGE)}
             alt={shopName}
             width={64}
             height={64}

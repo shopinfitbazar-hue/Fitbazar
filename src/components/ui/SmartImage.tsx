@@ -1,8 +1,8 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { type ImgHTMLAttributes, type SyntheticEvent, useEffect, useMemo, useState } from "react";
-import { buildImageSizes, getOptimizedImageUrl, getSafeImageUrl, isCloudinaryUrl } from "@/lib/media";
+import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { buildImageSizes, getOptimizedImageUrl, getSafeImageUrl } from "@/lib/media";
 
 type SmartImageProps = Omit<ImageProps, "src"> & {
   src: string | null | undefined;
@@ -10,10 +10,13 @@ type SmartImageProps = Omit<ImageProps, "src"> & {
   aspectClassName?: string;
 };
 
+const FALLBACK_PLACEHOLDER =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&auto=format&fit=crop&q=60";
+
 export default function SmartImage({
   src,
   alt,
-  fallbackSrc = "https://picsum.photos/seed/fitbazzar-image-fallback/1200/1600",
+  fallbackSrc = FALLBACK_PLACEHOLDER,
   className,
   sizes,
   aspectClassName,
@@ -25,6 +28,7 @@ export default function SmartImage({
   ...props
 }: SmartImageProps) {
   const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
   const initialSrc = useMemo(
     () => getOptimizedImageUrl(getSafeImageUrl(src, fallbackSrc)),
     [fallbackSrc, src],
@@ -35,65 +39,39 @@ export default function SmartImage({
   useEffect(() => {
     setCurrentSrc(initialSrc);
     setLoaded(false);
+    setErrored(false);
   }, [initialSrc]);
 
-  const useNativeImageDelivery = /^https?:\/\//i.test(currentSrc) && !isCloudinaryUrl(currentSrc);
-  const nativeImageClassName = fill
-    ? `${className ?? ""} absolute inset-0 h-full w-full`
-    : className;
+  const handleError = () => {
+    if (!errored) {
+      setErrored(true);
+      setCurrentSrc(fallback);
+    }
+  };
+
+  const handleLoad = (event: SyntheticEvent<HTMLImageElement, Event>) => {
+    setLoaded(true);
+    onLoad?.(event);
+  };
 
   return (
     <div className={`relative overflow-hidden ${aspectClassName ?? ""}`}>
-      <div className={`absolute inset-0 bg-[linear-gradient(135deg,rgba(246,240,235,0.95),rgba(255,255,255,0.55))] transition-opacity duration-300 ${loaded ? "opacity-0" : "opacity-100"}`} />
-      {useNativeImageDelivery ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          {...(props as Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt">)}
-          alt={alt}
-          src={currentSrc}
-          sizes={sizes || buildImageSizes()}
-          width={fill ? undefined : Number(width)}
-          height={fill ? undefined : Number(height)}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-          className={nativeImageClassName}
-          onLoad={(event) => {
-            setLoaded(true);
-            onLoad?.(event as unknown as SyntheticEvent<HTMLImageElement, Event>);
-          }}
-          onError={() => {
-            if (currentSrc !== fallback) {
-              setCurrentSrc(fallback);
-              return;
-            }
-            setLoaded(true);
-          }}
-        />
-      ) : (
-        <Image
-          {...props}
-          alt={alt}
-          src={currentSrc}
-          fill={fill}
-          width={width}
-          height={height}
-          priority={priority}
-          sizes={sizes || buildImageSizes()}
-          className={className}
-          unoptimized={false}
-          onLoad={(event) => {
-            setLoaded(true);
-            onLoad?.(event);
-          }}
-          onError={() => {
-            if (currentSrc !== fallback) {
-              setCurrentSrc(fallback);
-              return;
-            }
-            setLoaded(true);
-          }}
-        />
-      )}
+      <div
+        className={`absolute inset-0 bg-[linear-gradient(135deg,rgba(246,240,235,0.95),rgba(255,255,255,0.55))] transition-opacity duration-300 ${loaded ? "opacity-0" : "opacity-100"}`}
+      />
+      <Image
+        {...props}
+        alt={alt}
+        src={currentSrc}
+        fill={fill}
+        width={fill ? undefined : width}
+        height={fill ? undefined : height}
+        priority={priority}
+        sizes={sizes || buildImageSizes()}
+        className={className}
+        onLoad={handleLoad}
+        onError={handleError}
+      />
     </div>
   );
 }

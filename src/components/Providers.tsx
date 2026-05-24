@@ -22,7 +22,7 @@ export default function Providers({ children, initialLang = "en" }: ProvidersPro
   }, []);
 
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={300} refetchOnWindowFocus={true}>
       <LanguageProvider initialLang={initialLang}>
         <CartProvider>
           <WishlistProvider>

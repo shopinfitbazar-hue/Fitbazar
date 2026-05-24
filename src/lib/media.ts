@@ -2,6 +2,19 @@ const KNOWN_BROKEN_IMAGE_PATTERNS = [
   "photo-1583391733958-d25e07fac04f",
 ];
 
+/* ── Reliable fallback images (Unsplash — whitelisted in next.config.mjs remotePatterns) ── */
+export const FALLBACK_PRODUCT_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=900&auto=format&fit=crop&q=60";
+export const FALLBACK_BANNER_IMAGE =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&auto=format&fit=crop&q=70";
+export const FALLBACK_VENDOR_IMAGE =
+  "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=200&auto=format&fit=crop&q=60";
+export const FALLBACK_GALLERY_IMAGE =
+  "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&auto=format&fit=crop&q=60";
+export const FALLBACK_CATEGORY_IMAGE =
+  "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&auto=format&fit=crop&q=60";
+
+
 const CLOUDINARY_HOST = "res.cloudinary.com";
 const LOCAL_IMAGE_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 

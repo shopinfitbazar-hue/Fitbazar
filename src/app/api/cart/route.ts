@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserSession } from "@/lib/server-auth";
-import { getSafeImageUrl } from "@/lib/media";
+import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 import { isPublicProductStatus } from "@/lib/product-status";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ function serializeCartItem(item: {
     originalPrice: item.product.compareAtPrice ?? undefined,
     image: getSafeImageUrl(
       item.product.images[0],
-      "https://picsum.photos/seed/fitbazar-product-fallback/900/1200",
+      FALLBACK_PRODUCT_IMAGE,
     ),
     vendorId: item.product.vendorId,
     vendorName: item.product.vendor.shopName,

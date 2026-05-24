@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
@@ -12,6 +12,7 @@ import { normalizeAuthCallbackPath, resolvePostLoginPath } from "@/lib/auth-redi
 function LoginPageContent({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, update } = useSession();
   const { t } = useLanguage();
   const callbackUrl = normalizeAuthCallbackPath(searchParams?.get("callbackUrl") ?? null);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +22,13 @@ function LoginPageContent({ googleEnabled }: { googleEnabled: boolean }) {
     email: "",
     password: "",
   });
+
+  useEffect(() => {
+    if (session?.user) {
+      const path = resolvePostLoginPath(callbackUrl, session.user.role);
+      router.replace(path);
+    }
+  }, [session, callbackUrl, router]);
 
   useEffect(() => {
     const errorParam = searchParams?.get("error");
@@ -52,27 +60,23 @@ function LoginPageContent({ googleEnabled }: { googleEnabled: boolean }) {
         redirect: false,
         email: formData.email,
         password: formData.password,
-        callbackUrl,
       });
-
-      setIsLoading(false);
 
       if (!result) {
         setError(t("unable_signin"));
+        setIsLoading(false);
         return;
       }
 
       if (result.error) {
         setError(result.error);
+        setIsLoading(false);
         return;
       }
 
-      const sessionResponse = await fetch("/api/auth/session", { cache: "no-store" });
-      const sessionData = await sessionResponse.json().catch(() => null);
-      const nextPath = resolvePostLoginPath(callbackUrl, sessionData?.user?.role);
-
-      router.push(nextPath);
-      router.refresh();
+      const updatedSession = await update();
+      const path = resolvePostLoginPath(callbackUrl, updatedSession?.user?.role);
+      router.replace(path);
     } catch {
       setIsLoading(false);
       setError(t("unable_signin"));

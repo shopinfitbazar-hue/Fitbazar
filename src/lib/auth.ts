@@ -79,27 +79,34 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (!user.email) return false;
 
-      const dbUser = await prisma.user.findUnique({
-        where: { email: user.email },
-        include: { vendorProfile: true },
-      });
-
-      if (dbUser?.isBanned) {
-        throw new Error("Your account has been suspended.");
-      }
-
-      if (account?.provider === "google" && dbUser && !dbUser.emailVerified) {
-        await prisma.user.update({
-          where: { id: dbUser.id },
-          data: {
-            emailVerified: new Date(),
-          },
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          include: { vendorProfile: true },
         });
-      }
 
-      return true;
+        if (dbUser?.isBanned) {
+          throw new Error("Your account has been suspended.");
+        }
+
+        if (account?.provider === "google" && dbUser && !dbUser.emailVerified) {
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: {
+              emailVerified: new Date(),
+            },
+          });
+        }
+
+        return true;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error;
+        }
+        return false;
+      }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -109,19 +116,23 @@ export const authOptions: NextAuthOptions = {
         token.vendorId = user.vendorId ?? null;
       }
 
-      if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-          include: { vendorProfile: true },
-        });
+      if (trigger === "update" && token.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            include: { vendorProfile: true },
+          });
 
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.email = dbUser.email;
-          token.name = dbUser.name;
-          token.picture = dbUser.image;
-          token.role = dbUser.role;
-          token.vendorId = dbUser.vendorProfile?.id ?? null;
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.email = dbUser.email;
+            token.name = dbUser.name;
+            token.picture = dbUser.image;
+            token.role = dbUser.role;
+            token.vendorId = dbUser.vendorProfile?.id ?? null;
+          }
+        } catch {
+          console.error("Failed to refresh user data in JWT callback");
         }
       }
 

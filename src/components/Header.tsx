@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Heart, Menu, Search, ShoppingBag, User, X, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
@@ -41,6 +42,7 @@ export default function Header() {
   const { lang, setLang, t } = useLanguage();
   const { itemCount: bagCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
+  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [announcementText, setAnnouncementText] = useState("");
@@ -49,8 +51,9 @@ export default function Header() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCategory, setActiveCategory] = useState("");
   const [saleLinkActive, setSaleLinkActive] = useState(false);
-  const [sessionUser, setSessionUser] = useState<HeaderSessionUser | null>(null);
   const [loginCallbackUrl, setLoginCallbackUrl] = useState("/");
+
+  const sessionUser: HeaderSessionUser | null = session?.user ?? null;
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -77,29 +80,6 @@ export default function Header() {
     }
 
     void loadAnnouncement();
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadSession() {
-      try {
-        const response = await fetch("/api/auth/session", { cache: "no-store" });
-        const data = await response.json();
-        if (!active) return;
-
-        setSessionUser(data?.user ?? null);
-      } catch {
-        if (active) {
-          setSessionUser(null);
-        }
-      }
-    }
-
-    void loadSession();
-    return () => {
-      active = false;
-    };
   }, []);
 
   useEffect(() => {

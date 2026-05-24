@@ -7,6 +7,7 @@ import {
   WishlistItem,
   mergeWishlistCollections,
 } from "@/lib/cart-state";
+import { FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 
 interface WishlistContextType {
   items: WishlistItem[];
@@ -83,7 +84,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             name: item.product.name,
             price: item.product.price,
             originalPrice: item.product.compareAtPrice ?? undefined,
-            image: item.product.images[0] || "https://picsum.photos/seed/fitbazar-product-fallback/900/1200",
+            image: item.product.images[0] || FALLBACK_PRODUCT_IMAGE,
             vendorName: item.product.vendor.shopName,
             vendorSlug: item.product.vendor.slug,
           })),
@@ -149,7 +150,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             name: entry.product.name,
             price: entry.product.price,
             originalPrice: entry.product.compareAtPrice ?? undefined,
-            image: entry.product.images[0] || "https://picsum.photos/seed/fitbazar-product-fallback/900/1200",
+            image: entry.product.images[0] || FALLBACK_PRODUCT_IMAGE,
             vendorName: entry.product.vendor.shopName,
             vendorSlug: entry.product.vendor.slug,
           })),
