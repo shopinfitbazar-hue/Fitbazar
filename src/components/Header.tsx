@@ -250,118 +250,122 @@ export default function Header() {
       )}
 
       <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <div className="container hidden h-[72px] items-center gap-6 lg:flex">
-          <Link href="/" className="shrink-0 py-2">
-            <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
-            <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
-          </Link>
+        <div className="container hidden py-3 lg:block">
+          <div className="grid min-h-[72px] grid-cols-[auto_minmax(0,1.2fr)_minmax(260px,0.95fr)_auto] items-center gap-x-4 xl:gap-x-6">
+            <Link href="/" className="shrink-0 py-2">
+              <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
+              <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
+            </Link>
 
-          <nav className="flex items-center gap-5 xl:gap-6">
-            {desktopLinks.map((link) => {
-              const linkCategory = normalizeCategory(new URLSearchParams(link.href.split("?")[1] || "").get("category"));
-              const active = linkCategory
-                ? pathname === "/products" && activeCategory === linkCategory
-                : pathname === "/products" && link.href.includes("minDiscount")
-                  ? saleLinkActive
-                  : pathname === link.href;
-              return (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`border-b-2 border-transparent py-1 text-[13px] font-medium uppercase tracking-[0.08em] text-text-primary hover:border-fb-pink hover:text-text-primary ${active ? "border-fb-pink" : ""}`}
-                >
-                  {link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}
-                </Link>
-              );
-            })}
-          </nav>
+            <div className="min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+              <nav className="flex min-w-max items-center gap-5 xl:gap-6">
+                {desktopLinks.map((link) => {
+                  const linkCategory = normalizeCategory(new URLSearchParams(link.href.split("?")[1] || "").get("category"));
+                  const active = linkCategory
+                    ? pathname === "/products" && activeCategory === linkCategory
+                    : pathname === "/products" && link.href.includes("minDiscount")
+                      ? saleLinkActive
+                      : pathname === link.href;
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className={`whitespace-nowrap border-b-2 border-transparent py-1 text-[13px] font-medium uppercase tracking-[0.08em] text-text-primary hover:border-fb-pink hover:text-text-primary ${active ? "border-fb-pink" : ""}`}
+                    >
+                      {link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
 
-          <div className="relative ml-auto flex-1 max-w-[420px] xl:max-w-[480px]">
-            <form
-              onSubmit={submitSearch}
-              className={`flex h-10 items-center gap-2 rounded-[20px] border px-4 ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-[#F8F8F8]"}`}
-            >
-              <Search className="h-4 w-4 text-text-muted" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
-                placeholder={t("search")}
-                className="border-none bg-transparent px-0 py-0 shadow-none focus:border-none"
-              />
-            </form>
-            {searchFocused && (
-              <div className="absolute left-0 right-0 top-[46px] z-[1001] overflow-hidden rounded-[8px] border border-border-light bg-card shadow-[var(--shadow-md)]">
-                {searchSuggestions.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onMouseDown={() => {
-                      setQuery(item);
-                      router.push(`/search?q=${encodeURIComponent(item)}`);
-                    }}
-                    className="flex w-full items-center justify-between px-4 py-3 text-left text-[13px] text-text-secondary hover:bg-[var(--bg-hover)]"
-                  >
-                    <span>{item}</span>
-                    <ChevronRight className="h-4 w-4 text-text-muted" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-4 xl:gap-5">
-            <button
-              type="button"
-              onClick={() => setLang(lang === "en" ? "ne" : "en")}
-              className="rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
-            >
-              EN | नेपाली
-            </button>
-
-            <div
-              className="relative"
-              onMouseEnter={() => setShowProfileMenu(true)}
-              onMouseLeave={() => setShowProfileMenu(false)}
-            >
-              <button type="button" className="group flex flex-col items-center gap-1 text-text-muted hover:text-fb-pink">
-                <User className="h-[22px] w-[22px]" />
-                <span className="text-[10px] font-medium">{t("profile")}</span>
-              </button>
-              {showProfileMenu && (
-                <div className="absolute right-0 top-[42px] z-[1001] min-w-[240px] rounded-[8px] border border-border-light bg-card p-4 shadow-[var(--shadow-md)]">
-                  {profileLinks.header}
-                  <hr className="my-4" />
-                  <div className="space-y-3">
-                    {profileLinks.items.map((item) =>
-                      item.href === "#logout" ? (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={handleLogout}
-                          className="block text-[13px] font-medium text-text-secondary"
-                        >
-              {item.label}
-            </button>
-                      ) : (
-                        <Link key={item.label} href={item.href} className="block text-[13px] font-medium text-text-secondary">
-                          {item.label}
-                        </Link>
-                      ),
-                    )}
-                  </div>
+            <div className="relative min-w-0 w-full max-w-[480px] justify-self-end">
+              <form
+                onSubmit={submitSearch}
+                className={`flex h-10 w-full items-center gap-2 rounded-[20px] border px-4 ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-[#F8F8F8]"}`}
+              >
+                <Search className="h-4 w-4 text-text-muted" />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+                  placeholder={t("search")}
+                  className="min-w-0 flex-1 border-none bg-transparent px-0 py-0 shadow-none focus:border-none"
+                />
+              </form>
+              {searchFocused && (
+                <div className="absolute left-0 right-0 top-[46px] z-[1001] overflow-hidden rounded-[8px] border border-border-light bg-card shadow-[var(--shadow-md)]">
+                  {searchSuggestions.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onMouseDown={() => {
+                        setQuery(item);
+                        router.push(`/search?q=${encodeURIComponent(item)}`);
+                      }}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left text-[13px] text-text-secondary hover:bg-[var(--bg-hover)]"
+                    >
+                      <span>{item}</span>
+                      <ChevronRight className="h-4 w-4 text-text-muted" />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            <IconLink href="/account/wishlist" label={t("wishlist")} badge={wishlistCount}>
-              <Heart className="h-[22px] w-[22px]" />
-            </IconLink>
+            <div className="flex shrink-0 items-center justify-end gap-3 xl:gap-5">
+              <button
+                type="button"
+                onClick={() => setLang(lang === "en" ? "ne" : "en")}
+                className="whitespace-nowrap rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
+              >
+                EN | नेपाली
+              </button>
 
-            <IconLink href="/cart" label={t("bag")} badge={bagCount}>
-              <ShoppingBag className="h-[22px] w-[22px]" />
-            </IconLink>
+              <div
+                className="relative"
+                onMouseEnter={() => setShowProfileMenu(true)}
+                onMouseLeave={() => setShowProfileMenu(false)}
+              >
+                <button type="button" className="group flex flex-col items-center gap-1 text-text-muted hover:text-fb-pink">
+                  <User className="h-[22px] w-[22px]" />
+                  <span className="text-[10px] font-medium">{t("profile")}</span>
+                </button>
+                {showProfileMenu && (
+                  <div className="absolute right-0 top-[42px] z-[1001] min-w-[240px] rounded-[8px] border border-border-light bg-card p-4 shadow-[var(--shadow-md)]">
+                    {profileLinks.header}
+                    <hr className="my-4" />
+                    <div className="space-y-3">
+                      {profileLinks.items.map((item) =>
+                        item.href === "#logout" ? (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={handleLogout}
+                            className="block text-[13px] font-medium text-text-secondary"
+                          >
+                            {item.label}
+                          </button>
+                        ) : (
+                          <Link key={item.label} href={item.href} className="block text-[13px] font-medium text-text-secondary">
+                            {item.label}
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <IconLink href="/account/wishlist" label={t("wishlist")} badge={wishlistCount}>
+                <Heart className="h-[22px] w-[22px]" />
+              </IconLink>
+
+              <IconLink href="/cart" label={t("bag")} badge={bagCount}>
+                <ShoppingBag className="h-[22px] w-[22px]" />
+              </IconLink>
+            </div>
           </div>
         </div>
 
