@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SmartImage from "@/components/ui/SmartImage";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { formatPriceNpr } from "@/lib/catalog";
@@ -86,7 +86,7 @@ export default function CartPage() {
                 <div key={item.id} className="border-b border-border-light px-4 py-4 last:border-b-0">
                   <div className="flex gap-4">
                     <div className="relative h-32 w-24 shrink-0 overflow-hidden rounded-[4px] bg-[var(--bg-surface)]">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <SmartImage src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
                     <div className="flex flex-1 flex-col justify-between gap-3">
                       <div className="flex items-start justify-between gap-3">

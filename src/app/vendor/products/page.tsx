@@ -2,8 +2,8 @@
 
 import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import Image from "next/image";
 import { Search, Trash2 } from "lucide-react";
+import SmartImage from "@/components/ui/SmartImage";
 import { useLanguage } from "@/lib/LanguageContext";
 import VendorSidebar from "@/components/VendorSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
@@ -207,7 +207,7 @@ export default function VendorProductsPage() {
                   <tr key={product.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
                     <td className="px-4 py-4">
                       <div className="relative h-16 w-12 overflow-hidden rounded-[4px]">
-                        <Image src={product.images[0] || "https://picsum.photos/300/400?random=fitbazar"} alt={product.name} fill className="object-cover" />
+                        <SmartImage src={product.images[0] || "https://picsum.photos/300/400?random=fitbazar"} alt={product.name} fill className="object-cover" />
                       </div>
                     </td>
                     <td className="font-medium text-text-primary">{product.name}</td>

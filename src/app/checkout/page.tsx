@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { MapPin, Truck, Wallet } from "lucide-react";
+import SmartImage from "@/components/ui/SmartImage";
 import { useCart } from "@/lib/cart";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useToast } from "@/lib/ToastContext";
@@ -433,7 +433,7 @@ function CheckoutPageInner() {
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3">
                       <div className="relative h-16 w-16 overflow-hidden rounded-[4px] bg-[var(--bg-surface)]">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                        <SmartImage src={item.image} alt={item.name} fill className="object-cover" />
                       </div>
                       <div className="flex-1">
                         <p className="line-clamp-1 text-[14px] font-medium text-text-primary">{item.name}</p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SmartImage from "@/components/ui/SmartImage";
 import { categoryQueryValue } from "@/lib/categories";
 
 const editorialCards = [
@@ -64,7 +64,7 @@ export default function DiscoverPage() {
               </div>
             </div>
             <div className="relative min-h-[280px] bg-[var(--bg-surface)]">
-              <Image
+              <SmartImage
                 src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1400&auto=format&fit=crop"
                 alt="Fit Bazar discover editorial"
                 fill
@@ -83,7 +83,7 @@ export default function DiscoverPage() {
               className="overflow-hidden rounded-[12px] bg-card shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
             >
               <div className="relative aspect-[4/3] bg-[var(--bg-surface)]">
-                <Image src={card.image} alt={card.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+                <SmartImage src={card.image} alt={card.title} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
               </div>
               <div className="p-5">
                 <h2 className="text-[18px] font-semibold text-text-primary">{card.title}</h2>

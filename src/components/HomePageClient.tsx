@@ -113,19 +113,20 @@ export default function HomePageClient({
   return (
     <div className="container py-6">
       <section className="section">
-        <div className="hero-shell relative overflow-hidden rounded-[32px] p-6 md:p-10">
-          <div className="absolute inset-y-0 right-0 hidden w-[46%] md:block">
+        <div className="hero-shell relative min-h-[560px] overflow-hidden rounded-[32px] p-6 md:p-10">
+          <div className="absolute inset-0 opacity-85">
             {banners.length ? (
               <SmartImage
                 src={activeBannerItem?.imageUrl}
                 alt={activeBannerItem?.title || t("hero_banner_alt")}
                 fill
                 priority
-                sizes="(max-width: 767px) 100vw, 44vw"
-                className="object-cover opacity-70"
+                sizes="100vw"
+                className="object-cover"
               />
             ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(38,26,20,0.96)_0%,rgba(38,26,20,0.2)_50%,transparent_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(38,26,20,0.94)_0%,rgba(38,26,20,0.62)_38%,rgba(38,26,20,0.24)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_28%)]" />
           </div>
 
           <div className="relative z-[1] max-w-[36rem]">

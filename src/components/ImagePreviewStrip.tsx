@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { X } from "lucide-react";
 import { getSafeImageUrl } from "@/lib/media";
+import SmartImage from "@/components/ui/SmartImage";
 
 type ImagePreviewStripProps = {
   images: string[];
@@ -24,7 +24,7 @@ export default function ImagePreviewStrip({
       {images.map((imageUrl) => (
         <div key={imageUrl} className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-2">
           <div className="relative aspect-[3/4] overflow-hidden rounded-[6px]">
-            <Image
+            <SmartImage
               src={getSafeImageUrl(imageUrl, "https://picsum.photos/seed/fitbazar-product-fallback/900/1200")}
               alt="Preview"
               fill

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { CheckCircle, Clock, Package, Package2, Truck, XCircle } from "lucide-react";
+import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useLanguage } from "@/lib/LanguageContext";
 
@@ -121,7 +121,7 @@ export default function OrdersPage() {
                         <div key={item.id} className="flex items-center gap-4">
                           <div className="relative h-16 w-16 overflow-hidden rounded-[6px] bg-card">
                             {item.product?.images?.[0] ? (
-                              <Image src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
+                              <SmartImage src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-[12px] text-text-muted">{t("no_image")}</div>
                             )}

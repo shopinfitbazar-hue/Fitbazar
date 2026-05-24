@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { CircleDollarSign, LayoutDashboard, Package, ShoppingCart, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
 import ImagePreviewStrip from "@/components/ImagePreviewStrip";
+import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useLanguage } from "@/lib/LanguageContext";
 
@@ -1024,7 +1024,7 @@ export default function AdminDashboard() {
               {banners.map((banner) => (
                 <div key={banner.id} className="grid gap-4 rounded-[8px] border border-border-light p-4 lg:grid-cols-[180px_minmax(0,1fr)_auto]">
                   <div className="relative h-24 overflow-hidden rounded-[6px]">
-                    <Image src={banner.imageUrl} alt={banner.title || "Banner"} fill className="object-cover" />
+                    <SmartImage src={banner.imageUrl} alt={banner.title || "Banner"} fill className="object-cover" />
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <input value={banner.title || ""} onChange={(event) => setBanners((current) => current.map((item) => item.id === banner.id ? { ...item, title: event.target.value } : item))} />
