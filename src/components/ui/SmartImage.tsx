@@ -1,8 +1,8 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
-import { useState } from "react";
-import { buildImageSizes, getOptimizedImageUrl, getSafeImageUrl } from "@/lib/media";
+import { useEffect, useMemo, useState } from "react";
+import { buildImageSizes, getOptimizedImageUrl, getSafeImageUrl, isCloudinaryUrl } from "@/lib/media";
 
 type SmartImageProps = Omit<ImageProps, "src"> & {
   src: string | null | undefined;
@@ -20,7 +20,19 @@ export default function SmartImage({
   ...props
 }: SmartImageProps) {
   const [loaded, setLoaded] = useState(false);
-  const safeSrc = getOptimizedImageUrl(getSafeImageUrl(src, fallbackSrc));
+  const initialSrc = useMemo(
+    () => getOptimizedImageUrl(getSafeImageUrl(src, fallbackSrc)),
+    [fallbackSrc, src],
+  );
+  const fallback = useMemo(() => getOptimizedImageUrl(fallbackSrc), [fallbackSrc]);
+  const [currentSrc, setCurrentSrc] = useState(initialSrc);
+
+  useEffect(() => {
+    setCurrentSrc(initialSrc);
+    setLoaded(false);
+  }, [initialSrc]);
+
+  const useNativeImageDelivery = !isCloudinaryUrl(currentSrc);
 
   return (
     <div className={`relative overflow-hidden ${aspectClassName ?? ""}`}>
@@ -28,12 +40,20 @@ export default function SmartImage({
       <Image
         {...props}
         alt={alt}
-        src={safeSrc}
+        src={currentSrc}
         sizes={sizes || buildImageSizes()}
         className={className}
+        unoptimized={useNativeImageDelivery}
         onLoad={(event) => {
           setLoaded(true);
           props.onLoad?.(event);
+        }}
+        onError={() => {
+          if (currentSrc !== fallback) {
+            setCurrentSrc(fallback);
+            return;
+          }
+          setLoaded(true);
         }}
       />
     </div>

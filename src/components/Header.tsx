@@ -237,7 +237,7 @@ export default function Header() {
     <>
       {showAnnouncement && (
         <div className="relative bg-fb-pink px-10 py-2 text-center text-[12px] text-white">
-          <span className="text-white">{announcementText}</span>
+          <span className="block truncate pr-6 text-white">{announcementText}</span>
           <button
             type="button"
             onClick={() => setShowAnnouncement(false)}
@@ -249,14 +249,14 @@ export default function Header() {
         </div>
       )}
 
-      <header className="sticky top-0 z-[1000] border-b border-border-light bg-card shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <div className="container hidden h-[60px] items-center gap-6 lg:flex">
-          <Link href="/" className="shrink-0">
-            <div className="text-[24px] font-bold leading-none text-fb-pink">fitbazar</div>
-            <div className="text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
+      <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="container hidden h-[72px] items-center gap-6 lg:flex">
+          <Link href="/" className="shrink-0 py-2">
+            <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
+            <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
           </Link>
 
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-5 xl:gap-6">
             {desktopLinks.map((link) => {
               const linkCategory = normalizeCategory(new URLSearchParams(link.href.split("?")[1] || "").get("category"));
               const active = linkCategory
@@ -268,7 +268,7 @@ export default function Header() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className={`border-b-2 border-transparent py-1 text-[14px] font-medium uppercase tracking-[0.2px] text-text-primary hover:border-fb-pink hover:text-text-primary ${active ? "border-fb-pink" : ""}`}
+                  className={`border-b-2 border-transparent py-1 text-[13px] font-medium uppercase tracking-[0.08em] text-text-primary hover:border-fb-pink hover:text-text-primary ${active ? "border-fb-pink" : ""}`}
                 >
                   {link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}
                 </Link>
@@ -276,7 +276,7 @@ export default function Header() {
             })}
           </nav>
 
-          <div className="relative ml-auto flex-1 max-w-[480px]">
+          <div className="relative ml-auto flex-1 max-w-[420px] xl:max-w-[480px]">
             <form
               onSubmit={submitSearch}
               className={`flex h-10 items-center gap-2 rounded-[20px] border px-4 ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-[#F8F8F8]"}`}
@@ -311,7 +311,7 @@ export default function Header() {
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-5">
+          <div className="flex shrink-0 items-center gap-4 xl:gap-5">
             <button
               type="button"
               onClick={() => setLang(lang === "en" ? "ne" : "en")}
@@ -367,9 +367,9 @@ export default function Header() {
 
         <div className="lg:hidden">
           <div className="container flex h-[52px] items-center justify-between">
-            <Link href="/" className="shrink-0">
-              <div className="text-[22px] font-bold leading-none text-fb-pink">fitbazar</div>
-              <div className="text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
+            <Link href="/" className="shrink-0 py-2">
+              <div className="text-[22px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
+              <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
             </Link>
             <button type="button" onClick={() => setMobileOpen(true)} aria-label="Open menu">
               <Menu className="h-6 w-6 text-text-primary" />

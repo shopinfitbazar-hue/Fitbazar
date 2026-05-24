@@ -210,7 +210,7 @@ hr {
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 16px 80px;
+  padding: 0 16px;
 }
 
 .section {
@@ -354,7 +354,7 @@ button, a {
 
 @media (min-width: 768px) {
   .container {
-    padding: 0 24px 96px;
+    padding: 0 24px;
   }
 
   .section-shell {
