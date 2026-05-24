@@ -68,8 +68,8 @@ export default function Hero() {
                     <div className="absolute inset-0 z-10 w-full h-full p-4 transform lg:translate-x-8 lg:-translate-y-8 group-hover:translate-x-4 transition-transform duration-700">
                         <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-saffron to-gold shadow-2xl overflow-hidden relative border-4 border-offwhite dark:border-charcoal isolate">
                             {/* Stand-in for generated apparel image */}
-                            <Image src="https://images.unsplash.com/photo-1610486744865-c81cae933d1c?q=80&w=1280&auto=format&fit=crop" className="absolute inset-0 object-cover mix-blend-overlay opacity-80" alt="South Asian Fashion" fill sizes="(max-width: 1024px) 100vw, 50vw" />
-                            <Image src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1600&auto=format&fit=crop" className="absolute inset-0 object-cover z-20 hover:scale-105 transition-transform duration-1000 origin-bottom" alt="Fashion model" fill sizes="(max-width: 1024px) 100vw, 50vw" />
+                            <Image src="https://images.unsplash.com/photo-1610486744865-c81cae933d1c?q=80&w=1280&auto=format&fit=crop" priority className="absolute inset-0 object-cover mix-blend-overlay opacity-80" alt="South Asian Fashion" fill sizes="(max-width: 1024px) 100vw, 50vw" />
+                            <Image src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=1600&auto=format&fit=crop" priority className="absolute inset-0 object-cover z-20 hover:scale-105 transition-transform duration-1000 origin-bottom" alt="Fashion model" fill sizes="(max-width: 1024px) 100vw, 50vw" />
                         </div>
                     </div>
 
