@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 type MailPayload = {
   to: string;
@@ -7,8 +7,13 @@ type MailPayload = {
   text?: string;
 };
 
-function normalizeSmtpPassword(value?: string) {
-  return value?.replace(/\s+/g, "") || "";
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
 }
 
 function hasConfiguredValue(value?: string) {
@@ -16,41 +21,33 @@ function hasConfiguredValue(value?: string) {
 }
 
 export function hasConfiguredMailTransport() {
-  return (
-    hasConfiguredValue(process.env.SMTP_HOST) &&
-    hasConfiguredValue(process.env.SMTP_USER) &&
-    hasConfiguredValue(process.env.SMTP_PASS) &&
-    hasConfiguredValue(process.env.SMTP_FROM)
-  );
+  return hasConfiguredValue(process.env.RESEND_API_KEY);
 }
 
 export async function sendMail(payload: MailPayload) {
   if (!hasConfiguredMailTransport()) {
-    return {
-      delivered: false,
-      reason: "Mail transport is not configured.",
-    };
+    return { delivered: false, reason: "Resend API key is not configured." };
   }
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT || 587) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: normalizeSmtpPassword(process.env.SMTP_PASS),
-    },
-  });
+  const from = process.env.EMAIL_FROM || "noreply@fit-bazar.com";
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to: payload.to,
-    subject: payload.subject,
-    html: payload.html,
-    text: payload.text,
-  });
+  try {
+    const { error } = await getResendClient().emails.send({
+      from,
+      to: [payload.to],
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    });
 
-  return {
-    delivered: true,
-  };
+    if (error) {
+      console.error("[mailer] Resend send error:", error);
+      return { delivered: false, reason: error.message };
+    }
+
+    return { delivered: true };
+  } catch (err) {
+    console.error("[mailer] Resend exception:", err);
+    return { delivered: false, reason: err instanceof Error ? err.message : "Unknown error" };
+  }
 }

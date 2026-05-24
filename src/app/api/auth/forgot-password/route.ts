@@ -25,11 +25,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
+      select: { id: true, name: true },
     });
 
     if (!user) {
@@ -37,9 +33,7 @@ export async function POST(request: Request) {
     }
 
     await prisma.verificationToken.deleteMany({
-      where: {
-        identifier: `password-reset:${email}`,
-      },
+      where: { identifier: `password-reset:${email}` },
     });
 
     const rawToken = createOpaqueToken();
@@ -54,10 +48,15 @@ export async function POST(request: Request) {
       },
     });
 
-    const resetUrl = buildAppUrl(`/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`);
+    const resetUrl = buildAppUrl(
+      `/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(email)}`,
+    );
+
     if (!hasConfiguredMailTransport()) {
       if (process.env.NODE_ENV === "production") {
-        return NextResponse.json({ error: "Password reset email service is not configured." }, { status: 503 });
+        return NextResponse.json({
+          error: "Password reset email service is not configured.",
+        }, { status: 503 });
       }
 
       return NextResponse.json({
@@ -75,13 +74,21 @@ export async function POST(request: Request) {
       html: renderPasswordResetEmail(user.name || "there", resetUrl),
     });
 
+    if (!emailState.delivered) {
+      console.error("[forgot-password] Failed to send email:", emailState.reason);
+    }
+
     return NextResponse.json({
       success: true,
-      message: emailState.delivered ? "Password reset link sent." : "Password reset email could not be sent.",
+      message: emailState.delivered
+        ? "Password reset link sent. Check your inbox."
+        : "Password reset email could not be sent. Please try again.",
       emailSent: emailState.delivered,
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    return NextResponse.json({ error: "Unable to process password reset." }, { status: 500 });
+    console.error("[forgot-password] Error:", error);
+    return NextResponse.json({
+      error: "Unable to process password reset. Please try again.",
+    }, { status: 500 });
   }
 }
