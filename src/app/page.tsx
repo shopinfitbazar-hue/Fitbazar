@@ -1,101 +1,251 @@
-import Image from "next/image";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import HomePageClient from "@/components/HomePageClient";
+import { prisma } from "@/lib/prisma";
+import { mapProductToCard, mapVendorToCard } from "@/lib/catalog";
+import { getSafeImageUrl } from "@/lib/media";
+import { ProductStatus } from "@prisma/client";
+import { buildMetadata } from "@/config/site";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+export const metadata = buildMetadata({
+  title: "Fit Bazzar | Premium Fashion Marketplace in Nepal",
+  description:
+    "Browse premium Nepal-first fashion, curated storefronts, and fast mobile shopping across Fit Bazzar.",
+});
+
+export default async function HomePage() {
+  const [banners, categories, mostPopular, festivalConfig, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
+    prisma.banner.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      take: 5,
+    }),
+    prisma.category.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+      take: 8,
+    }),
+    prisma.product.findMany({
+      where: {
+        status: ProductStatus.ACTIVE,
+        vendor: {
+          isApproved: true,
+          isSuspended: false,
+          isPartnered: true,
+        },
+      },
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+      take: 8,
+    }),
+    prisma.festivalConfig.findFirst({
+      where: { isActive: true },
+    }),
+    prisma.product.findMany({
+      where: {
+        status: ProductStatus.ACTIVE,
+        isYearRoundSale: true,
+        vendor: {
+          isApproved: true,
+          isSuspended: false,
+          isPartnered: true,
+        },
+      },
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
+      take: 8,
+    }),
+    prisma.product.findMany({
+      where: {
+        status: ProductStatus.ACTIVE,
+        discountPct: { gte: 20 },
+        vendor: {
+          isApproved: true,
+          isSuspended: false,
+          isPartnered: true,
+        },
+      },
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
+      take: 8,
+    }),
+    prisma.vendor.findMany({
+      where: {
+        isApproved: true,
+        isSuspended: false,
+        isPartnered: true,
+        isTopShop: true,
+      },
+      include: {
+        reviews: {
+          where: { isVisible: true },
+          select: { rating: true },
+        },
+        _count: {
+          select: {
+            products: true,
+            orders: true,
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 4,
+    }),
+    prisma.vendor.findMany({
+      where: {
+        isApproved: true,
+        isSuspended: false,
+        isPartnered: true,
+      },
+      include: {
+        reviews: {
+          where: { isVisible: true },
+          select: { rating: true },
+        },
+        _count: {
+          select: {
+            products: true,
+            orders: true,
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ createdAt: "desc" }],
+      take: 4,
+    }),
+  ]);
+
+  const festivalProducts = festivalConfig
+    ? await prisma.product.findMany({
+        where: {
+          status: ProductStatus.ACTIVE,
+          isFestivalSale: true,
+          vendor: {
+          isApproved: true,
+          isSuspended: false,
+          isPartnered: true,
+        },
+        },
+        include: {
+          vendor: {
+            select: {
+              id: true,
+              shopName: true,
+              slug: true,
+              logo: true,
+            },
+          },
+          reviews: {
+            select: {
+              rating: true,
+            },
+          },
+          _count: {
+            select: {
+              reviews: true,
+            },
+          },
+        },
+        orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+        take: 8,
+      })
+    : [];
+
+  const vendors = (topShopVendors.length ? topShopVendors : partneredVendors).slice(0, 4);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    <main className="bg-page">
+      <Header />
+      <HomePageClient
+        banners={banners.map((banner) => ({
+          id: banner.id,
+          imageUrl: getSafeImageUrl(banner.imageUrl, "https://picsum.photos/seed/fitbazar-banner-fallback/1600/600"),
+          title: banner.title,
+          linkUrl: banner.linkUrl,
+        }))}
+        categories={categories}
+        mostPopular={mostPopular.map(mapProductToCard)}
+        festivalProducts={festivalProducts.map(mapProductToCard)}
+        yearRoundProducts={yearRoundProducts.map(mapProductToCard)}
+        specialDiscounts={specialDiscounts.map(mapProductToCard)}
+        vendors={vendors.map(mapVendorToCard)}
+        festival={
+          festivalConfig
+            ? {
+                name: festivalConfig.name,
+                nameNp: festivalConfig.nameNp,
+                endDate: festivalConfig.endDate.toISOString(),
+                isActive: festivalConfig.isActive,
+              }
+            : null
+        }
+      />
+      <Footer />
+    </main>
   );
 }

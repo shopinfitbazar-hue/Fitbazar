@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fit Bazar
 
-## Getting Started
+Nepal-first multi-role fashion marketplace built with Next.js, NextAuth, Prisma 7, and Neon PostgreSQL.
 
-First, run the development server:
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
+npx prisma db seed
+npm run dev -- --hostname localhost --port 3002
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3002`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Validation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-## Learn More
+## Seeded Accounts
 
-To learn more about Next.js, take a look at the following resources:
+- Admin: `admin@fitbazar.com` / `Admin@123`
+- Vendor: `vendor@fitbazar.com` / `Vendor@123`
+- Vendor 2: `vendor2@fitbazar.com` / `Vendor2@123`
+- Customer: `customer@fitbazar.com` / `Customer@123`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Authentication Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Required NextAuth env
 
-## Deploy on Vercel
+```env
+NEXTAUTH_URL="http://localhost:3002"
+NEXTAUTH_SECRET="replace-with-a-long-random-secret"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`NEXTAUTH_URL` must match the exact dev or production host you are actually using.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Google Sign-In
+
+Required env vars:
+
+```env
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+```
+
+Google Console configuration:
+
+- Authorized JavaScript origin for local: `http://localhost:3002`
+- Authorized redirect URI for local: `http://localhost:3002/api/auth/callback/google`
+- Authorized redirect URI for production: `https://your-domain.com/api/auth/callback/google`
+
+Behavior:
+
+- If valid Google credentials are configured, Google Sign-In is enabled on `/login`.
+- If they are missing, the login page falls back cleanly to email/password auth and shows a clear message.
+
+### Forgot Password / Verification Email
+
+Required SMTP env vars for real email delivery:
+
+```env
+SMTP_HOST=""
+SMTP_PORT="587"
+SMTP_USER=""
+SMTP_PASS=""
+SMTP_FROM="noreply@fitbazar.com.np"
+```
+
+Behavior:
+
+- `/forgot-password` sends a real reset email when SMTP is configured.
+- `/reset-password` consumes the secure reset token and lets the user set a new password.
+- `/verify-email` consumes signup/vendor verification tokens.
+- In development only, if SMTP is not configured, the forgot-password API returns a manual reset link for testing.
+- In production, SMTP must be configured for real reset-email delivery.
+
+## Prisma / Database
+
+This project uses Prisma 7 with Neon and Prisma config-driven datasource setup.
+
+Useful commands:
+
+```bash
+npx prisma db seed
+npx prisma generate
+```
+
+## Launch Notes
+
+- Run the app on the same host/port configured in `NEXTAUTH_URL`.
+- Configure Google OAuth before enabling Google Sign-In publicly.
+- Configure SMTP before relying on real password reset and verification emails in production.
+- Configure payment gateway credentials before enabling live online payments.
+
+## Payments Setup
+
+Fit Bazar supports Nepal-first checkout methods:
+
+- Cash on Delivery
+- eSewa
+- Khalti
+- connectIPS
+- Fonepay
+- Local Cards via Khalti when card acceptance is enabled in Khalti merchant config
+
+### Required env vars for online payments
+
+```env
+ESEWA_PRODUCT_CODE="EPAYTEST"
+ESEWA_SECRET_KEY="8gBm/:&EnhH.1/q"
+ESEWA_BASE_URL="https://rc-epay.esewa.com.np"
+ESEWA_STATUS_BASE_URL="https://rc.esewa.com.np"
+
+KHALTI_PUBLIC_KEY=""
+KHALTI_SECRET_KEY=""
+KHALTI_API_BASE_URL="https://dev.khalti.com/api/v2"
+KHALTI_ENABLE_LOCAL_CARD="false"
+
+CONNECTIPS_MERCHANT_ID=""
+CONNECTIPS_APP_ID=""
+CONNECTIPS_GATEWAY_URL=""
+CONNECTIPS_VERIFY_URL=""
+
+FONEPAY_MERCHANT_CODE=""
+FONEPAY_GATEWAY_URL=""
+FONEPAY_VERIFY_URL=""
+```
+
+### Local callback URLs
+
+- Google OAuth callback:
+  - `http://localhost:3002/api/auth/callback/google`
+- Khalti return URL is generated automatically from `NEXTAUTH_URL`:
+  - `http://localhost:3002/checkout/complete?method=KHALTI...`
+- Local Cards via Khalti use the same hosted Khalti return flow:
+  - `http://localhost:3002/checkout/complete?method=LOCAL_CARD...`
+- eSewa success/failure URLs are generated automatically from `NEXTAUTH_URL`:
+  - `http://localhost:3002/checkout/complete?method=ESEWA...`
+- connectIPS return URL should point back to:
+  - `http://localhost:3002/checkout/complete?method=CONNECTIPS...`
+- Fonepay return URL should point back to:
+  - `http://localhost:3002/checkout/complete?method=FONEPAY...`
+
+### Payment flow behavior
+
+- COD creates orders immediately with `paymentStatus=PENDING`.
+- eSewa and Khalti only create orders after provider verification succeeds.
+- Gateway verification happens server-side before stock is decremented and before coupon usage is committed.
+- Local cards are only shown when Khalti is configured and `KHALTI_ENABLE_LOCAL_CARD=true`.
+- connectIPS and Fonepay remain hidden until their merchant env vars are configured.
