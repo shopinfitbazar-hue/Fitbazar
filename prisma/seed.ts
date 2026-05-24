@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
-import { PrismaClient, Role, OrderStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
@@ -13,21 +13,35 @@ const ws = require("ws");
 neonConfig.webSocketConstructor = ws;
 neonConfig.poolQueryViaFetch = false;
 
-const connectionString = process.env.DIRECT_URL;
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("Missing DIRECT_URL for Prisma seed");
+  throw new Error("Missing DIRECT_URL or DATABASE_URL for Prisma seed");
 }
 
 const prisma = new PrismaClient({
   adapter: new PrismaNeon({ connectionString }),
 });
 
+const ROLES = {
+  ADMIN: "ADMIN",
+  VENDOR: "VENDOR",
+  CUSTOMER: "CUSTOMER",
+} as const;
+
+const ORDER_STATUSES = [
+  "PENDING",
+  "RECEIVED",
+  "PACKED",
+  "HANDED_TO_DELIVERY",
+  "DELIVERED",
+] as const;
+
 const users = [
-  { email: "admin@fitbazar.com", password: "Admin@123", role: Role.ADMIN, name: "Fit Bazar Admin", phone: "9800000001" },
-  { email: "vendor@fitbazar.com", password: "Vendor@123", role: Role.VENDOR, name: "Kathmandu Threads Owner", phone: "9800000002" },
-  { email: "vendor2@fitbazar.com", password: "Vendor2@123", role: Role.VENDOR, name: "Newari Weaves Owner", phone: "9800000003" },
-  { email: "customer@fitbazar.com", password: "Customer@123", role: Role.CUSTOMER, name: "Fit Bazar Customer", phone: "9800000004" },
+  { email: "admin@fitbazar.com", password: "Admin@123", role: ROLES.ADMIN, name: "Fit Bazar Admin", phone: "9800000001" },
+  { email: "vendor@fitbazar.com", password: "Vendor@123", role: ROLES.VENDOR, name: "Kathmandu Threads Owner", phone: "9800000002" },
+  { email: "vendor2@fitbazar.com", password: "Vendor2@123", role: ROLES.VENDOR, name: "Newari Weaves Owner", phone: "9800000003" },
+  { email: "customer@fitbazar.com", password: "Customer@123", role: ROLES.CUSTOMER, name: "Fit Bazar Customer", phone: "9800000004" },
 ];
 
 const vendorConfigs = [
@@ -96,7 +110,7 @@ function createPicsumImages(seed: string) {
 async function main() {
   console.log("🌱 Seeding database...");
 
-  const userMap = new Map<string, { id: string; email: string; role: Role }>();
+  const userMap = new Map<string, { id: string; email: string; role: string }>();
 
   for (const user of users) {
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -283,7 +297,7 @@ async function main() {
         vendorPayout: Math.round(product.price * 0.92),
         paymentMethod: index % 2 === 0 ? "KHALTI" : "COD",
         paymentStatus: index % 2 === 0 ? "PAID" : "PENDING",
-        status: [OrderStatus.PENDING, OrderStatus.RECEIVED, OrderStatus.PACKED, OrderStatus.HANDED_TO_DELIVERY, OrderStatus.DELIVERED][index],
+        status: ORDER_STATUSES[index],
         deliveryAddress: {
           name: "Fit Bazar Customer",
           phone: "9800000004",
@@ -301,7 +315,7 @@ async function main() {
         vendorPayout: Math.round(product.price * 0.92),
         paymentMethod: index % 2 === 0 ? "KHALTI" : "COD",
         paymentStatus: index % 2 === 0 ? "PAID" : "PENDING",
-        status: [OrderStatus.PENDING, OrderStatus.RECEIVED, OrderStatus.PACKED, OrderStatus.HANDED_TO_DELIVERY, OrderStatus.DELIVERED][index],
+        status: ORDER_STATUSES[index],
         deliveryAddress: {
           name: "Fit Bazar Customer",
           phone: "9800000004",

@@ -87,9 +87,15 @@ This project uses Prisma 7 with Neon and Prisma config-driven datasource setup.
 Useful commands:
 
 ```bash
-npx prisma db seed
 npx prisma generate
+npx prisma db seed
+npm run build
 ```
+
+Build note:
+
+- Vercel and local installs run `prisma generate` automatically through `postinstall`.
+- The production build also runs `prisma generate` before `next build` as a safety net.
 
 ## Launch Notes
 

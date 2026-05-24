@@ -7,7 +7,7 @@ dotenv.config({ path: '.env.local' })
 export default defineConfig({
   schema: path.join('prisma', 'schema.prisma'),
   datasource: {
-    url: env('DIRECT_URL'),
+    url: process.env.DIRECT_URL || env('DATABASE_URL'),
   },
   migrations: {
     seed: 'npx ts-node --project prisma/tsconfig.seed.json prisma/seed.ts',
