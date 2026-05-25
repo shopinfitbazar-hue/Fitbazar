@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
+import { SITE_SETTINGS_ID, cleanInternalHref, defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -12,20 +13,9 @@ export async function GET() {
     }
 
     const settings = (await prisma.siteSettings.findUnique({
-      where: { id: "site-settings" },
+      where: { id: SITE_SETTINGS_ID },
     })) || (await prisma.siteSettings.findFirst());
-    return NextResponse.json({
-      settings: settings || {
-        commissionPct: 8,
-        minFreeDelivery: 2000,
-        whatsappNumber: "977XXXXXXXXX",
-        announcementBar: "",
-        announcementActive: false,
-        supportEmail: "support@fitbazar.com",
-        supportPhone: "+977 9800000000",
-        supportHours: "Sun-Fri, 10am-6pm",
-      },
-    });
+    return NextResponse.json({ settings: settings || defaultSiteSettings });
   } catch (error) {
     console.error("Error fetching admin settings:", error);
     return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
@@ -48,30 +38,39 @@ export async function PUT(request: Request) {
       supportEmail?: string;
       supportPhone?: string;
       supportHours?: string;
+      heroEyebrow?: string;
+      heroTitle?: string;
+      heroSubtitle?: string;
+      heroPrimaryLabel?: string;
+      heroPrimaryHref?: string;
+      heroSecondaryLabel?: string;
+      heroSecondaryHref?: string;
+    };
+
+    const data = {
+      commissionPct: Number(body.commissionPct || defaultSiteSettings.commissionPct),
+      minFreeDelivery: Number(body.minFreeDelivery || defaultSiteSettings.minFreeDelivery),
+      whatsappNumber: body.whatsappNumber?.trim() || defaultSiteSettings.whatsappNumber,
+      announcementBar: body.announcementBar?.trim() || null,
+      announcementActive: Boolean(body.announcementActive),
+      supportEmail: body.supportEmail?.trim() || defaultSiteSettings.supportEmail,
+      supportPhone: body.supportPhone?.trim() || defaultSiteSettings.supportPhone,
+      supportHours: body.supportHours?.trim() || null,
+      heroEyebrow: body.heroEyebrow?.trim() || defaultSiteSettings.heroEyebrow,
+      heroTitle: body.heroTitle?.trim() || defaultSiteSettings.heroTitle,
+      heroSubtitle: body.heroSubtitle?.trim() || defaultSiteSettings.heroSubtitle,
+      heroPrimaryLabel: body.heroPrimaryLabel?.trim() || defaultSiteSettings.heroPrimaryLabel,
+      heroPrimaryHref: cleanInternalHref(body.heroPrimaryHref, defaultSiteSettings.heroPrimaryHref),
+      heroSecondaryLabel: body.heroSecondaryLabel?.trim() || defaultSiteSettings.heroSecondaryLabel,
+      heroSecondaryHref: cleanInternalHref(body.heroSecondaryHref, defaultSiteSettings.heroSecondaryHref),
     };
 
     const settings = await prisma.siteSettings.upsert({
-      where: { id: "site-settings" },
-      update: {
-        commissionPct: Number(body.commissionPct || 8),
-        minFreeDelivery: Number(body.minFreeDelivery || 2000),
-        whatsappNumber: body.whatsappNumber?.trim() || "977XXXXXXXXX",
-        announcementBar: body.announcementBar?.trim() || null,
-        announcementActive: Boolean(body.announcementActive),
-        supportEmail: body.supportEmail?.trim() || "support@fitbazar.com",
-        supportPhone: body.supportPhone?.trim() || "+977 9800000000",
-        supportHours: body.supportHours?.trim() || null,
-      },
+      where: { id: SITE_SETTINGS_ID },
+      update: data,
       create: {
-        id: "site-settings",
-        commissionPct: Number(body.commissionPct || 8),
-        minFreeDelivery: Number(body.minFreeDelivery || 2000),
-        whatsappNumber: body.whatsappNumber?.trim() || "977XXXXXXXXX",
-        announcementBar: body.announcementBar?.trim() || null,
-        announcementActive: Boolean(body.announcementActive),
-        supportEmail: body.supportEmail?.trim() || "support@fitbazar.com",
-        supportPhone: body.supportPhone?.trim() || "+977 9800000000",
-        supportHours: body.supportHours?.trim() || null,
+        id: SITE_SETTINGS_ID,
+        ...data,
       },
     });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Camera } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 
 type UploadSignatureResponse = {
@@ -17,6 +18,7 @@ type CloudinaryImageUploaderProps = {
   onUploaded: (urls: string[]) => void;
   multiple?: boolean;
   className?: string;
+  enableCamera?: boolean;
 };
 
 async function resizeImage(file: File, maxSize = 1600) {
@@ -56,9 +58,11 @@ export default function CloudinaryImageUploader({
   onUploaded,
   multiple = true,
   className = "btn-ghost",
+  enableCamera = false,
 }: CloudinaryImageUploaderProps) {
   const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
@@ -122,9 +126,32 @@ export default function CloudinaryImageUploader({
         className="hidden"
         onChange={(event) => void startUpload(event.target.files)}
       />
-      <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className={className}>
-        {uploading ? t("uploading_images") : buttonLabel}
-      </button>
+      {enableCamera ? (
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(event) => void startUpload(event.target.files)}
+        />
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} className={className}>
+          {uploading ? t("uploading_images") : buttonLabel}
+        </button>
+        {enableCamera ? (
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={uploading}
+            className="btn-ghost inline-flex items-center gap-2"
+          >
+            <Camera className="h-4 w-4" />
+            {t("take_photo")}
+          </button>
+        ) : null}
+      </div>
       {error ? <p className="text-[12px] text-fb-pink">{error}</p> : null}
     </div>
   );

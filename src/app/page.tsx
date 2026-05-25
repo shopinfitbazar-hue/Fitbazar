@@ -6,6 +6,7 @@ import { mapProductToCard, mapVendorToCard } from "@/lib/catalog";
 import { getSafeImageUrl, FALLBACK_BANNER_IMAGE } from "@/lib/media";
 import { ProductStatus } from "@prisma/client";
 import { buildMetadata } from "@/config/site";
+import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 export const metadata = buildMetadata({
@@ -14,8 +15,19 @@ export const metadata = buildMetadata({
     "Browse premium Nepal-first fashion, curated storefronts, and fast mobile shopping across Fit Bazzar.",
 });
 
+async function getHomepageFestivalConfig() {
+  return (
+    (await prisma.festivalConfig.findUnique({
+      where: { id: "festival-config" },
+    })) ||
+    (await prisma.festivalConfig.findFirst({
+      where: { isActive: true },
+    }))
+  );
+}
+
 export default async function HomePage() {
-  const [banners, categories, mostPopular, festivalConfig, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
+  const [banners, categories, mostPopular, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
     prisma.banner.findMany({
       where: {
         isActive: true,
@@ -64,9 +76,8 @@ export default async function HomePage() {
       orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
       take: 8,
     }),
-    prisma.festivalConfig.findFirst({
-      where: { isActive: true },
-    }),
+    getHomepageFestivalConfig(),
+    (await prisma.siteSettings.findUnique({ where: { id: SITE_SETTINGS_ID } })) || (await prisma.siteSettings.findFirst()),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
@@ -180,7 +191,7 @@ export default async function HomePage() {
     }),
   ]);
 
-  const festivalProducts = festivalConfig
+  const festivalProducts = festivalConfig?.isActive
     ? await prisma.product.findMany({
         where: {
           status: ProductStatus.ACTIVE,
@@ -234,8 +245,17 @@ export default async function HomePage() {
         yearRoundProducts={yearRoundProducts.map(mapProductToCard)}
         specialDiscounts={specialDiscounts.map(mapProductToCard)}
         vendors={vendors.map(mapVendorToCard)}
+        hero={{
+          eyebrow: siteSettings?.heroEyebrow || defaultSiteSettings.heroEyebrow,
+          title: siteSettings?.heroTitle || defaultSiteSettings.heroTitle,
+          subtitle: siteSettings?.heroSubtitle || defaultSiteSettings.heroSubtitle,
+          primaryLabel: siteSettings?.heroPrimaryLabel || defaultSiteSettings.heroPrimaryLabel,
+          primaryHref: siteSettings?.heroPrimaryHref || defaultSiteSettings.heroPrimaryHref,
+          secondaryLabel: siteSettings?.heroSecondaryLabel || defaultSiteSettings.heroSecondaryLabel,
+          secondaryHref: siteSettings?.heroSecondaryHref || defaultSiteSettings.heroSecondaryHref,
+        }}
         festival={
-          festivalConfig
+          festivalConfig?.isActive
             ? {
                 name: festivalConfig.name,
                 nameNp: festivalConfig.nameNp,

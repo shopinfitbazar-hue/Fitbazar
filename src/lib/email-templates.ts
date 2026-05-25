@@ -71,3 +71,33 @@ export function renderEmailVerificationEmail(name: string, verificationUrl: stri
     "If you did not create this account, you can ignore this email.",
   );
 }
+
+export function renderOrderPlacedEmail(name: string, orderNumber: string, orderUrl: string) {
+  return renderShell(
+    "Your Fit Bazar order is confirmed",
+    `Hello ${name}, your order ${orderNumber} has been placed successfully. We will keep you updated as the vendor prepares it.`,
+    "View Order",
+    orderUrl,
+    "Thank you for shopping with Fit Bazar.",
+  );
+}
+
+export function renderVendorOrderEmail(shopName: string, orderNumber: string, orderUrl: string) {
+  return renderShell(
+    "New order received",
+    `Hello ${shopName}, order ${orderNumber} is waiting in your vendor dashboard. Please review it and prepare the items on time.`,
+    "Open Vendor Orders",
+    orderUrl,
+    "Timely updates help customers track their order with confidence.",
+  );
+}
+
+export function renderVendorUpdateEmail(name: string, title: string, message: string, dashboardUrl: string) {
+  return renderShell(
+    title,
+    `Hello ${name}, ${message}`,
+    "Open Vendor Dashboard",
+    dashboardUrl,
+    "This message was sent by Fit Bazar Vendor Support.",
+  );
+}

@@ -95,6 +95,10 @@ run("google oauth config detection rejects placeholders", () => {
     false,
   );
   assert.equal(
+    hasConfiguredGoogleOAuth({ clientId: "your_google_client_id", clientSecret: "your_google_client_secret" }),
+    false,
+  );
+  assert.equal(
     hasConfiguredGoogleOAuth({ clientId: "real-client-id.apps.googleusercontent.com", clientSecret: "real-secret" }),
     true,
   );

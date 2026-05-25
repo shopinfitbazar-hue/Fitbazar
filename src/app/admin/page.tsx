@@ -79,7 +79,16 @@ interface AdminCustomer {
   id: string;
   name: string | null;
   email: string;
+  phone?: string | null;
+  emailVerified?: string | null;
   isBanned: boolean;
+  createdAt?: string;
+  accounts?: Array<{ provider: string }>;
+  _count?: {
+    orders: number;
+    wishlist: number;
+    supportTickets: number;
+  };
 }
 
 interface AdminBanner {
@@ -110,6 +119,13 @@ interface SiteSettingsState {
   supportEmail: string;
   supportPhone: string;
   supportHours: string;
+  heroEyebrow: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  heroPrimaryLabel: string;
+  heroPrimaryHref: string;
+  heroSecondaryLabel: string;
+  heroSecondaryHref: string;
 }
 
 interface FestivalState {
@@ -194,6 +210,13 @@ export default function AdminDashboard() {
     supportEmail: "support@fitbazar.com",
     supportPhone: "+977 9800000000",
     supportHours: "Sun-Fri, 10am-6pm",
+    heroEyebrow: "Nepal's premium fashion marketplace",
+    heroTitle: "Discover sharper style, faster shopping, and curated Nepal-first fashion.",
+    heroSubtitle: "Mobile-first discovery, partner-led fashion drops, and cleaner product storytelling built for modern shoppers.",
+    heroPrimaryLabel: "Shop New Arrivals",
+    heroPrimaryHref: "/products",
+    heroSecondaryLabel: "Explore Collections",
+    heroSecondaryHref: "/discover",
   });
   const [festival, setFestival] = useState<FestivalState>({
     name: "Dashain",
@@ -560,10 +583,18 @@ export default function AdminDashboard() {
   return (
     <main className="bg-page">
       <Header />
-      <div className="mx-auto flex max-w-site">
+      <div className="mx-auto flex max-w-site gap-4 px-4 py-5">
         <AdminSidebar activeSection={activeSection} />
 
-        <section className="flex-1 p-4 md:p-6">
+        <section className="min-w-0 flex-1">
+          <div className="mb-5 rounded-[8px] border border-border-light bg-card p-5 shadow-[var(--shadow-sm)]">
+            <div className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">Fit Bazar Operations</div>
+            <h1 className="mt-2 text-[28px] font-semibold text-text-primary">Admin Control Center</h1>
+            <p className="mt-2 max-w-[720px] text-[14px] text-text-secondary">
+              Manage vendors, product approvals, homepage content, customer access, orders, and support from one place.
+            </p>
+          </div>
+
           {message ? (
             <div className="mb-4 rounded-[8px] border border-border-light bg-card p-4 text-[13px] text-text-secondary">
               {message}
@@ -715,6 +746,7 @@ export default function AdminDashboard() {
                   <div className="mt-3">
                     <CloudinaryImageUploader
                       buttonLabel={t("upload_product_images")}
+                      enableCamera
                       onUploaded={(urls) =>
                         setProductDraft((current) => ({
                           ...current,
@@ -873,10 +905,18 @@ export default function AdminDashboard() {
             <h2 className="text-[16px] font-semibold text-text-primary">{t("customers")}</h2>
             <div className="mt-4 space-y-3">
               {customers.slice(0, 5).map((customer) => (
-                <div key={customer.id} className="flex items-center justify-between rounded-[8px] border border-border-light p-4">
+                <div key={customer.id} className="flex flex-col gap-3 rounded-[8px] border border-border-light p-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="text-[14px] font-semibold text-text-primary">{customer.name || t("customer")}</div>
                     <div className="text-[13px] text-text-secondary">{customer.email}</div>
+                    <div className="mt-1 grid gap-1 text-[12px] text-text-muted md:grid-cols-2">
+                      <span>{t("phone_number")}: {customer.phone || "-"}</span>
+                      <span>{t("orders")}: {customer._count?.orders ?? 0}</span>
+                      <span>{t("wishlist")}: {customer._count?.wishlist ?? 0}</span>
+                      <span>{t("help_support")}: {customer._count?.supportTickets ?? 0}</span>
+                      <span>{t("login_methods")}: {customer.accounts?.map((account) => account.provider).join(", ") || "credentials"}</span>
+                      <span>{t("joined")}: {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-NP") : "-"}</span>
+                    </div>
                   </div>
                   <button type="button" onClick={() => updateCustomer(customer.id, !customer.isBanned)} className="btn-ghost px-4 py-2">
                     {customer.isBanned ? t("unban") : t("ban")}
@@ -969,6 +1009,42 @@ export default function AdminDashboard() {
                   <input type="checkbox" checked={settings.announcementActive} onChange={(event) => setSettings((current) => ({ ...current, announcementActive: event.target.checked }))} />
                   {t("enable_announcement_bar")}
                 </label>
+                <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                  <h3 className="text-[14px] font-semibold text-text-primary">{t("hero_content")}</h3>
+                  <p className="mt-1 text-[13px] text-text-muted">{t("hero_content_help")}</p>
+                  <div className="mt-4 grid gap-4">
+                    <div>
+                      <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("hero_eyebrow")}</label>
+                      <input value={settings.heroEyebrow} onChange={(event) => setSettings((current) => ({ ...current, heroEyebrow: event.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("hero_title")}</label>
+                      <textarea rows={2} value={settings.heroTitle} onChange={(event) => setSettings((current) => ({ ...current, heroTitle: event.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("hero_subtitle")}</label>
+                      <textarea rows={3} value={settings.heroSubtitle} onChange={(event) => setSettings((current) => ({ ...current, heroSubtitle: event.target.value }))} />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("primary_cta_label")}</label>
+                        <input value={settings.heroPrimaryLabel} onChange={(event) => setSettings((current) => ({ ...current, heroPrimaryLabel: event.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("primary_cta_link")}</label>
+                        <input value={settings.heroPrimaryHref} onChange={(event) => setSettings((current) => ({ ...current, heroPrimaryHref: event.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("secondary_cta_label")}</label>
+                        <input value={settings.heroSecondaryLabel} onChange={(event) => setSettings((current) => ({ ...current, heroSecondaryLabel: event.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("secondary_cta_link")}</label>
+                        <input value={settings.heroSecondaryHref} onChange={(event) => setSettings((current) => ({ ...current, heroSecondaryHref: event.target.value }))} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <button type="button" onClick={saveSettings} className="btn-primary w-fit">
                   {t("save_settings")}
                 </button>
@@ -1016,6 +1092,7 @@ export default function AdminDashboard() {
               <CloudinaryImageUploader
                 buttonLabel={t("upload_banner_image")}
                 multiple={false}
+                enableCamera
                 onUploaded={(urls) => setBannerDraft((current) => ({ ...current, imageUrl: urls[0] || current.imageUrl }))}
               />
             </div>

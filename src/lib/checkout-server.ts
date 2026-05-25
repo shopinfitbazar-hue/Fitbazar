@@ -5,6 +5,9 @@ import { isSupportedPaymentMethod, type SupportedPaymentMethod } from "@/lib/pay
 import { getShippingAmount, isDeliveryMethod, type DeliveryMethod } from "@/lib/shipping";
 import { publicProductVendorFilter } from "@/lib/public-storefront";
 import { ProductStatus } from "@prisma/client";
+import { buildAbsoluteAppUrl } from "@/lib/app-url";
+import { renderOrderPlacedEmail, renderVendorOrderEmail } from "@/lib/email-templates";
+import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 
 export type CheckoutItemInput = {
   productId: string;
@@ -45,6 +48,9 @@ type ProductRecord = {
   stock: number;
   vendor: {
     userId: string;
+    user: {
+      email: string;
+    };
     shopName: string;
     commissionPct: number;
   };
@@ -132,6 +138,7 @@ export async function prepareCheckoutContext(customerId: string, payload: Checko
           user: {
             select: {
               id: true,
+              email: true,
             },
           },
         },
@@ -238,8 +245,9 @@ export async function createOrdersFromCheckoutPayload(input: {
   );
   const couponAllocations = allocateAmountAcrossSubtotals(context.couponDiscountTotal, vendorSubtotals);
   const shippingAllocations = allocateAmountAcrossSubtotals(context.shippingAmount, vendorSubtotals);
+  let didCreateOrders = false;
 
-  return prisma.$transaction(async (tx) => {
+  const orders = await prisma.$transaction(async (tx) => {
     if (checkoutGroupId) {
       const existingOrders = await tx.order.findMany({
         where: { checkoutGroupId },
@@ -381,8 +389,46 @@ export async function createOrdersFromCheckoutPayload(input: {
       });
     }
 
+    didCreateOrders = true;
     return createdOrders;
   });
+
+  if (didCreateOrders && hasConfiguredMailTransport()) {
+    await sendOrderEmails(context, orders).catch((error) => {
+      console.error("[orders] Failed to send order email:", error);
+    });
+  }
+
+  return orders;
+}
+
+async function sendOrderEmails(context: PreparedCheckoutContext, orders: Array<{ orderNumber: string; vendorId: string }>) {
+  const orderNumbers = orders.map((order) => order.orderNumber).join(", ");
+
+  if (context.address.email) {
+    await sendMail({
+      to: context.address.email,
+      subject: `Fit Bazar order confirmed: ${orderNumbers}`,
+      text: `Your Fit Bazar order has been placed: ${orderNumbers}`,
+      html: renderOrderPlacedEmail(context.address.name || "there", orderNumbers, buildAbsoluteAppUrl("/account/orders")),
+    });
+  }
+
+  await Promise.all(
+    orders.map(async (order) => {
+      const product = context.products.find((item) => item.vendorId === order.vendorId);
+      const vendorEmail = product?.vendor.user.email;
+      if (!product || !vendorEmail) return;
+
+      await sendMail({
+        to: vendorEmail,
+        from: process.env.VENDOR_SUPPORT_EMAIL_FROM || "vendorSupport@fitbazar.com",
+        subject: `New Fit Bazar order: ${order.orderNumber}`,
+        text: `Order ${order.orderNumber} is waiting in your vendor dashboard.`,
+        html: renderVendorOrderEmail(product.vendor.shopName, order.orderNumber, buildAbsoluteAppUrl("/vendor/orders")),
+      });
+    }),
+  );
 }
 
 export function buildPaymentReference(prefix: string) {

@@ -35,10 +35,10 @@ export default function AdminSidebar({ activeSection = "dashboard" }: AdminSideb
   );
 
   return (
-    <aside className="hidden min-h-[calc(100vh-60px)] w-60 shrink-0 border-r border-border-light bg-card lg:block">
+    <aside className="sticky top-[76px] hidden max-h-[calc(100vh-92px)] w-60 shrink-0 overflow-y-auto rounded-[8px] border border-border-light bg-card shadow-[var(--shadow-sm)] lg:block">
       <div className="border-b border-border-light p-5">
         <div className="text-[16px] font-semibold text-fb-pink">{t("admin_title")}</div>
-        <div className="mt-1 text-[12px] text-text-muted">{t("admin_subtitle")}</div>
+        <div className="mt-1 text-[12px] text-text-muted">Launch operations</div>
       </div>
 
       <nav className="py-3">

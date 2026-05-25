@@ -43,6 +43,15 @@ interface HomePageClientProps {
     endDate: string;
     isActive: boolean;
   } | null;
+  hero: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    primaryLabel: string;
+    primaryHref: string;
+    secondaryLabel: string;
+    secondaryHref: string;
+  };
 }
 
 function formatCountdown(endDate: string) {
@@ -65,6 +74,7 @@ export default function HomePageClient({
   specialDiscounts,
   vendors,
   festival,
+  hero,
 }: HomePageClientProps) {
   const { t } = useLanguage();
   const [activeBanner, setActiveBanner] = useState(0);
@@ -133,18 +143,18 @@ export default function HomePageClient({
           <div className="relative z-[1] max-w-[36rem]">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
               <Sparkles className="h-3.5 w-3.5 text-white" />
-              Nepal&apos;s premium fashion marketplace
+              {hero.eyebrow}
             </div>
-            <h1 className="mt-5 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)]">Discover sharper style, faster shopping, and curated Nepal-first fashion.</h1>
+            <h1 className="mt-5 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)]">{hero.title}</h1>
             <p className="mt-4 max-w-[30rem] text-[1rem] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
-              Mobile-first discovery, partner-led fashion drops, and cleaner product storytelling built for modern shoppers.
+              {hero.subtitle}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/products" className="btn-primary">
-                Shop New Arrivals
+              <Link href={hero.primaryHref} className="btn-primary">
+                {hero.primaryLabel}
               </Link>
-              <Link href="/discover" className="btn-ghost border-white/20 bg-white/10 text-white hover:text-text-primary">
-                Explore Collections
+              <Link href={hero.secondaryHref} className="btn-ghost border-white/20 bg-white/10 text-white hover:text-text-primary">
+                {hero.secondaryLabel}
               </Link>
             </div>
           </div>
@@ -213,7 +223,7 @@ export default function HomePageClient({
           <SectionHeading
             eyebrow="Browse"
             title="Shop by mood, category, and occasion"
-            subtitle="The homepage is restructured for fast scanning on mobile, with cleaner fashion-first entry points."
+            subtitle="Find everyday wear, festive looks, and local store picks in a few quick taps."
           />
           <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
           {displayCategories.map((category, index) => (

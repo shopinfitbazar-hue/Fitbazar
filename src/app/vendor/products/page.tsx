@@ -269,9 +269,10 @@ export default function VendorProductsPage() {
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("image_urls")}</label>
                 <textarea rows={3} value={form.images} onChange={(event) => setForm((current) => ({ ...current, images: event.target.value }))} />
                 <div className="mt-3">
-                  <CloudinaryImageUploader
-                    buttonLabel={t("upload_product_images")}
-                    onUploaded={(urls) =>
+	                  <CloudinaryImageUploader
+	                    buttonLabel={t("upload_product_images")}
+	                    enableCamera
+	                    onUploaded={(urls) =>
                       setForm((current) => ({
                         ...current,
                         images: [...current.images.split(",").map((item) => item.trim()).filter(Boolean), ...urls].join(", "),

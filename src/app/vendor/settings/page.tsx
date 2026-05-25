@@ -145,22 +145,24 @@ export default function VendorSettingsPage() {
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("logo_url")}</label>
                 <input value={form.logo} onChange={(event) => setForm((current) => ({ ...current, logo: event.target.value }))} />
                 <div className="mt-3">
-                  <CloudinaryImageUploader
-                    buttonLabel={t("upload_logo")}
-                    multiple={false}
-                    onUploaded={(urls) => setForm((current) => ({ ...current, logo: urls[0] || current.logo }))}
-                  />
+	                  <CloudinaryImageUploader
+	                    buttonLabel={t("upload_logo")}
+	                    multiple={false}
+	                    enableCamera
+	                    onUploaded={(urls) => setForm((current) => ({ ...current, logo: urls[0] || current.logo }))}
+	                  />
                 </div>
               </div>
               <div>
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("banner_url")}</label>
                 <input value={form.banner} onChange={(event) => setForm((current) => ({ ...current, banner: event.target.value }))} />
                 <div className="mt-3">
-                  <CloudinaryImageUploader
-                    buttonLabel={t("upload_store_banner")}
-                    multiple={false}
-                    onUploaded={(urls) => setForm((current) => ({ ...current, banner: urls[0] || current.banner }))}
-                  />
+	                  <CloudinaryImageUploader
+	                    buttonLabel={t("upload_store_banner")}
+	                    multiple={false}
+	                    enableCamera
+	                    onUploaded={(urls) => setForm((current) => ({ ...current, banner: urls[0] || current.banner }))}
+	                  />
                 </div>
               </div>
               <div>

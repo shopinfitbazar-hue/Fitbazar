@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     const adminEmails = admins.map((admin) => admin.email).filter(Boolean);
     if (adminEmails.length && hasConfiguredMailTransport()) {
       await sendMail({
-        to: adminEmails.join(", "),
+        to: adminEmails,
         subject: `Fit Bazar support request: ${topic}`,
         text: `${name} (${email})${orderNumber ? ` • Order ${orderNumber}` : ""}\n\n${message}`,
         html: `

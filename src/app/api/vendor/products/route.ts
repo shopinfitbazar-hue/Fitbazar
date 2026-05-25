@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { buildAbsoluteAppUrl } from "@/lib/app-url";
+import { renderVendorUpdateEmail } from "@/lib/email-templates";
+import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
-import { deriveProductStatus } from "@/lib/product-status";
 
 export const dynamic = "force-dynamic";
 
@@ -96,12 +98,6 @@ export async function POST(request: Request) {
     const discountPct = compareAtPrice ? Math.round(((compareAtPrice - body.price) / compareAtPrice) * 100) : 0;
     const slug = await buildUniqueSlug(body.name);
     const stock = Number(body.stock || 0);
-    const status = deriveProductStatus({
-      requestedStatus: body.status,
-      stock,
-      isActive: body.isActive ?? true,
-    });
-
     const product = await prisma.product.create({
       data: {
         vendorId: vendor.id,
@@ -119,10 +115,42 @@ export async function POST(request: Request) {
         images: body.images.filter(Boolean),
         isFestivalSale: Boolean(body.isFestivalSale),
         isYearRoundSale: Boolean(body.isYearRoundSale),
-        isActive: status === "ACTIVE",
-        status,
+        isActive: false,
+        status: "DRAFT",
       },
     });
+
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true, email: true },
+    });
+
+    if (admins.length) {
+      await prisma.notification.createMany({
+        data: admins.map((admin) => ({
+          userId: admin.id,
+          title: "Product awaiting approval",
+          message: `${vendor.shopName} submitted ${product.name} for review.`,
+          type: "PRODUCT",
+          link: "/admin#products",
+        })),
+      }).catch(() => undefined);
+    }
+
+    if (hasConfiguredMailTransport()) {
+      await sendMail({
+        to: admins.map((admin) => admin.email),
+        from: process.env.VENDOR_SUPPORT_EMAIL_FROM || "vendorSupport@fitbazar.com",
+        subject: `Product awaiting approval: ${product.name}`,
+        text: `${vendor.shopName} submitted ${product.name} for review.`,
+        html: renderVendorUpdateEmail(
+          "Admin",
+          "Product awaiting approval",
+          `${vendor.shopName} submitted ${product.name} for review.`,
+          buildAbsoluteAppUrl("/admin#products"),
+        ),
+      }).catch(() => undefined);
+    }
 
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {

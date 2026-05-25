@@ -54,7 +54,7 @@ Google Console configuration:
 
 - Authorized JavaScript origin for local: `http://localhost:3002`
 - Authorized redirect URI for local: `http://localhost:3002/api/auth/callback/google`
-- Authorized redirect URI for production: `https://your-domain.com/api/auth/callback/google`
+- Authorized redirect URI for production: `https://fit-bazar.com/api/auth/callback/google`
 
 Behavior:
 
@@ -67,7 +67,8 @@ Required Resend env vars for real email delivery:
 
 ```env
 RESEND_API_KEY=""
-EMAIL_FROM="noreply@fit-bazar.com"
+EMAIL_FROM="noreply@fitbazar.com"
+VENDOR_SUPPORT_EMAIL_FROM="vendorSupport@fitbazar.com"
 ```
 
 Behavior:

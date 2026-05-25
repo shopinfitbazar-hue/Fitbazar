@@ -311,6 +311,13 @@ model SiteSettings {
   supportEmail       String  @default("support@fitbazar.com")
   supportPhone       String  @default("+977 9800000000")
   supportHours       String?
+  heroEyebrow        String  @default("Nepal's premium fashion marketplace")
+  heroTitle          String  @default("Discover sharper style, faster shopping, and curated Nepal-first fashion.")
+  heroSubtitle       String  @default("Mobile-first discovery, partner-led fashion drops, and cleaner product storytelling built for modern shoppers.")
+  heroPrimaryLabel   String  @default("Shop New Arrivals")
+  heroPrimaryHref    String  @default("/products")
+  heroSecondaryLabel String  @default("Explore Collections")
+  heroSecondaryHref  String  @default("/discover")
 }
 
 model Notification {

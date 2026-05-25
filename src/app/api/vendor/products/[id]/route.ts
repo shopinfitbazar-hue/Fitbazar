@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { buildAbsoluteAppUrl } from "@/lib/app-url";
+import { renderVendorUpdateEmail } from "@/lib/email-templates";
+import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
-import { deriveProductStatus } from "@/lib/product-status";
 
 export const dynamic = "force-dynamic";
 
@@ -73,20 +75,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
         : undefined;
 
-    const current = await prisma.product.findFirst({
-      where: { id, vendorId: vendor.id },
-      select: { stock: true, status: true, isActive: true },
-    });
-
     const nextStock = body.stock !== undefined ? Number(body.stock) : undefined;
-    const status =
-      body.status !== undefined || body.isActive !== undefined || nextStock !== undefined
-        ? deriveProductStatus({
-            requestedStatus: body.status ?? current?.status,
-            stock: nextStock ?? current?.stock ?? 0,
-            isActive: body.isActive ?? current?.isActive,
-          })
-        : undefined;
 
     const product = await prisma.product.update({
       where: { id },
@@ -104,9 +93,42 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         ...(body.images !== undefined ? { images: body.images.filter(Boolean) } : {}),
         ...(body.isFestivalSale !== undefined ? { isFestivalSale: body.isFestivalSale } : {}),
         ...(body.isYearRoundSale !== undefined ? { isYearRoundSale: body.isYearRoundSale } : {}),
-        ...(status !== undefined ? { status, isActive: status === "ACTIVE" } : {}),
+        status: "DRAFT",
+        isActive: false,
       },
     });
+
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true, email: true },
+    });
+
+    if (admins.length) {
+      await prisma.notification.createMany({
+        data: admins.map((admin) => ({
+          userId: admin.id,
+          title: "Product update awaiting approval",
+          message: `${vendor.shopName} updated ${product.name}. Review it before it goes live.`,
+          type: "PRODUCT",
+          link: "/admin#products",
+        })),
+      }).catch(() => undefined);
+    }
+
+    if (hasConfiguredMailTransport()) {
+      await sendMail({
+        to: admins.map((admin) => admin.email),
+        from: process.env.VENDOR_SUPPORT_EMAIL_FROM || "vendorSupport@fitbazar.com",
+        subject: `Product update awaiting approval: ${product.name}`,
+        text: `${vendor.shopName} updated ${product.name}. Review it before it goes live.`,
+        html: renderVendorUpdateEmail(
+          "Admin",
+          "Product update awaiting approval",
+          `${vendor.shopName} updated ${product.name}. Review it before it goes live.`,
+          buildAbsoluteAppUrl("/admin#products"),
+        ),
+      }).catch(() => undefined);
+    }
 
     return NextResponse.json({ product });
   } catch (error) {

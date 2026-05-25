@@ -15,11 +15,25 @@ export async function GET() {
       where: {
         role: "CUSTOMER",
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        image: true,
+        emailVerified: true,
+        isBanned: true,
+        createdAt: true,
+        accounts: {
+          select: {
+            provider: true,
+          },
+        },
         _count: {
           select: {
             orders: true,
             wishlist: true,
+            supportTickets: true,
           },
         },
       },

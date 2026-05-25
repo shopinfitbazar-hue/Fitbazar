@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+const FESTIVAL_CONFIG_ID = "festival-config";
 
 export async function GET() {
   try {
     const festival = (await prisma.festivalConfig.findUnique({
-      where: { id: "festival-config" },
+      where: { id: FESTIVAL_CONFIG_ID },
     })) || (await prisma.festivalConfig.findFirst({
       where: { isActive: true },
     }));
@@ -27,13 +28,25 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
+    const endDate = body.endDate ? new Date(body.endDate) : null;
+
+    if (!body.name?.trim() || !body.nameNp?.trim() || !endDate || Number.isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: "Festival name, Nepali name, and valid end date are required." }, { status: 400 });
+    }
+
+    const data = {
+      name: body.name.trim(),
+      nameNp: body.nameNp.trim(),
+      endDate,
+      isActive: Boolean(body.isActive),
+    };
     
     const festival = await prisma.festivalConfig.upsert({
-      where: { id: "festival-config" },
-      update: body,
+      where: { id: FESTIVAL_CONFIG_ID },
+      update: data,
       create: {
-        id: "festival-config",
-        ...body,
+        id: FESTIVAL_CONFIG_ID,
+        ...data,
       },
     });
     

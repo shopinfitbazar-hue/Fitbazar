@@ -2,13 +2,18 @@ export function hasConfiguredGoogleOAuth(config: {
   clientId?: string;
   clientSecret?: string;
 }) {
+  const clientId = config.clientId?.trim();
+  const clientSecret = config.clientSecret?.trim();
+
   return (
-    !!config.clientId &&
-    !!config.clientSecret &&
-    !config.clientId.startsWith("your-") &&
-    !config.clientSecret.startsWith("your-") &&
-    config.clientId !== "placeholder" &&
-    config.clientSecret !== "placeholder"
+    !!clientId &&
+    !!clientSecret &&
+    !clientId.startsWith("your-") &&
+    !clientId.startsWith("your_") &&
+    !clientSecret.startsWith("your-") &&
+    !clientSecret.startsWith("your_") &&
+    clientId !== "placeholder" &&
+    clientSecret !== "placeholder"
   );
 }
 

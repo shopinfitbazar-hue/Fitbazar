@@ -106,11 +106,12 @@ export default function AccountSettingsPage() {
                 )}
               </div>
               <div className="mt-4">
-                <CloudinaryImageUploader
-                  buttonLabel={t("upload_profile_photo")}
-                  multiple={false}
-                  onUploaded={(urls) => setProfile((current) => ({ ...current, image: urls[0] || current.image }))}
-                />
+	                <CloudinaryImageUploader
+	                  buttonLabel={t("upload_profile_photo")}
+	                  multiple={false}
+	                  enableCamera
+	                  onUploaded={(urls) => setProfile((current) => ({ ...current, image: urls[0] || current.image }))}
+	                />
               </div>
             </div>
 
