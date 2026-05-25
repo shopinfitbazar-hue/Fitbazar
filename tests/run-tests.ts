@@ -19,6 +19,17 @@ function run(name: string, fn: () => void) {
   console.log(`PASS ${name}`);
 }
 
+function restoreEnv(previous: Record<string, string | undefined>) {
+  Object.entries(previous).forEach(([key, value]) => {
+    if (value === undefined) {
+      delete process.env[key];
+      return;
+    }
+
+    process.env[key] = value;
+  });
+}
+
 runCartStateTests(run);
 
 run("category aliases normalize to canonical values", () => {
@@ -98,37 +109,67 @@ run("google callback urls are derived from NEXTAUTH_URL safely", () => {
 run("absolute app urls fall back to Vercel envs safely", () => {
   const previous = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    SITE_URL: process.env.SITE_URL,
+    APP_URL: process.env.APP_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     VERCEL_URL: process.env.VERCEL_URL,
   };
 
   delete process.env.NEXTAUTH_URL;
+  delete process.env.NEXT_PUBLIC_SITE_URL;
+  delete process.env.SITE_URL;
+  delete process.env.APP_URL;
   delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
   process.env.VERCEL_URL = "fitbazar.vercel.app";
   assert.equal(buildAppUrl("/verify-email"), "https://fitbazar.vercel.app/verify-email");
 
-  Object.assign(process.env, previous);
+  restoreEnv(previous);
 });
 
-run("mail transport config rejects placeholders", () => {
+run("absolute app urls prefer canonical site url over local NextAuth in production", () => {
   const previous = {
-    SMTP_HOST: process.env.SMTP_HOST,
-    SMTP_USER: process.env.SMTP_USER,
-    SMTP_PASS: process.env.SMTP_PASS,
-    SMTP_FROM: process.env.SMTP_FROM,
+    NODE_ENV: process.env.NODE_ENV,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    SITE_URL: process.env.SITE_URL,
+    APP_URL: process.env.APP_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL: process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
+    NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
   };
 
-  process.env.SMTP_HOST = "smtp.gmail.com";
-  process.env.SMTP_USER = "your-email@gmail.com";
-  process.env.SMTP_PASS = "your-app-password";
-  process.env.SMTP_FROM = "noreply@example.com";
+  Object.assign(process.env, { NODE_ENV: "production" });
+  process.env.NEXTAUTH_URL = "http://localhost:3002";
+  process.env.NEXT_PUBLIC_SITE_URL = "https://fit-bazar.com";
+  delete process.env.SITE_URL;
+  delete process.env.APP_URL;
+  delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  delete process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL;
+  delete process.env.VERCEL_URL;
+  delete process.env.NEXT_PUBLIC_VERCEL_URL;
+
+  assert.equal(buildAppUrl("/reset-password"), "https://fit-bazar.com/reset-password");
+
+  restoreEnv(previous);
+});
+
+run("mail transport config rejects missing and placeholder Resend keys", () => {
+  const previous = {
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+  };
+
+  delete process.env.RESEND_API_KEY;
   assert.equal(hasConfiguredMailTransport(), false);
 
-  process.env.SMTP_USER = "ops@fitbazar.com";
-  process.env.SMTP_PASS = "real-secret";
+  process.env.RESEND_API_KEY = "your-resend-api-key";
+  assert.equal(hasConfiguredMailTransport(), false);
+
+  process.env.RESEND_API_KEY = "re_real_secret";
   assert.equal(hasConfiguredMailTransport(), true);
 
-  Object.assign(process.env, previous);
+  restoreEnv(previous);
 });
 
 run("safe image urls reject local machine hosts and malformed values", () => {

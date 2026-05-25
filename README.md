@@ -34,11 +34,12 @@ npm run build
 ### Required NextAuth env
 
 ```env
+NEXT_PUBLIC_SITE_URL="http://localhost:3002"
 NEXTAUTH_URL="http://localhost:3002"
 NEXTAUTH_SECRET="replace-with-a-long-random-secret"
 ```
 
-`NEXTAUTH_URL` must match the exact dev or production host you are actually using.
+`NEXT_PUBLIC_SITE_URL` and `NEXTAUTH_URL` must match the exact dev or production host you are actually using. In production, set both to `https://fit-bazar.com` so email buttons point to the live site instead of localhost.
 
 ### Google Sign-In
 
@@ -62,23 +63,20 @@ Behavior:
 
 ### Forgot Password / Verification Email
 
-Required SMTP env vars for real email delivery:
+Required Resend env vars for real email delivery:
 
 ```env
-SMTP_HOST=""
-SMTP_PORT="587"
-SMTP_USER=""
-SMTP_PASS=""
-SMTP_FROM="noreply@fitbazar.com.np"
+RESEND_API_KEY=""
+EMAIL_FROM="noreply@fit-bazar.com"
 ```
 
 Behavior:
 
-- `/forgot-password` sends a real reset email when SMTP is configured.
+- `/forgot-password` sends a real reset email when Resend is configured.
 - `/reset-password` consumes the secure reset token and lets the user set a new password.
 - `/verify-email` consumes signup/vendor verification tokens.
-- In development only, if SMTP is not configured, the forgot-password API returns a manual reset link for testing.
-- In production, SMTP must be configured for real reset-email delivery.
+- In development only, if Resend is not configured, the forgot-password API returns a manual reset link for testing.
+- In production, Resend must be configured for real reset-email delivery.
 
 ## Prisma / Database
 
@@ -109,7 +107,7 @@ Build note:
 
 - Run the app on the same host/port configured in `NEXTAUTH_URL`.
 - Configure Google OAuth before enabling Google Sign-In publicly.
-- Configure SMTP before relying on real password reset and verification emails in production.
+- Configure Resend before relying on real password reset and verification emails in production.
 - Configure payment gateway credentials before enabling live online payments.
 
 ## Payments Setup
