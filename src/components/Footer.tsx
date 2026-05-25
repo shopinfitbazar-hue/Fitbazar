@@ -51,14 +51,14 @@ export default function Footer() {
             <Link href="/" className="text-[24px] font-bold tracking-tight text-white">
               fit<span className="text-fb-pink">bazar</span>
             </Link>
-            <p className="mt-4 max-w-[260px] text-[14px] text-[#94969F]">
+            <p className="mt-4 max-w-[260px] text-[14px] text-[#D7D9E0]">
               {t("footer_brand_blurb")}
             </p>
             <div className="mt-5 flex items-center gap-3">
               {[Instagram, Facebook, Music2].map((Icon, index) => (
                 <span
                   key={index}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white opacity-75"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white"
                   aria-hidden="true"
                 >
                   <Icon className="h-4 w-4 text-white" />
@@ -72,7 +72,7 @@ export default function Footer() {
               <h4 className="text-[13px] font-semibold tracking-[1px] text-white">{t(group.title)}</h4>
               <div className="mt-4 space-y-3">
                 {group.links.map((link) => (
-                  <Link key={link.label} href={link.href} className="block text-[13px] text-[#94969F]">
+                  <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
                     {t(link.label)}
                   </Link>
                 ))}
@@ -86,7 +86,7 @@ export default function Footer() {
             <Link href="/" className="text-[24px] font-bold tracking-tight text-white">
               fit<span className="text-fb-pink">bazar</span>
             </Link>
-            <p className="mt-3 text-[14px] text-[#94969F]">{t("footer_brand_short")}</p>
+            <p className="mt-3 text-[14px] text-[#D7D9E0]">{t("footer_brand_short")}</p>
           </div>
           {groups.map((group, index) => {
             const open = openIndex === index;
@@ -103,7 +103,7 @@ export default function Footer() {
                 {open && (
                   <div className="mt-3 space-y-3">
                     {group.links.map((link) => (
-                      <Link key={link.label} href={link.href} className="block text-[13px] text-[#94969F]">
+                      <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
                         {t(link.label)}
                       </Link>
                     ))}
@@ -114,7 +114,7 @@ export default function Footer() {
           })}
         </div>
 
-        <div className="mt-8 border-t border-white/10 pt-4 text-[13px] text-[#94969F]">
+        <div className="mt-8 border-t border-white/10 pt-4 text-[13px] text-[#D7D9E0]">
           © 2026 Fit Bazar. {t("made_with_love")}
         </div>
       </div>

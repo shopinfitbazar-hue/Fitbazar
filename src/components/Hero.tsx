@@ -91,7 +91,7 @@ export default function Hero() {
                         </div>
                         <div>
                             <p className="font-heading font-bold text-charcoal dark:text-offwhite text-lg">Himalayan Loom</p>
-                            <p className="text-xs font-semibold text-gray-500 uppercase">Vendor in Thamel</p>
+                            <p className="text-xs font-semibold uppercase text-text-muted">Vendor in Thamel</p>
                         </div>
                     </div>
                 </div>
