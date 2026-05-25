@@ -26,6 +26,26 @@ async function getHomepageFestivalConfig() {
   );
 }
 
+async function getHomepageSiteSettings() {
+  try {
+    return await prisma.siteSettings.findUnique({
+      where: { id: SITE_SETTINGS_ID },
+      select: {
+        heroEyebrow: true,
+        heroTitle: true,
+        heroSubtitle: true,
+        heroPrimaryLabel: true,
+        heroPrimaryHref: true,
+        heroSecondaryLabel: true,
+        heroSecondaryHref: true,
+      },
+    });
+  } catch (error) {
+    console.error("[home] Site settings unavailable; using defaults.", error);
+    return null;
+  }
+}
+
 export default async function HomePage() {
   const [banners, categories, mostPopular, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
     prisma.banner.findMany({
@@ -77,7 +97,7 @@ export default async function HomePage() {
       take: 8,
     }),
     getHomepageFestivalConfig(),
-    (await prisma.siteSettings.findUnique({ where: { id: SITE_SETTINGS_ID } })) || (await prisma.siteSettings.findFirst()),
+    getHomepageSiteSettings(),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,

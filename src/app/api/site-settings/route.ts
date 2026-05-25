@@ -10,7 +10,28 @@ export async function GET() {
   try {
     const settings = (await prisma.siteSettings.findUnique({
       where: { id: SITE_SETTINGS_ID },
-    })) || (await prisma.siteSettings.findFirst());
+      select: {
+        announcementBar: true,
+        announcementActive: true,
+        commissionPct: true,
+        minFreeDelivery: true,
+        whatsappNumber: true,
+        supportEmail: true,
+        supportPhone: true,
+        supportHours: true,
+      },
+    })) || (await prisma.siteSettings.findFirst({
+      select: {
+        announcementBar: true,
+        announcementActive: true,
+        commissionPct: true,
+        minFreeDelivery: true,
+        whatsappNumber: true,
+        supportEmail: true,
+        supportPhone: true,
+        supportHours: true,
+      },
+    }));
     
     if (!settings) {
       return NextResponse.json(defaultSiteSettings);
