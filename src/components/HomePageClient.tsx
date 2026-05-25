@@ -125,18 +125,18 @@ export default function HomePageClient({
                 className="object-cover"
               />
             ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,18,15,0.97)_0%,rgba(24,18,15,0.84)_44%,rgba(24,18,15,0.48)_100%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(24,18,15,0.22)_0%,rgba(24,18,15,0.68)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_28%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,24,20,0.72)_0%,rgba(34,24,20,0.42)_36%,rgba(34,24,20,0.08)_72%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent_0%,rgba(34,24,20,0.34)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_30%)]" />
           </div>
 
           <div className="relative z-[1] max-w-[36rem]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-black/35 px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
               <Sparkles className="h-3.5 w-3.5 text-white" />
               Nepal&apos;s premium fashion marketplace
             </div>
-            <h1 className="mt-5 text-white drop-shadow-[0_3px_18px_rgba(0,0,0,0.5)]">Discover sharper style, faster shopping, and curated Nepal-first fashion.</h1>
-            <p className="mt-4 max-w-[30rem] text-[1rem] font-medium text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+            <h1 className="mt-5 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)]">Discover sharper style, faster shopping, and curated Nepal-first fashion.</h1>
+            <p className="mt-4 max-w-[30rem] text-[1rem] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
               Mobile-first discovery, partner-led fashion drops, and cleaner product storytelling built for modern shoppers.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -156,9 +156,9 @@ export default function HomePageClient({
                 { label: "Premium partner stores", value: "40+" },
                 { label: "Fashion picks refreshed", value: "Daily" },
               ].map((item) => (
-                <div key={item.label} className="rounded-[24px] border border-white/28 bg-black/30 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.18)] backdrop-blur-md">
+                <div key={item.label} className="rounded-[24px] border border-white/50 bg-white/18 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)] backdrop-blur-md">
                   <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-white">{item.value}</p>
-                  <p className="mt-1 text-sm font-medium text-white">{item.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.65)]">{item.label}</p>
                 </div>
               ))}
             </div>
