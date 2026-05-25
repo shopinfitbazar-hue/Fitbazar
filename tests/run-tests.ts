@@ -83,10 +83,14 @@ run("pincode validation resolves Nepal delivery messaging", () => {
   assert.match(delivery.message, /Kathmandu/);
 });
 
-run("unknown pincodes no longer collapse into Kathmandu by default", () => {
+run("non-Kathmandu pincodes are recognized but not serviceable yet", () => {
   const resolved = resolvePincode("44900");
   assert.equal(resolved?.district, "Other Nepal");
   assert.equal(resolved?.zone, "Other Nepal");
+  assert.equal(resolved?.serviceable, false);
+  const delivery = getDeliveryMessage("44700");
+  assert.equal(delivery.ok, false);
+  assert.match(delivery.message, /Kathmandu only/);
 });
 
 run("google oauth config detection rejects placeholders", () => {

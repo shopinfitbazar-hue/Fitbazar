@@ -13,8 +13,9 @@ test("delivery messaging resolves known districts", () => {
   assert.match(result.message, /Kathmandu/);
 });
 
-test("unknown pincodes fall back to Other Nepal instead of Kathmandu", () => {
+test("non-Kathmandu pincodes are not serviceable yet", () => {
   const result = resolvePincode("44900");
   assert.equal(result?.district, "Other Nepal");
   assert.equal(result?.zone, "Other Nepal");
+  assert.equal(result?.serviceable, false);
 });

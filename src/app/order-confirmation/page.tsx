@@ -22,6 +22,7 @@ type CustomerOrder = {
     line1?: string;
     zone?: string;
     district?: string;
+    pincode?: string;
     phone?: string;
     name?: string;
   };
@@ -91,6 +92,7 @@ function OrderConfirmationContent() {
     order?.deliveryAddress?.line1,
     order?.deliveryAddress?.district,
     order?.deliveryAddress?.zone,
+    order?.deliveryAddress?.pincode,
   ]
     .filter(Boolean)
     .join(", ");

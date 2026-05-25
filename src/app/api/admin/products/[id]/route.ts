@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
 import { deriveProductStatus } from "@/lib/product-status";
+import { removeOrDiscontinueProduct } from "@/lib/product-deletion";
 
 export const dynamic = "force-dynamic";
 
@@ -168,8 +169,13 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     }
 
     const { id } = await params;
-    await prisma.product.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+    const result = await removeOrDiscontinueProduct(id);
+
+    if (!result) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("Error deleting admin product:", error);
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });

@@ -394,6 +394,22 @@ export default function AdminDashboard() {
     });
   };
 
+  const deleteProduct = async (id: string) => {
+    if (!window.confirm(t("discontinue_product_confirm"))) return;
+
+    const response = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+    const result = (await response.json().catch(() => ({}))) as { error?: string; deleted?: boolean; discontinued?: boolean };
+
+    if (!response.ok) {
+      setMessage(result.error || t("failed_to_delete_product"));
+      return;
+    }
+
+    setMessage(result.deleted ? t("product_deleted") : t("product_discontinued"));
+    if (productDraft.id === id) resetProductDraft();
+    await loadAdmin();
+  };
+
   const updateCustomer = async (id: string, isBanned: boolean) => {
     await fetch(`/api/admin/customers/${id}`, {
       method: "PATCH",
@@ -860,6 +876,9 @@ export default function AdminDashboard() {
                           className="text-fb-pink"
                         >
                           {product.status === "ACTIVE" ? t("hide") : t("show")}
+                        </button>
+                        <button type="button" onClick={() => deleteProduct(product.id)} className="text-fb-pink">
+                          {t("delete")}
                         </button>
                       </td>
                     </tr>

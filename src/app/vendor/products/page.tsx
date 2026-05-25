@@ -78,6 +78,7 @@ export default function VendorProductsPage() {
   const [form, setForm] = useState<VendorProductForm>(createEmptyForm());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [vendorMeta, setVendorMeta] = useState<VendorProductsResponse["vendor"] | null>(null);
   const imageList = form.images.split(",").map((item) => item.trim()).filter(Boolean);
 
@@ -146,6 +147,7 @@ export default function VendorProductsPage() {
 
       if (response.ok) {
         resetForm();
+        setMessage(t("product_saved_approval"));
         await loadProducts();
       } else {
         const data = await response.json();
@@ -157,10 +159,16 @@ export default function VendorProductsPage() {
   };
 
   const removeProduct = async (id: string) => {
+    if (!window.confirm(t("discontinue_product_confirm"))) return;
     const response = await fetch(`/api/vendor/products/${id}`, { method: "DELETE" });
+    const data = (await response.json().catch(() => ({}))) as { error?: string; deleted?: boolean; discontinued?: boolean };
     if (response.ok) {
+      setMessage(data.deleted ? t("product_deleted") : t("product_discontinued"));
+      setError("");
       await loadProducts();
       if (form.id === id) resetForm();
+    } else {
+      setError(data.error || t("failed_to_delete_product"));
     }
   };
 
@@ -185,6 +193,7 @@ export default function VendorProductsPage() {
               </div>
             </div>
             {error ? <p className="mt-3 text-[12px] text-fb-pink">{error}</p> : null}
+            {message ? <p className="mt-3 text-[12px] text-success">{message}</p> : null}
           </div>
 
           <div className="mt-4 overflow-hidden rounded-[8px] bg-card">

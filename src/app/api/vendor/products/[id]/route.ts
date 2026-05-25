@@ -3,6 +3,7 @@ import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { renderVendorUpdateEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
+import { removeOrDiscontinueProduct } from "@/lib/product-deletion";
 import { requireVendorSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
 
@@ -156,8 +157,13 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    await prisma.product.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+    const result = await removeOrDiscontinueProduct(id);
+
+    if (!result) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("Error deleting vendor product:", error);
     return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });

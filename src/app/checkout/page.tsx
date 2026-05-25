@@ -13,8 +13,9 @@ import { formatPriceNpr } from "@/lib/catalog";
 import { useToast } from "@/lib/ToastContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import type { SupportedPaymentMethod } from "@/lib/payment-types";
+import { getDeliveryMessage } from "@/lib/pincode";
 
-const zones = ["Kathmandu", "Lalitpur", "Bhaktapur", "Other Nepal"];
+const zones = ["Kathmandu"];
 
 function CheckoutPageInner() {
   const router = useRouter();
@@ -28,7 +29,8 @@ function CheckoutPageInner() {
     phone: "",
     email: "",
     zone: "Kathmandu",
-    district: "",
+    district: "Kathmandu",
+    pincode: "",
     address: "",
     landmark: "",
   });
@@ -167,8 +169,14 @@ function CheckoutPageInner() {
       return;
     }
 
-    if (!formData.name || !formData.phone || !formData.address || !formData.zone || !formData.district) {
+    if (!formData.name || !formData.phone || !formData.address || !formData.zone || !formData.district || !formData.pincode) {
       addToast(t("complete_delivery_details"), "error");
+      return;
+    }
+
+    const deliveryCheck = getDeliveryMessage(formData.pincode);
+    if (!deliveryCheck.ok || formData.zone !== "Kathmandu" || formData.district.trim().toLowerCase() !== "kathmandu") {
+      addToast(t("kathmandu_delivery_only"), "error");
       return;
     }
 
@@ -199,6 +207,7 @@ function CheckoutPageInner() {
             line1: `${formData.address}${formData.landmark ? `, ${formData.landmark}` : ""}`,
             zone: formData.zone,
             district: formData.district,
+            pincode: formData.pincode,
           },
           paymentMethod: selectedPayment,
           deliveryMethod: selectedDelivery,
@@ -355,6 +364,21 @@ function CheckoutPageInner() {
                   <div>
                     <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("district")}</label>
                     <input type="text" name="district" value={formData.district} onChange={handleInputChange} required placeholder={t("district_example")} />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("delivery_pincode")}</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      name="pincode"
+                      value={formData.pincode}
+                      onChange={handleInputChange}
+                      required
+                      maxLength={5}
+                      placeholder="44600"
+                    />
+                    <p className="mt-2 text-[12px] text-text-muted">{t("kathmandu_delivery_only")}</p>
                   </div>
 
                   <div className="md:col-span-2">

@@ -17,6 +17,7 @@ type VendorOrder = {
     line1?: string;
     zone?: string;
     district?: string;
+    pincode?: string;
   };
   customer: {
     name: string | null;
@@ -171,7 +172,7 @@ export default function VendorOrdersPage() {
                         <h4 className="mb-3 font-semibold text-text-primary">{t("customer_information")}</h4>
                         <p className="text-sm text-text-secondary"><span className="text-text-muted">{t("name")}:</span> {order.customer.name || t("customer")}</p>
                         <p className="text-sm text-text-secondary"><span className="text-text-muted">{t("phone_number")}:</span> {order.customer.phone || t("not_available")}</p>
-                        <p className="text-sm text-text-secondary"><span className="text-text-muted">{t("address")}:</span> {[order.deliveryAddress?.line1, order.deliveryAddress?.district, order.deliveryAddress?.zone].filter(Boolean).join(", ")}</p>
+                        <p className="text-sm text-text-secondary"><span className="text-text-muted">{t("address")}:</span> {[order.deliveryAddress?.line1, order.deliveryAddress?.district, order.deliveryAddress?.zone, order.deliveryAddress?.pincode].filter(Boolean).join(", ")}</p>
                       </div>
 
                       <div>

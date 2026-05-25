@@ -8,6 +8,7 @@ import { ProductStatus } from "@prisma/client";
 import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { renderOrderPlacedEmail, renderVendorOrderEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
+import { resolvePincode } from "@/lib/pincode";
 
 export type CheckoutItemInput = {
   productId: string;
@@ -22,6 +23,7 @@ export type CheckoutAddressInput = {
   line1: string;
   zone: string;
   district: string;
+  pincode: string;
   email?: string;
 };
 
@@ -113,8 +115,13 @@ export async function prepareCheckoutContext(customerId: string, payload: Checko
     throw buildCheckoutError("MISSING_ITEMS", "Your cart is empty.");
   }
 
-  if (!payload.address?.name || !payload.address?.phone || !payload.address?.line1 || !payload.address?.zone || !payload.address?.district) {
+  if (!payload.address?.name || !payload.address?.phone || !payload.address?.line1 || !payload.address?.zone || !payload.address?.district || !payload.address?.pincode) {
     throw buildCheckoutError("MISSING_ADDRESS", "Delivery address is incomplete.");
+  }
+
+  const resolvedPincode = resolvePincode(payload.address.pincode);
+  if (!resolvedPincode?.serviceable || payload.address.zone !== "Kathmandu" || payload.address.district.trim().toLowerCase() !== "kathmandu") {
+    throw buildCheckoutError("UNSERVICEABLE_PINCODE", "Fit Bazar is accepting delivery orders inside Kathmandu only right now.");
   }
 
   if (!isSupportedPaymentMethod(payload.paymentMethod)) {
@@ -445,6 +452,7 @@ export function mapCheckoutErrorToResponse(error: unknown) {
     case "MISSING_ADDRESS":
     case "INVALID_PAYMENT_METHOD":
     case "INVALID_DELIVERY_METHOD":
+    case "UNSERVICEABLE_PINCODE":
     case "PRODUCT_NOT_FOUND":
     case "INVALID_QUANTITY":
     case "INSUFFICIENT_STOCK":
