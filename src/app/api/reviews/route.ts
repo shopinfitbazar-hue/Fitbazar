@@ -3,8 +3,43 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 
+const MAX_COMMENT_LENGTH = 1200;
+
+function normalizeRating(value: unknown) {
+  const rating = Number(value);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return null;
+  }
+  return Math.round(rating);
+}
+
+function normalizeComment(value: unknown) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, MAX_COMMENT_LENGTH);
+}
+
+async function hasDeliveredProductOrder(userId: string, productId: string) {
+  const order = await prisma.order.findFirst({
+    where: {
+      customerId: userId,
+      status: "DELIVERED",
+      items: {
+        some: {
+          productId,
+        },
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return Boolean(order);
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get("productId");
     const slug = searchParams.get("slug");
@@ -27,23 +62,54 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    const reviews = await prisma.review.findMany({
-      where: { productId: resolvedProductId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+    const [reviews, aggregate, existingReview, hasDeliveredOrder] = await Promise.all([
+      prisma.review.findMany({
+        where: { productId: resolvedProductId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+      prisma.review.aggregate({
+        where: { productId: resolvedProductId },
+        _avg: { rating: true },
+        _count: { _all: true },
+      }),
+      session?.user?.id
+        ? prisma.review.findFirst({
+            where: {
+              productId: resolvedProductId,
+              userId: session.user.id,
+            },
+            select: {
+              id: true,
+              rating: true,
+              comment: true,
+              images: true,
+            },
+          })
+        : Promise.resolve(null),
+      session?.user?.id ? hasDeliveredProductOrder(session.user.id, resolvedProductId) : Promise.resolve(false),
+    ]);
+
+    return NextResponse.json({
+      reviews,
+      existingReview,
+      canReview: Boolean(session?.user?.id && (hasDeliveredOrder || existingReview)),
+      hasDeliveredOrder,
+      summary: {
+        averageRating: aggregate._avg.rating ? Number(aggregate._avg.rating.toFixed(1)) : 0,
+        reviewCount: aggregate._count._all,
       },
     });
-
-    return NextResponse.json({ reviews });
   } catch (error) {
     console.error("Error fetching reviews:", error);
     return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
@@ -59,12 +125,29 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { productId, rating, comment, images } = body;
+    const normalizedRating = normalizeRating(rating);
 
-    if (!productId || !rating) {
+    if (typeof productId !== "string" || !productId.trim() || !normalizedRating) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Product and a rating from 1 to 5 are required." },
         { status: 400 }
       );
+    }
+
+    const [product, eligibleOrder] = await Promise.all([
+      prisma.product.findUnique({
+        where: { id: productId },
+        select: { id: true },
+      }),
+      hasDeliveredProductOrder(session.user.id, productId),
+    ]);
+
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (!eligibleOrder) {
+      return NextResponse.json({ error: "Only customers with delivered orders can review this product." }, { status: 403 });
     }
 
     const existingReview = await prisma.review.findFirst({
@@ -85,8 +168,8 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.user.id,
         productId,
-        rating,
-        comment: comment || "",
+        rating: normalizedRating,
+        comment: normalizeComment(comment),
         images: Array.isArray(images) ? images : [],
       },
       include: {
@@ -119,12 +202,17 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const { reviewId, rating, comment, images } = body;
+    const normalizedRating = rating === undefined ? undefined : normalizeRating(rating);
 
-    if (!reviewId) {
+    if (typeof reviewId !== "string" || !reviewId.trim()) {
       return NextResponse.json(
         { error: "Review ID required" },
         { status: 400 }
       );
+    }
+
+    if (rating !== undefined && !normalizedRating) {
+      return NextResponse.json({ error: "Rating must be between 1 and 5." }, { status: 400 });
     }
 
     const existingReview = await prisma.review.findFirst({
@@ -141,9 +229,18 @@ export async function PUT(request: NextRequest) {
     const review = await prisma.review.update({
       where: { id: reviewId },
       data: {
-        rating,
-        comment: comment ?? existingReview.comment,
+        rating: normalizedRating ?? existingReview.rating,
+        comment: comment === undefined ? existingReview.comment : normalizeComment(comment),
         images: Array.isArray(images) ? images : existingReview.images,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
       },
     });
 

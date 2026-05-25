@@ -23,6 +23,8 @@ export async function GET() {
           include: {
             product: {
               select: {
+                id: true,
+                slug: true,
                 name: true,
                 images: true,
               },

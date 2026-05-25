@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import BottomNav from "@/components/BottomNav";
 import BackToTop from "@/components/BackToTop";
 import type { Language } from "@/lib/translations";
 import { buildMetadata } from "@/config/site";
@@ -43,7 +42,6 @@ export default function RootLayout({
       <body className={`${fitBazarSans.variable} bg-page font-sans text-text-primary antialiased`}>
         <Providers initialLang={initialLang}>
           {children}
-          <BottomNav />
           <BackToTop />
         </Providers>
       </body>

@@ -350,28 +350,38 @@ export default function Header() {
         </div>
 
         <div className="lg:hidden">
-          <div className="container flex h-[52px] items-center justify-between">
-            <Link href="/" className="shrink-0 py-2">
-              <div className="text-[22px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
-              <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
+          <div className="container flex h-[58px] items-center gap-2">
+            <Link href="/" className="shrink-0 py-2" aria-label="Fit Bazzar home">
+              <div className="text-[20px] font-bold leading-none tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
             </Link>
-            <button type="button" onClick={() => setMobileOpen(true)} aria-label="Open menu">
-              <Menu className="h-6 w-6 text-text-primary" />
-            </button>
-          </div>
-          <div className="container pb-2">
             <form
               onSubmit={submitSearch}
-              className="flex h-11 items-center gap-2 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-4"
+              className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3"
             >
-              <Search className="h-4 w-4 text-text-muted" />
+              <Search className="h-4 w-4 shrink-0 text-text-muted" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder={t("search")}
-                className="border-none bg-transparent px-0 py-0 shadow-none focus:border-none"
+                placeholder={t("search_label")}
+                className="min-w-0 border-none bg-transparent px-0 py-0 text-[13px] shadow-none focus:border-none"
               />
             </form>
+            <Link href="/cart" className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={t("bag")}>
+              <ShoppingBag className="h-5 w-5 text-text-primary" />
+              {bagCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-fb-pink px-1 text-[9px] font-semibold text-white">
+                  {bagCount}
+                </span>
+              ) : null}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5 text-text-primary" />
+            </button>
           </div>
         </div>
       </header>

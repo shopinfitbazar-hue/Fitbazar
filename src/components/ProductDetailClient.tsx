@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ChevronDown, Minus, Plus, Star } from "lucide-react";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import ImageGallery from "@/components/ImageGallery";
@@ -12,6 +13,25 @@ import { useToast } from "@/lib/ToastContext";
 import { getDeliveryMessage } from "@/lib/pincode";
 import { useLanguage } from "@/lib/LanguageContext";
 import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
+
+type ProductReview = {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    name?: string | null;
+    image?: string | null;
+  };
+};
+
+type ExistingReview = {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  images?: string[];
+};
 
 interface ProductDetailClientProps {
   product: {
@@ -34,17 +54,7 @@ interface ProductDetailClientProps {
       logo?: string | null;
       category?: string | null;
     };
-    reviews: Array<{
-      id: string;
-      rating: number;
-      comment?: string | null;
-      createdAt: string;
-      user: {
-        id: string;
-        name?: string | null;
-        image?: string | null;
-      };
-    }>;
+    reviews: ProductReview[];
   };
   similarProducts: ProductCardProps[];
   alsoBoughtProducts: ProductCardProps[];
@@ -57,6 +67,7 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const router = useRouter();
   const { t } = useLanguage();
+  const { status: authStatus } = useSession();
   const { addItem } = useCart();
   const { addToast } = useToast();
   const safeImages = useMemo(
@@ -73,6 +84,15 @@ export default function ProductDetailClient({
   const [added, setAdded] = useState(false);
   const [pincode, setPincode] = useState("");
   const [deliveryMessage, setDeliveryMessage] = useState(t("enter_pincode_hint"));
+  const [reviews, setReviews] = useState<ProductReview[]>(product.reviews);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [hasDeliveredOrder, setHasDeliveredOrder] = useState(false);
+  const [existingReview, setExistingReview] = useState<ExistingReview | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
 
   useEffect(() => {
     if (!pincode) {
@@ -88,16 +108,54 @@ export default function ProductDetailClient({
     setDeliveryMessage(result.message);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadReviews() {
+      setReviewsLoading(true);
+      try {
+        const response = await fetch(`/api/reviews?productId=${encodeURIComponent(product.id)}`, { cache: "no-store" });
+        const data = await response.json();
+        if (!active) return;
+
+        if (response.ok) {
+          setReviews(data.reviews || []);
+          setCanReview(Boolean(data.canReview));
+          setHasDeliveredOrder(Boolean(data.hasDeliveredOrder));
+          setExistingReview(data.existingReview || null);
+          if (data.existingReview) {
+            setReviewRating(data.existingReview.rating || 5);
+            setReviewComment(data.existingReview.comment || "");
+          } else {
+            setReviewRating(5);
+            setReviewComment("");
+          }
+        }
+      } catch {
+        if (active) {
+          setReviews(product.reviews);
+        }
+      } finally {
+        if (active) setReviewsLoading(false);
+      }
+    }
+
+    void loadReviews();
+    return () => {
+      active = false;
+    };
+  }, [authStatus, product.id, product.reviews]);
+
   const ratingData = useMemo(() => {
-    if (!product.reviews.length) {
+    if (!reviews.length) {
       return { average: 4.7, count: 0 };
     }
 
     const average =
-      product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length;
+      reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
 
-    return { average: Number(average.toFixed(1)), count: product.reviews.length };
-  }, [product.reviews]);
+    return { average: Number(average.toFixed(1)), count: reviews.length };
+  }, [reviews]);
 
   const requireSize = product.sizes.length > 0;
 
@@ -137,6 +195,72 @@ export default function ProductDetailClient({
     setDeliveryMessage(result.message);
     if (result.ok) {
       window.localStorage.setItem("fitbazar_pincode", pincode.trim());
+    }
+  };
+
+  const handleReviewSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setReviewMessage("");
+
+    if (authStatus !== "authenticated") {
+      router.push(`/login?callbackUrl=${encodeURIComponent(`${window.location.pathname}${window.location.hash}`)}`);
+      return;
+    }
+
+    if (!canReview && !existingReview) {
+      setReviewMessage(t("review_after_delivery"));
+      return;
+    }
+
+    setReviewSaving(true);
+    try {
+      const response = await fetch("/api/reviews", {
+        method: existingReview ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          existingReview
+            ? {
+                reviewId: existingReview.id,
+                rating: reviewRating,
+                comment: reviewComment,
+              }
+            : {
+                productId: product.id,
+                rating: reviewRating,
+                comment: reviewComment,
+              },
+        ),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = data.error || t("failed_to_submit_review");
+        setReviewMessage(message);
+        addToast(message, "error");
+        return;
+      }
+
+      const savedReview = data.review as ProductReview;
+      setReviews((current) => {
+        const withoutSaved = current.filter((review) => review.id !== savedReview.id);
+        return [savedReview, ...withoutSaved];
+      });
+      setExistingReview({
+        id: savedReview.id,
+        rating: savedReview.rating,
+        comment: savedReview.comment,
+      });
+      setCanReview(true);
+      setHasDeliveredOrder(true);
+      setReviewMessage(t("product_review_saved"));
+      addToast(t("product_review_saved"), "success");
+    } catch {
+      setReviewMessage(t("failed_to_submit_review"));
+      addToast(t("failed_to_submit_review"), "error");
+    } finally {
+      setReviewSaving(false);
     }
   };
 
@@ -302,33 +426,101 @@ export default function ProductDetailClient({
         </section>
       </div>
 
-      <section className="section mt-4 rounded-[8px]">
-        <div className="mb-4 px-4 md:px-6">
-          <h2>{t("ratings_reviews_title")}</h2>
-        </div>
-        <div className="space-y-3 px-4 md:px-6">
-          {product.reviews.length ? (
-            product.reviews.map((review) => (
-              <div key={review.id} className="rounded-[8px] border border-border-light p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[14px] font-semibold text-text-primary">{review.user.name || t("fitbazar_shopper")}</div>
-                    <div className="text-[12px] text-text-muted">{new Date(review.createdAt).toLocaleDateString("en-NP")}</div>
-                  </div>
-                  <div className="flex items-center gap-1 text-[13px] text-text-secondary">
-                    <Star className="h-4 w-4 fill-[#FFC94A] text-[#FFC94A]" />
-                    <span>{review.rating}</span>
-                  </div>
-                </div>
-                <p className="mt-3 text-[14px] text-text-secondary">{review.comment || t("loved_quality_finish")}</p>
+      <section id="reviews" className="section mt-4 scroll-mt-24 rounded-[8px]">
+        <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+          <div className="space-y-4">
+            <div className="rounded-[8px] bg-card p-5 shadow-[var(--shadow-sm)]">
+              <h2>{t("ratings_reviews_title")}</h2>
+              <div className="mt-4 flex items-end gap-2">
+                <span className="text-[42px] font-bold leading-none text-text-primary">{ratingData.count ? ratingData.average : "0.0"}</span>
+                <span className="pb-1 text-[14px] font-semibold text-text-muted">/ 5</span>
               </div>
-            ))
-          ) : (
-            <div className="rounded-[8px] border border-border-light p-6 text-center">
-              <h3>{t("no_reviews_yet")}</h3>
-              <p className="mt-2 text-[14px] text-text-muted">{t("first_review_hint")}</p>
+              <p className="mt-2 text-[14px] text-text-muted">
+                {ratingData.count
+                  ? t("product_rating_summary", { count: ratingData.count, rating: ratingData.average })
+                  : t("first_review_hint")}
+              </p>
             </div>
-          )}
+
+            <div className="rounded-[8px] border border-border-light bg-card p-5 shadow-[var(--shadow-sm)]">
+              <h3 className="text-[16px] font-semibold text-text-primary">
+                {existingReview ? t("update_your_review") : t("write_a_review")}
+              </h3>
+              {authStatus === "loading" || reviewsLoading ? (
+                <p className="mt-3 text-[14px] text-text-muted">{t("loading_reviews")}</p>
+              ) : authStatus !== "authenticated" ? (
+                <div className="mt-4">
+                  <p className="text-[14px] text-text-secondary">{t("login_to_review")}</p>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(`${window.location.pathname}#reviews`)}`)}
+                    className="btn-primary mt-4 inline-flex"
+                  >
+                    {t("login")}
+                  </button>
+                </div>
+              ) : canReview || existingReview ? (
+                <form onSubmit={handleReviewSubmit} className="mt-4 space-y-4">
+                  <div>
+                    <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-text-muted">{t("your_rating")}</div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setReviewRating(value)}
+                          className="rounded-full p-1 text-[#FFC94A]"
+                          aria-label={t("rate_product_stars", { count: value })}
+                        >
+                          <Star className={`h-7 w-7 ${value <= reviewRating ? "fill-[#FFC94A]" : "fill-transparent"}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(event) => setReviewComment(event.target.value)}
+                    rows={4}
+                    maxLength={1200}
+                    placeholder={t("review_placeholder")}
+                  />
+                  {reviewMessage ? <p className="text-[13px] text-text-secondary">{reviewMessage}</p> : null}
+                  <button type="submit" disabled={reviewSaving} className="btn-primary w-full disabled:opacity-60">
+                    {reviewSaving ? t("saving") : existingReview ? t("update_review") : t("submit_review")}
+                  </button>
+                </form>
+              ) : (
+                <p className="mt-3 text-[14px] text-text-secondary">
+                  {hasDeliveredOrder ? t("review_after_delivery") : t("review_delivered_orders_only")}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {reviews.length ? (
+              reviews.map((review) => (
+                <div key={review.id} className="rounded-[8px] border border-border-light bg-card p-4 shadow-[var(--shadow-sm)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[14px] font-semibold text-text-primary">{review.user.name || t("fitbazar_shopper")}</div>
+                      <div className="text-[12px] text-text-muted">{new Date(review.createdAt).toLocaleDateString("en-NP")}</div>
+                    </div>
+                    <div className="flex items-center gap-1 text-[13px] text-text-secondary">
+                      <Star className="h-4 w-4 fill-[#FFC94A] text-[#FFC94A]" />
+                      <span>{review.rating}</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-[14px] text-text-secondary">{review.comment || t("review_without_comment")}</p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[8px] border border-border-light bg-card p-6 text-center shadow-[var(--shadow-sm)]">
+                <h3>{t("no_reviews_yet")}</h3>
+                <p className="mt-2 text-[14px] text-text-muted">{t("first_review_hint")}</p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

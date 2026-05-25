@@ -328,7 +328,7 @@ function ProductsPageInner() {
   return (
     <main className="bg-page">
       <Header />
-      <div className="container py-4">
+      <div className="container pb-20 pt-4 lg:pb-4">
         <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="sticky top-[60px] hidden h-[calc(100vh-60px)] overflow-y-auto border-r border-border-light bg-card lg:block">
             {filterPanel}
@@ -376,7 +376,7 @@ function ProductsPageInner() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-12 z-[990] flex gap-[1px] bg-border-light lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-[990] flex gap-[1px] bg-border-light lg:hidden">
         <button type="button" onClick={() => setShowMobileFilter(true)} className="flex h-12 flex-1 items-center justify-center gap-2 bg-card text-[13px] font-semibold text-text-primary">
           <SlidersHorizontal className="h-4 w-4" />
           {t("filter")}

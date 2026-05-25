@@ -26,6 +26,8 @@ interface OrderListItem {
     color?: string | null;
     price: number;
     product?: {
+      id: string;
+      slug?: string | null;
       name: string;
       images: string[];
     } | null;
@@ -117,22 +119,33 @@ export default function OrdersPage() {
 
                   {selectedOrder === order.id ? (
                     <div className="space-y-4 bg-[var(--bg-surface)] p-6">
-                      {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-4">
-                          <div className="relative h-16 w-16 overflow-hidden rounded-[6px] bg-card">
+                      {order.items.map((item) => {
+                        const reviewHref = item.product ? `/products/${item.product.slug || item.product.id}#reviews` : "";
+
+                        return (
+                        <div key={item.id} className="flex items-start gap-3 sm:items-center sm:gap-4">
+                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[6px] bg-card">
                             {item.product?.images?.[0] ? (
                               <SmartImage src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-[12px] text-text-muted">{t("no_image")}</div>
                             )}
                           </div>
-                          <div className="flex-1">
+                          <div className="min-w-0 flex-1">
                             <p className="text-[14px] font-medium text-text-primary">{item.product?.name || t("products")}</p>
                             <p className="text-[12px] text-text-muted">{t("qty")}: {item.quantity} • {item.size || t("free")} • {item.color || t("default_label")}</p>
                           </div>
-                          <p className="text-[14px] font-bold text-text-primary">{formatPriceNpr(item.price * item.quantity)}</p>
+                          <div className="flex flex-col items-end gap-2">
+                            <p className="text-[14px] font-bold text-text-primary">{formatPriceNpr(item.price * item.quantity)}</p>
+                            {order.status === "DELIVERED" && reviewHref ? (
+                              <Link href={reviewHref} className="text-[12px] font-semibold uppercase tracking-[0.12em] text-fb-pink">
+                                {t("write_review")}
+                              </Link>
+                            ) : null}
+                          </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <div className="rounded-[8px] border border-border-light bg-card p-4">
                         <div className="mb-2 flex items-center gap-2">
                           <Icon className={`h-4 w-4 ${config.color}`} />
