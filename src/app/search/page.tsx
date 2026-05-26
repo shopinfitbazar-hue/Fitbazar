@@ -147,8 +147,8 @@ function SearchPageInner() {
       <div className="container py-4">
         <div className="rounded-[8px] bg-card p-4">
           <form onSubmit={onSubmit} className="flex items-center gap-3 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-4">
-            <Search className="h-4 w-4 text-text-muted" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} className="border-none bg-transparent px-0 py-3 shadow-none" />
+            <Search className="h-4 w-4 shrink-0 text-text-muted" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} className="min-w-0 flex-1 !border-none !bg-transparent !px-0 py-3 !shadow-none focus:!border-none focus:!shadow-none" />
           </form>
           <div className="mt-4 flex gap-2">
             <button type="button" onClick={() => setTab("products")} className={`rounded-[20px] px-4 py-2 text-[13px] font-medium ${tab === "products" ? "bg-fb-pink text-white" : "bg-[var(--bg-surface)] text-text-secondary"}`}>

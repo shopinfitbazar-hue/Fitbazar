@@ -234,7 +234,7 @@ export default function Header() {
       )}
 
       <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <div className="container hidden py-3 lg:block">
+        <div className="container hidden py-3 xl:block">
           <div className="grid min-h-[72px] grid-cols-[auto_minmax(0,1.2fr)_minmax(260px,0.95fr)_auto] items-center gap-x-4 xl:gap-x-6">
             <Link href="/" className="shrink-0 py-2">
               <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
@@ -275,7 +275,7 @@ export default function Header() {
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
                   placeholder={t("search")}
-                  className="min-w-0 flex-1 border-none bg-transparent px-0 py-0 shadow-none focus:border-none"
+                  className="min-w-0 flex-1 !border-none !bg-transparent !px-0 !py-0 !shadow-none focus:!border-none focus:!shadow-none"
                 />
               </form>
               {searchFocused && (
@@ -355,7 +355,7 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="lg:hidden">
+        <div className="xl:hidden">
           <div className="container flex h-[58px] items-center gap-2">
             <Link href="/" className="shrink-0 py-2" aria-label="Fit Bazzar home">
               <div className="text-[20px] font-bold leading-none tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
@@ -369,7 +369,7 @@ export default function Header() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t("search_label")}
-                className="min-w-0 border-none bg-transparent px-0 py-0 text-[13px] shadow-none focus:border-none"
+                className="min-w-0 flex-1 !border-none !bg-transparent !px-0 !py-0 text-[13px] !shadow-none focus:!border-none focus:!shadow-none"
               />
             </form>
             <Link href="/cart" className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={t("bag")}>
@@ -398,11 +398,11 @@ export default function Header() {
       </header>
 
       <div
-        className={`fixed inset-0 z-[1010] bg-black/30 transition-opacity lg:hidden ${mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-[1010] bg-black/30 transition-opacity xl:hidden ${mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={() => setMobileOpen(false)}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-[1011] flex h-full w-[80vw] max-w-[320px] flex-col bg-card transition-transform duration-300 ease-out lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-[1011] flex h-full w-[80vw] max-w-[320px] flex-col bg-card transition-transform duration-300 ease-out xl:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="border-b border-border-light p-4">
           {sessionUser ? (

@@ -108,7 +108,7 @@ export default function VendorOrdersPage() {
           subtitle={t("orders")}
         />
         <section className="flex-1 p-4 md:p-6">
-        <h1 className="mb-8">{t("orders")}</h1>
+          <h1 className="mb-5 md:mb-8">{t("orders")}</h1>
 
         <div className="mb-6 flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
@@ -118,10 +118,10 @@ export default function VendorOrdersPage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={t("search_orders")}
-              className="pl-12"
+              className="!pl-12"
             />
           </div>
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="max-w-[220px]">
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full md:max-w-[220px]">
             <option value="ALL">{t("all_status")}</option>
             {statusOptions.map((status) => (
               <option key={status} value={status}>{status}</option>

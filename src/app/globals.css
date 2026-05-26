@@ -158,7 +158,7 @@ a:hover {
   box-shadow: var(--shadow-card);
 }
 
-input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   font-family: var(--font-assistant), sans-serif;
   font-size: 0.95rem;
   color: var(--text-primary);
@@ -171,7 +171,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus {
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 4px rgba(196, 63, 87, 0.12);
   background: var(--bg-white);
@@ -358,6 +358,26 @@ button, a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 2.45rem;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .section-shell {
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .btn-primary,
+  .btn-ghost {
+    padding: 10px 16px;
+    font-size: 0.78rem;
+    letter-spacing: 0;
   }
 }
 

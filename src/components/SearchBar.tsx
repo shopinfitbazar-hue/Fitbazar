@@ -91,7 +91,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={t("search")}
-          className="flex-1 min-w-0 bg-transparent px-2 text-text-primary outline-none placeholder:text-text-muted"
+          className="min-w-0 flex-1 !border-none !bg-transparent px-2 !shadow-none outline-none placeholder:text-text-muted focus:!border-none focus:!shadow-none"
         />
 
         {query && (

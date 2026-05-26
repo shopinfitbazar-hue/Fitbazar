@@ -216,9 +216,9 @@ export default function VendorProductsPage() {
           <div className="rounded-[8px] bg-card p-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <button type="button" onClick={resetForm} className="btn-primary">{t("add_product")}</button>
-              <div className="relative min-w-[280px] flex-1">
+              <div className="relative min-w-0 flex-1 md:min-w-[280px]">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search_products")} className="pl-10" />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search_products")} className="!pl-10" />
               </div>
             </div>
             {error ? <p className="mt-3 text-[12px] text-fb-pink">{error}</p> : null}
