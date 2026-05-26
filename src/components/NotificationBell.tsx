@@ -8,7 +8,7 @@ import { getSafeHref } from "@/lib/media";
 
 interface Notification {
   id: string;
-  type: 'ORDER' | 'WISHLIST' | 'PROMOTION' | 'SYSTEM';
+  type: string;
   title: string;
   message: string;
   isRead: boolean;
@@ -16,52 +16,32 @@ interface Notification {
   createdAt: string;
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: 'n1',
-    type: 'ORDER',
-    title: 'Order Shipped',
-    message: 'Your order FB-2024-12345 has been shipped!',
-    isRead: false,
-    link: '/account/orders',
-    createdAt: '2024-01-15T10:30:00Z',
-  },
-  {
-    id: 'n2',
-    type: 'WISHLIST',
-    title: 'Price Drop',
-    message: 'Handwoven Pashmina Shawl is now 29% off!',
-    isRead: false,
-    link: '/products',
-    createdAt: '2024-01-14T15:20:00Z',
-  },
-  {
-    id: 'n3',
-    type: 'ORDER',
-    title: 'Order Delivered',
-    message: 'Your order FB-2024-12340 has been delivered.',
-    isRead: true,
-    link: '/account/orders',
-    createdAt: '2024-01-12T09:00:00Z',
-  },
-  {
-    id: 'n4',
-    type: 'PROMOTION',
-    title: 'Dashain Sale',
-    message: 'Up to 50% off on all traditional wear!',
-    isRead: true,
-    link: '/products?sale=true',
-    createdAt: '2024-01-10T12:00:00Z',
-  },
-];
-
 export default function NotificationBell() {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  useEffect(() => {
+    let active = true;
+    async function loadNotifications() {
+      try {
+        const response = await fetch("/api/notifications", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { notifications?: Notification[] };
+        if (active) setNotifications(data.notifications || []);
+      } catch {
+        if (active) setNotifications([]);
+      }
+    }
+
+    void loadNotifications();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,20 +54,24 @@ export default function NotificationBell() {
   }, []);
 
   const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, isRead: true } : n
-    ));
+    setNotifications((current) => current.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    void fetch(`/api/notifications/${id}`, { method: "PATCH" });
   };
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    setNotifications((current) => current.map((n) => ({ ...n, isRead: true })));
+    void fetch("/api/notifications", { method: "PATCH" });
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'ORDER': return <Package className="w-5 h-5" />;
       case 'WISHLIST': return <Heart className="w-5 h-5" />;
-      case 'PROMOTION': return <ShoppingBag className="w-5 h-5" />;
+      case 'PROMOTION':
+      case 'ADMIN':
+      case 'PRODUCT':
+      case 'SUPPORT':
+        return <ShoppingBag className="w-5 h-5" />;
       default: return <Bell className="w-5 h-5" />;
     }
   };
@@ -151,7 +135,7 @@ export default function NotificationBell() {
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       notification.type === "ORDER" ? "bg-fb-pink-bg text-fb-pink" :
                       notification.type === "WISHLIST" ? "bg-[var(--green-bg)] text-success" :
-                      notification.type === "PROMOTION" ? "bg-[var(--amber-bg)] text-fb-orange" :
+                      notification.type === "PROMOTION" || notification.type === "ADMIN" || notification.type === "PRODUCT" || notification.type === "SUPPORT" ? "bg-[var(--amber-bg)] text-fb-orange" :
                       "bg-[var(--bg-surface)] text-text-secondary"
                     }`}>
                       {getNotificationIcon(notification.type)}

@@ -10,6 +10,7 @@ const navItems = [
   { id: "products", labelKey: "products" },
   { id: "orders", labelKey: "orders" },
   { id: "customers", labelKey: "customers" },
+  { id: "notifications", labelKey: "notifications" },
   { id: "coupons", labelKey: "coupons" },
   { id: "banners", labelKey: "banners" },
   { id: "vendor-reviews", labelKey: "vendor_reviews" },

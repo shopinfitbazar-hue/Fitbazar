@@ -7,7 +7,7 @@ import { memo, useMemo, useState } from "react";
 import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/lib/ToastContext";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
+import { getSafeImageUrl, getShowcaseImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 import SmartImage from "@/components/ui/SmartImage";
 
 export interface ProductCardProps {
@@ -70,10 +70,7 @@ function ProductCard({
   const router = useRouter();
   const [animateHeart, setAnimateHeart] = useState(false);
   const href = `/products/${slug || id}`;
-  const image = getSafeImageUrl(
-    images[0],
-    FALLBACK_PRODUCT_IMAGE,
-  );
+  const image = getShowcaseImageUrl(getSafeImageUrl(images[0], FALLBACK_PRODUCT_IMAGE));
   const vendorPath = `/shop/${vendorSlug || slugify(vendorName)}`;
   const wishlisted = isInWishlist(id);
 

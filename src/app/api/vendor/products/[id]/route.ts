@@ -64,6 +64,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    if (body.description !== undefined && !body.description.trim()) {
+      return NextResponse.json({ error: "A vendor-written product description is required." }, { status: 400 });
+    }
+
+    if (body.images !== undefined && !body.images.filter(Boolean).length) {
+      return NextResponse.json({ error: "At least one product image is required." }, { status: 400 });
+    }
+
     const price = body.price !== undefined ? Number(body.price) : undefined;
     const compareAtPrice =
       body.compareAtPrice !== undefined

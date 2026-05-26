@@ -63,6 +63,25 @@ export function getOptimizedImageUrl(url: string, options?: { width?: number; qu
   return url.replace("/upload/", `/upload/f_auto,q_${quality},c_limit,w_${width}/`);
 }
 
+export function getShowcaseImageUrl(
+  url: string,
+  options?: { width?: number; height?: number; quality?: number; background?: string },
+) {
+  if (!isCloudinaryUrl(url)) {
+    return url;
+  }
+
+  const width = options?.width ?? 900;
+  const height = options?.height ?? 1200;
+  const quality = options?.quality ?? 82;
+  const background = options?.background ?? "f7f1ea";
+
+  return url.replace(
+    "/upload/",
+    `/upload/f_auto,q_${quality},c_pad,w_${width},h_${height},b_rgb:${background},e_sharpen:45/`,
+  );
+}
+
 export function buildImageSizes({
   mobile = "50vw",
   tablet = "33vw",

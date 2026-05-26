@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { MapPin, Truck, Wallet } from "lucide-react";
+import { CheckCircle2, MapPin, ShieldCheck, Truck, Wallet } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
 import { useCart } from "@/lib/cart";
 import { formatPriceNpr } from "@/lib/catalog";
@@ -325,16 +325,41 @@ function CheckoutPageInner() {
           <span className="font-medium text-text-primary">{t("checkout")}</span>
         </div>
 
-        <h1 className="mb-8">{t("checkout")}</h1>
+        <div className="mb-8 rounded-[8px] border border-border-light bg-card p-5 shadow-[var(--shadow-sm)]">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-text-muted">Secure checkout</div>
+              <h1 className="mt-2 text-[32px] font-semibold tracking-[-0.04em]">{t("checkout")}</h1>
+              <p className="mt-2 text-[14px] text-text-muted">Delivery, payment, and review in one clean flow.</p>
+            </div>
+            <div className="grid gap-2 text-[12px] text-text-secondary sm:grid-cols-3">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                Address
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+                <Truck className="h-4 w-4 text-fb-orange" />
+                Delivery
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+                <ShieldCheck className="h-4 w-4 text-fb-pink" />
+                Payment
+              </span>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
-              <div className="rounded-[8px] bg-card p-6">
-                <h2 className="mb-6 flex items-center gap-3 text-[20px] font-semibold">
-                  <MapPin className="h-5 w-5 text-fb-pink" />
-                  {t("delivery_address")}
-                </h2>
+              <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <h2 className="flex items-center gap-3 text-[20px] font-semibold">
+                    <MapPin className="h-5 w-5 text-fb-pink" />
+                    {t("delivery_address")}
+                  </h2>
+                  <span className="rounded-full bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-success">Kathmandu</span>
+                </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="md:col-span-2">
@@ -393,7 +418,7 @@ function CheckoutPageInner() {
                 </div>
               </div>
 
-              <div className="rounded-[8px] bg-card p-6">
+              <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
                 <h2 className="mb-6 flex items-center gap-3 text-[20px] font-semibold">
                   <Truck className="h-5 w-5 text-fb-pink" />
                   {t("delivery_method")}
@@ -403,7 +428,7 @@ function CheckoutPageInner() {
                   {deliveryOptions.map((option) => (
                     <label
                       key={option.id}
-                      className={`flex items-center justify-between rounded-[8px] border p-4 ${selectedDelivery === option.id ? "border-fb-pink bg-fb-pink-bg" : "border-border-light"}`}
+                      className={`flex items-center justify-between rounded-[8px] border p-4 transition-shadow ${selectedDelivery === option.id ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light hover:shadow-[var(--shadow-sm)]"}`}
                     >
                       <div className="flex items-center gap-3">
                         <input type="radio" name="delivery" value={option.id} checked={selectedDelivery === option.id} onChange={(event) => setSelectedDelivery(event.target.value)} />
@@ -418,7 +443,7 @@ function CheckoutPageInner() {
                 </div>
               </div>
 
-              <div className="rounded-[8px] bg-card p-6">
+              <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
                 <h2 className="mb-6 flex items-center gap-3 text-[20px] font-semibold">
                   <Wallet className="h-5 w-5 text-fb-pink" />
                   {t("payment_method")}
@@ -428,7 +453,7 @@ function CheckoutPageInner() {
                   {paymentMethods.filter((method) => availablePayments[method.id as SupportedPaymentMethod]).map((method) => (
                     <label
                       key={method.id}
-                      className={`rounded-[8px] border p-4 ${selectedPayment === method.id ? "border-fb-pink bg-fb-pink-bg" : "border-border-light"}`}
+                      className={`rounded-[8px] border p-4 transition-shadow ${selectedPayment === method.id ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light hover:shadow-[var(--shadow-sm)]"}`}
                     >
                       <div className="flex items-start gap-3">
                         <input
@@ -450,7 +475,7 @@ function CheckoutPageInner() {
             </div>
 
             <div>
-              <div className="sticky top-24 rounded-[8px] bg-card p-6">
+              <div className="sticky top-24 rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-md)]">
                 <h3 className="mb-6 text-[20px] font-semibold text-text-primary">{t("order_summary")}</h3>
 
                 <div className="mb-6 space-y-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CircleDollarSign, LayoutDashboard, Package, ShoppingCart, Users } from "lucide-react";
+import { BellRing, CheckCircle2, CircleDollarSign, LayoutDashboard, Package, Send, ShoppingCart, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
@@ -9,6 +9,7 @@ import ImagePreviewStrip from "@/components/ImagePreviewStrip";
 import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useLanguage } from "@/lib/LanguageContext";
+import { FALLBACK_PRODUCT_IMAGE, getSafeImageUrl, getShowcaseImageUrl } from "@/lib/media";
 
 interface AdminVendor {
   id: string;
@@ -200,7 +201,15 @@ export default function AdminDashboard() {
   const [banners, setBanners] = useState<AdminBanner[]>([]);
   const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
   const [supportTickets, setSupportTickets] = useState<AdminSupportTicket[]>([]);
+  const [supportArchiveCount, setSupportArchiveCount] = useState(0);
   const [vendorReviews, setVendorReviews] = useState<AdminVendorReview[]>([]);
+  const [broadcastDraft, setBroadcastDraft] = useState({
+    audience: "CUSTOMERS",
+    title: "",
+    message: "",
+    link: "/account/notifications",
+    sendEmail: true,
+  });
   const [settings, setSettings] = useState<SiteSettingsState>({
     commissionPct: 8,
     minFreeDelivery: 2000,
@@ -295,7 +304,10 @@ export default function AdminDashboard() {
     if (customersResponse.ok) setCustomers(customersData.customers || []);
     if (bannersResponse.ok) setBanners(bannersData.banners || []);
     if (couponsResponse.ok) setCoupons(couponsData.coupons || []);
-    if (supportResponse.ok) setSupportTickets(supportData.tickets || []);
+    if (supportResponse.ok) {
+      setSupportTickets(supportData.tickets || []);
+      setSupportArchiveCount(supportData.archivedCount || 0);
+    }
     if (vendorReviewsResponse.ok) setVendorReviews(vendorReviewsData.reviews || []);
     if (settingsResponse.ok && settingsData.settings) setSettings(settingsData.settings);
     if (festivalResponse.ok && festivalData) {
@@ -351,6 +363,23 @@ export default function AdminDashboard() {
     await loadAdmin();
   };
 
+  const sendBroadcast = async () => {
+    const response = await fetch("/api/admin/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(broadcastDraft),
+    });
+    const result = (await response.json().catch(() => ({}))) as { error?: string; notified?: number; emailed?: number };
+
+    if (!response.ok) {
+      setMessage(result.error || "Failed to send notification.");
+      return;
+    }
+
+    setMessage(`Notification sent to ${result.notified || 0} account${result.notified === 1 ? "" : "s"}${result.emailed ? ` and emailed to ${result.emailed}` : ""}.`);
+    setBroadcastDraft((current) => ({ ...current, title: "", message: "" }));
+  };
+
   const editProduct = (product: AdminProduct) => {
     setProductDraft({
       id: product.id,
@@ -391,6 +420,16 @@ export default function AdminDashboard() {
       isYearRoundSale: false,
       isActive: true,
       status: "ACTIVE",
+    });
+  };
+
+  const makeAdminCoverImage = (imageUrl: string) => {
+    setProductDraft((current) => {
+      const images = current.images.split(",").map((item) => item.trim()).filter(Boolean);
+      return {
+        ...current,
+        images: [imageUrl, ...images.filter((item) => item !== imageUrl)].join(", "),
+      };
     });
   };
 
@@ -573,6 +612,10 @@ export default function AdminDashboard() {
     () => vendors.filter((vendor) => vendor.isPartnered && vendor.isTopShop).slice(0, 4),
     [vendors],
   );
+  const draftProducts = useMemo(
+    () => products.filter((product) => product.status === "DRAFT"),
+    [products],
+  );
 
   const updateSupportTicket = async (id: string, payload: { status?: string; adminResponse?: string; replyMessage?: string }) => {
     const response = await fetch(`/api/admin/support/${id}`, {
@@ -708,7 +751,71 @@ export default function AdminDashboard() {
           </div>
 
           <div id="products" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
-            <h2 className="text-[16px] font-semibold text-text-primary">{t("products")}</h2>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <h2 className="text-[16px] font-semibold text-text-primary">{t("products")}</h2>
+              <span className="rounded-full bg-[var(--amber-bg)] px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-orange">
+                {draftProducts.length} awaiting approval
+              </span>
+            </div>
+            {draftProducts.length ? (
+              <div className="mt-4 grid gap-4">
+                {draftProducts.map((product) => {
+                  const rawImages = product.images?.filter(Boolean) || [];
+                  const coverImage = getSafeImageUrl(rawImages[0], FALLBACK_PRODUCT_IMAGE);
+
+                  return (
+                    <div key={product.id} className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                      <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)_auto]">
+                        <div className="relative aspect-[3/4] overflow-hidden rounded-[8px] bg-[#f7f1ea]">
+                          <SmartImage src={getShowcaseImageUrl(coverImage)} alt={product.name} fill className="object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="badge badge-amber">{t("draft")}</span>
+                            {product.isFestivalSale ? <span className="badge badge-pink">{t("festival_sale")}</span> : null}
+                            {product.isYearRoundSale ? <span className="badge badge-orange">{t("all_year_sale")}</span> : null}
+                          </div>
+                          <h3 className="mt-3 text-[18px] font-semibold text-text-primary">{product.name}</h3>
+                          <p className="mt-1 text-[13px] text-text-muted">
+                            {product.vendor.shopName} • {product.category} • {formatPriceNpr(product.price)} • Stock {product.stock ?? 0}
+                          </p>
+                          <p className="mt-3 text-[14px] text-text-secondary">{product.description || "No description provided."}</p>
+                          <div className="mt-3 grid gap-2 text-[12px] text-text-muted md:grid-cols-2">
+                            <span>Sizes: {product.sizes?.join(", ") || "-"}</span>
+                            <span>Colors: {product.colors?.join(", ") || "-"}</span>
+                            <span>Compare at: {product.compareAtPrice ? formatPriceNpr(product.compareAtPrice) : "-"}</span>
+                            <span>Discount: {product.discountPct || 0}%</span>
+                          </div>
+                          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                            {rawImages.map((image) => (
+                              <div key={image} className="relative h-20 w-16 shrink-0 overflow-hidden rounded-[6px] border border-border-light bg-white">
+                                <SmartImage src={getSafeImageUrl(image, FALLBACK_PRODUCT_IMAGE)} alt={`${product.name} raw`} fill className="object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-row gap-2 lg:flex-col">
+                          <button type="button" onClick={() => updateProduct(product.id, { status: "ACTIVE" })} className="btn-primary inline-flex items-center gap-2 px-4 py-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            {t("approve")}
+                          </button>
+                          <button type="button" onClick={() => editProduct(product)} className="btn-ghost px-4 py-2">
+                            {t("edit")}
+                          </button>
+                          <button type="button" onClick={() => updateProduct(product.id, { status: "HIDDEN" })} className="btn-ghost px-4 py-2">
+                            {t("hide")}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4 text-[13px] text-text-muted">
+                No draft products waiting right now.
+              </div>
+            )}
             <div className="mt-4 grid gap-4 rounded-[8px] border border-border-light p-4 lg:grid-cols-2">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
                 <div>
@@ -775,6 +882,8 @@ export default function AdminDashboard() {
                     <ImagePreviewStrip
                       images={productDraft.images.split(",").map((item) => item.trim()).filter(Boolean)}
                       emptyText={t("no_images_uploaded_yet")}
+                      showShowcasePreview
+                      onMakeCover={makeAdminCoverImage}
                       onRemove={(imageUrl) =>
                         setProductDraft((current) => ({
                           ...current,
@@ -843,7 +952,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.slice(0, 8).map((product) => (
+                  {products.map((product) => (
                     <tr key={product.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
                       <td className="py-4 font-medium text-text-primary">{product.name}</td>
                       <td>{product.vendor.shopName}</td>
@@ -922,12 +1031,17 @@ export default function AdminDashboard() {
 
           <div id="customers" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
             <h2 className="text-[16px] font-semibold text-text-primary">{t("customers")}</h2>
-            <div className="mt-4 space-y-3">
-              {customers.slice(0, 5).map((customer) => (
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              {customers.map((customer) => (
                 <div key={customer.id} className="flex flex-col gap-3 rounded-[8px] border border-border-light p-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-[14px] font-semibold text-text-primary">{customer.name || t("customer")}</div>
-                    <div className="text-[13px] text-text-secondary">{customer.email}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-[14px] font-semibold text-text-primary">{customer.name || t("customer")}</div>
+                      <span className={`badge ${customer.isBanned ? "badge-orange" : "badge-green"}`}>
+                        {customer.isBanned ? "Banned" : t("active")}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[13px] text-text-secondary">{customer.email}</div>
                     <div className="mt-1 grid gap-1 text-[12px] text-text-muted md:grid-cols-2">
                       <span>{t("phone_number")}: {customer.phone || "-"}</span>
                       <span>{t("orders")}: {customer._count?.orders ?? 0}</span>
@@ -942,6 +1056,56 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div id="notifications" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
+            <div className="flex items-center gap-3">
+              <BellRing className="h-5 w-5 text-fb-pink" />
+              <div>
+                <h2 className="text-[16px] font-semibold text-text-primary">{t("notifications")}</h2>
+                <p className="text-[13px] text-text-muted">Send website notifications and optional email to customers or vendors.</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-[180px_1fr]">
+              <div>
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Audience</label>
+                <select
+                  value={broadcastDraft.audience}
+                  onChange={(event) => setBroadcastDraft((current) => ({ ...current, audience: event.target.value }))}
+                >
+                  <option value="CUSTOMERS">Customers</option>
+                  <option value="VENDORS">Vendors</option>
+                  <option value="ALL">Customers + Vendors</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Title</label>
+                <input value={broadcastDraft.title} onChange={(event) => setBroadcastDraft((current) => ({ ...current, title: event.target.value }))} />
+              </div>
+              <div className="lg:col-span-2">
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Message</label>
+                <textarea rows={4} value={broadcastDraft.message} onChange={(event) => setBroadcastDraft((current) => ({ ...current, message: event.target.value }))} />
+              </div>
+              <div>
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Link</label>
+                <input value={broadcastDraft.link} onChange={(event) => setBroadcastDraft((current) => ({ ...current, link: event.target.value }))} />
+              </div>
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="flex items-center gap-2 rounded-[8px] border border-border-light bg-[var(--bg-surface)] px-4 py-3 text-[13px] text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={broadcastDraft.sendEmail}
+                    onChange={(event) => setBroadcastDraft((current) => ({ ...current, sendEmail: event.target.checked }))}
+                    className="h-4 w-4"
+                  />
+                  Also email
+                </label>
+                <button type="button" onClick={sendBroadcast} className="btn-primary inline-flex items-center gap-2">
+                  <Send className="h-4 w-4" />
+                  Send
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1178,7 +1342,12 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <h2 className="text-[16px] font-semibold text-text-primary">{t("help_support")}</h2>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <h2 className="text-[16px] font-semibold text-text-primary">{t("help_support")}</h2>
+              <span className="text-[12px] text-text-muted">
+                {supportArchiveCount} resolved record{supportArchiveCount === 1 ? "" : "s"} archived after 7 days
+              </span>
+            </div>
             <div className="mt-4 space-y-3">
               {supportTickets.map((ticket) => (
                 <div key={ticket.id} className="rounded-[8px] border border-border-light p-4">

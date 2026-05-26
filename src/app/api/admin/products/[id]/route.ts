@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { buildAbsoluteAppUrl } from "@/lib/app-url";
+import { renderVendorUpdateEmail } from "@/lib/email-templates";
+import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
@@ -42,27 +45,76 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       nextStatus = body.isActive ? "ACTIVE" : "HIDDEN";
     }
 
+    const currentProduct = await prisma.product.findUnique({
+      where: { id },
+      select: {
+        stock: true,
+        status: true,
+        isActive: true,
+      },
+    });
+
+    if (!currentProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const derivedStatus =
+      nextStatus !== undefined
+        ? deriveProductStatus({
+            requestedStatus: nextStatus,
+            stock: currentProduct.stock,
+            isActive: body.isActive,
+          })
+        : undefined;
+
     const product = await prisma.product.update({
       where: { id },
       data: {
         ...(body.isFeatured !== undefined ? { isFeatured: body.isFeatured } : {}),
-        ...(nextStatus !== undefined
-          ? {
-              status: deriveProductStatus({
-                requestedStatus: nextStatus,
-                stock: (
-                  await prisma.product.findUnique({
-                    where: { id },
-                    select: { stock: true },
-                  })
-                )?.stock ?? 0,
-                isActive: body.isActive,
-              }),
-            }
-          : {}),
-        ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+        ...(derivedStatus !== undefined ? { status: derivedStatus, isActive: derivedStatus === "ACTIVE" } : {}),
+        ...(derivedStatus === undefined && body.isActive !== undefined ? { isActive: body.isActive } : {}),
+      },
+      include: {
+        vendor: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    if (derivedStatus && derivedStatus !== currentProduct.status) {
+      const title = derivedStatus === "ACTIVE" ? "Product approved" : "Product status updated";
+      const message =
+        derivedStatus === "ACTIVE"
+          ? `${product.name} is approved and visible to customers.`
+          : `${product.name} is now ${derivedStatus.toLowerCase().replace(/_/g, " ")}.`;
+
+      await prisma.notification.create({
+        data: {
+          userId: product.vendor.user.id,
+          title,
+          message,
+          type: "PRODUCT",
+          link: "/vendor/products",
+        },
+      }).catch(() => undefined);
+
+      if (hasConfiguredMailTransport()) {
+        await sendMail({
+          to: product.vendor.user.email,
+          from: process.env.VENDOR_SUPPORT_EMAIL_FROM || "vendorSupport@fitbazar.com",
+          subject: `Fit Bazar product update: ${product.name}`,
+          text: message,
+          html: renderVendorUpdateEmail(product.vendor.shopName, title, message, buildAbsoluteAppUrl("/vendor/products")),
+        }).catch(() => undefined);
+      }
+    }
 
     return NextResponse.json({ product });
   } catch (error) {

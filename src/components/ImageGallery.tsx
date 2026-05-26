@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
-import { getSafeImageUrl, FALLBACK_GALLERY_IMAGE } from "@/lib/media";
+import { getSafeImageUrl, getShowcaseImageUrl, FALLBACK_GALLERY_IMAGE } from "@/lib/media";
 
 interface ImageGalleryProps {
   images: string[];
@@ -41,7 +41,7 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
   const displayImages = useMemo(
     () =>
       (images.length > 0 ? images : defaultImages).map((image) =>
-        getSafeImageUrl(image, FALLBACK_GALLERY_IMAGE),
+        getShowcaseImageUrl(getSafeImageUrl(image, FALLBACK_GALLERY_IMAGE), { width: 1200, height: 1350 }),
       ),
     [images],
   );

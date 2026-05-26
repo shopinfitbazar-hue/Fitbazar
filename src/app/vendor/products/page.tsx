@@ -2,12 +2,13 @@
 
 import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { Search, Trash2 } from "lucide-react";
+import { CheckCircle2, ImagePlus, Search, Sparkles, Trash2 } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
 import { useLanguage } from "@/lib/LanguageContext";
 import VendorSidebar from "@/components/VendorSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
 import ImagePreviewStrip from "@/components/ImagePreviewStrip";
+import { FALLBACK_PRODUCT_IMAGE, getSafeImageUrl, getShowcaseImageUrl } from "@/lib/media";
 
 type VendorProduct = {
   id: string;
@@ -66,8 +67,8 @@ const createEmptyForm = (): VendorProductForm => ({
   images: "",
   isFestivalSale: false,
   isYearRoundSale: false,
-  isActive: true,
-  status: "ACTIVE",
+  isActive: false,
+  status: "DRAFT",
 });
 
 export default function VendorProductsPage() {
@@ -120,7 +121,35 @@ export default function VendorProductsPage() {
 
   const resetForm = () => setForm(createEmptyForm());
 
+  const makeCoverImage = (imageUrl: string) => {
+    setForm((current) => {
+      const images = current.images.split(",").map((item) => item.trim()).filter(Boolean);
+      return {
+        ...current,
+        images: [imageUrl, ...images.filter((item) => item !== imageUrl)].join(", "),
+      };
+    });
+  };
+
   const saveProduct = async () => {
+    setError("");
+    setMessage("");
+
+    if (!form.name.trim() || !form.category.trim() || !form.description.trim()) {
+      setError("Product name, category, and vendor-written description are required.");
+      return;
+    }
+
+    if (!imageList.length) {
+      setError("Add at least one product photo before sending it for approval.");
+      return;
+    }
+
+    if (Number(form.price) <= 0) {
+      setError("Enter a valid product price.");
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -135,8 +164,8 @@ export default function VendorProductsPage() {
         images: form.images.split(",").map((item) => item.trim()).filter(Boolean),
         isFestivalSale: form.isFestivalSale,
         isYearRoundSale: form.isYearRoundSale,
-        isActive: form.isActive,
-        status: form.status,
+        isActive: false,
+        status: "DRAFT",
       };
 
       const response = await fetch(form.id ? `/api/vendor/products/${form.id}` : "/api/vendor/products", {
@@ -215,8 +244,8 @@ export default function VendorProductsPage() {
                 {products.map((product) => (
                   <tr key={product.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
                     <td className="px-4 py-4">
-                      <div className="relative h-16 w-12 overflow-hidden rounded-[4px]">
-                        <SmartImage src={product.images[0] || "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=300&auto=format&fit=crop&q=60"} alt={product.name} fill className="object-cover" />
+                <div className="relative h-16 w-12 overflow-hidden rounded-[4px]">
+                        <SmartImage src={getShowcaseImageUrl(getSafeImageUrl(product.images[0], FALLBACK_PRODUCT_IMAGE))} alt={product.name} fill className="object-cover" />
                       </div>
                     </td>
                     <td className="font-medium text-text-primary">{product.name}</td>
@@ -244,7 +273,30 @@ export default function VendorProductsPage() {
           </div>
 
           <div className="mt-4 rounded-[8px] bg-card p-5">
-            <h2 className="text-[20px] font-semibold text-text-primary">{form.id ? t("edit_product") : t("add_product")}</h2>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-fb-pink-bg px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-pink">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Admin approval
+                </div>
+                <h2 className="mt-3 text-[20px] font-semibold text-text-primary">{form.id ? t("edit_product") : t("add_product")}</h2>
+                <p className="mt-1 text-[13px] text-text-muted">Write the product story yourself, add photos, and send the draft for review.</p>
+              </div>
+              {imageList[0] ? (
+                <div className="flex items-center gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3">
+                  <div className="relative h-20 w-16 overflow-hidden rounded-[6px] bg-[#f7f1ea]">
+                    <SmartImage src={getShowcaseImageUrl(getSafeImageUrl(imageList[0], FALLBACK_PRODUCT_IMAGE))} alt="Cover preview" fill className="object-cover" />
+                  </div>
+                  <div className="max-w-[180px] text-[12px] text-text-muted">
+                    <span className="mb-1 flex items-center gap-1 font-semibold text-text-primary">
+                      <Sparkles className="h-3.5 w-3.5 text-fb-pink" />
+                      Customer cover
+                    </span>
+                    Raw upload stays saved. The cover gets a cleaner presentation.
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("product_name")}</label>
@@ -267,32 +319,26 @@ export default function VendorProductsPage() {
                 <input type="number" value={form.stock} onChange={(event) => setForm((current) => ({ ...current, stock: Number(event.target.value) }))} />
               </div>
               <div className="md:col-span-2">
-                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("sizes_csv")}</label>
-                <input value={form.sizes} onChange={(event) => setForm((current) => ({ ...current, sizes: event.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("colors_csv")}</label>
-                <input value={form.colors} onChange={(event) => setForm((current) => ({ ...current, colors: event.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("image_urls")}</label>
-                <textarea rows={3} value={form.images} onChange={(event) => setForm((current) => ({ ...current, images: event.target.value }))} />
-                <div className="mt-3">
-	                  <CloudinaryImageUploader
-	                    buttonLabel={t("upload_product_images")}
-	                    enableCamera
-	                    onUploaded={(urls) =>
+                <label className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[1px] text-text-muted">
+                  <ImagePlus className="h-4 w-4" />
+                  Product photos
+                </label>
+                <CloudinaryImageUploader
+                  buttonLabel="Add product photos"
+                  enableCamera
+                  onUploaded={(urls) =>
                       setForm((current) => ({
                         ...current,
                         images: [...current.images.split(",").map((item) => item.trim()).filter(Boolean), ...urls].join(", "),
                       }))
                     }
-                  />
-                </div>
+                />
                 <div className="mt-3">
                   <ImagePreviewStrip
                     images={imageList}
                     emptyText={t("no_images_uploaded_yet")}
+                    showShowcasePreview
+                    onMakeCover={makeCoverImage}
                     onRemove={(imageUrl) =>
                       setForm((current) => ({
                         ...current,
@@ -305,10 +351,29 @@ export default function VendorProductsPage() {
                     }
                   />
                 </div>
+                <details className="mt-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3">
+                  <summary className="cursor-pointer text-[12px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                    Raw image URLs
+                  </summary>
+                  <textarea rows={3} value={form.images} onChange={(event) => setForm((current) => ({ ...current, images: event.target.value }))} className="mt-3" />
+                </details>
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("description")}</label>
-                <textarea rows={5} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+                <textarea
+                  rows={5}
+                  value={form.description}
+                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  placeholder="Describe fabric, fit, occasion, care, and what makes this piece special."
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("sizes_csv")}</label>
+                <input value={form.sizes} onChange={(event) => setForm((current) => ({ ...current, sizes: event.target.value }))} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("colors_csv")}</label>
+                <input value={form.colors} onChange={(event) => setForm((current) => ({ ...current, colors: event.target.value }))} />
               </div>
               <div className="md:col-span-2 flex gap-4">
                 {[
@@ -324,25 +389,9 @@ export default function VendorProductsPage() {
                     <span className="text-[13px] text-text-secondary">{item.label}</span>
                   </label>
                 ))}
-                <label className="flex items-center gap-3">
-                  <span className="text-[13px] text-text-secondary">{t("product_status")}</span>
-                  <select
-                    value={form.status}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        status: event.target.value as VendorProduct["status"],
-                        isActive: event.target.value === "ACTIVE",
-                      }))
-                    }
-                    className="rounded-[8px] border border-border-default bg-white px-3 py-2 text-[13px] text-text-primary"
-                  >
-                    <option value="ACTIVE">{t("active")}</option>
-                    <option value="HIDDEN">{t("hidden")}</option>
-                    <option value="DRAFT">{t("draft")}</option>
-                    <option value="OUT_OF_STOCK">{t("out_of_stock")}</option>
-                  </select>
-                </label>
+                <span className="rounded-full bg-[var(--amber-bg)] px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-orange">
+                  Draft until admin approves
+                </span>
               </div>
             </div>
             <div className="mt-5 flex gap-3">

@@ -13,7 +13,7 @@ type SmartImageProps = Omit<ImageProps, "src"> & {
 const FALLBACK_PLACEHOLDER =
   "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&auto=format&fit=crop&q=60";
 
-const DEBUG = true;
+const DEBUG = false;
 
 export default function SmartImage({
   src,

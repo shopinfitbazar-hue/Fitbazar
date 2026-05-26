@@ -90,6 +90,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required product fields" }, { status: 400 });
     }
 
+    if (!body.description?.trim()) {
+      return NextResponse.json({ error: "A vendor-written product description is required." }, { status: 400 });
+    }
+
     if (!body.images?.filter(Boolean).length) {
       return NextResponse.json({ error: "At least one product image is required." }, { status: 400 });
     }
