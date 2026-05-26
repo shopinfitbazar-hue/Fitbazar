@@ -1,27 +1,18 @@
 import { NextResponse } from "next/server";
 import { buildAbsoluteAppUrl } from "@/lib/app-url";
+import {
+  buildBroadcastRecipientReport,
+  escapeHtml,
+  getRecipientNotificationLink,
+  normalizeBroadcastAudience,
+  normalizeBroadcastLink,
+  validateBroadcastContent,
+} from "@/lib/admin-notifications";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
-import { getSafeHref } from "@/lib/media";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
-
-type BroadcastAudience = "CUSTOMERS" | "VENDORS" | "ALL";
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function normalizeAudience(value?: string): BroadcastAudience {
-  if (value === "VENDORS" || value === "ALL") return value;
-  return "CUSTOMERS";
-}
 
 export async function POST(request: Request) {
   try {
@@ -38,18 +29,14 @@ export async function POST(request: Request) {
       sendEmail?: boolean;
     };
 
-    const title = body.title?.trim();
-    const message = body.message?.trim();
-    const audience = normalizeAudience(body.audience);
-    const requestedLink = body.link?.trim();
-    const link =
-      requestedLink && requestedLink.startsWith("/") && !requestedLink.startsWith("//")
-        ? getSafeHref(requestedLink, "/account/notifications")
-        : "/account/notifications";
-
-    if (!title || !message) {
-      return NextResponse.json({ error: "Title and message are required." }, { status: 400 });
+    const validation = validateBroadcastContent({ title: body.title, message: body.message });
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+
+    const { title, message } = validation;
+    const audience = normalizeBroadcastAudience(body.audience);
+    const link = normalizeBroadcastLink(body.link);
 
     const recipients = await prisma.user.findMany({
       where:
@@ -74,31 +61,39 @@ export async function POST(request: Request) {
         title,
         message,
         type: "ADMIN",
-        link: recipient.role === "VENDOR" && link === "/account/notifications" ? "/vendor/dashboard" : link,
+        link: getRecipientNotificationLink(recipient.role, link),
       })),
     });
 
+    const recipientReport = buildBroadcastRecipientReport(recipients);
+
     let emailed = 0;
     if (body.sendEmail && hasConfiguredMailTransport()) {
-      const emailResult = await sendMail({
-        to: recipients.map((recipient) => recipient.email),
-        subject: title,
-        text: message,
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #282C3F;">
-            <h2>${escapeHtml(title)}</h2>
-            <p>${escapeHtml(message).replace(/\n/g, "<br />")}</p>
-            <p style="margin-top: 16px;">
-              <a href="${buildAbsoluteAppUrl(link)}" style="display:inline-block;background:#ff3f6c;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
-                Open Fit Bazar
-              </a>
-            </p>
-          </div>
-        `,
-      });
+      for (const recipient of recipients) {
+        const recipientLink = getRecipientNotificationLink(recipient.role, link);
+        const emailResult = await sendMail({
+          to: recipient.email,
+          subject: title,
+          text: message,
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #282C3F;">
+              <h2>${escapeHtml(title)}</h2>
+              <p>Hello ${escapeHtml(recipient.name || "there")},</p>
+              <p>${escapeHtml(message).replace(/\n/g, "<br />")}</p>
+              <p style="margin-top: 16px;">
+                <a href="${buildAbsoluteAppUrl(recipientLink)}" style="display:inline-block;background:#ff3f6c;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
+                  Open Fit Bazar
+                </a>
+              </p>
+            </div>
+          `,
+        });
 
-      if (emailResult.delivered) {
-        emailed = recipients.length;
+        if (emailResult.delivered) {
+          emailed += 1;
+          const report = recipientReport.find((item) => item.id === recipient.id);
+          if (report) report.emailSent = true;
+        }
       }
     }
 
@@ -106,6 +101,8 @@ export async function POST(request: Request) {
       success: true,
       notified: recipients.length,
       emailed,
+      recipients: recipientReport,
+      privacy: "Emails are sent one recipient at a time. Customers and vendors cannot see the other recipients.",
     });
   } catch (error) {
     console.error("Error broadcasting admin notification:", error);

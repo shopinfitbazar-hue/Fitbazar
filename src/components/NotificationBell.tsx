@@ -38,8 +38,24 @@ export default function NotificationBell() {
     }
 
     void loadNotifications();
+    const interval = window.setInterval(() => {
+      void loadNotifications();
+    }, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadNotifications();
+      }
+    };
+
+    window.addEventListener("focus", loadNotifications);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", loadNotifications);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -92,6 +108,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-text-secondary transition-colors hover:text-fb-pink"
+        aria-label={t("notifications")}
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (

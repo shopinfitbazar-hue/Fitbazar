@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { CheckCircle2, MapPin, ShieldCheck, Truck, Wallet } from "lucide-react";
+import { Banknote, CheckCircle2, CreditCard, Landmark, MapPin, QrCode, ShieldCheck, Smartphone, Truck, Wallet } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
 import { useCart } from "@/lib/cart";
 import { formatPriceNpr } from "@/lib/catalog";
@@ -16,6 +16,11 @@ import type { SupportedPaymentMethod } from "@/lib/payment-types";
 import { getDeliveryMessage } from "@/lib/pincode";
 
 const zones = ["Kathmandu"];
+const supportedCheckoutPaymentIds: SupportedPaymentMethod[] = ["COD", "ESEWA", "KHALTI", "CONNECTIPS", "FONEPAY", "LOCAL_CARD"];
+
+function isCheckoutPaymentId(value: string): value is SupportedPaymentMethod {
+  return supportedCheckoutPaymentIds.includes(value as SupportedPaymentMethod);
+}
 
 function CheckoutPageInner() {
   const router = useRouter();
@@ -35,7 +40,7 @@ function CheckoutPageInner() {
     landmark: "",
   });
   const [selectedDelivery, setSelectedDelivery] = useState("standard");
-  const [selectedPayment, setSelectedPayment] = useState<SupportedPaymentMethod>("KHALTI");
+  const [selectedPayment, setSelectedPayment] = useState<SupportedPaymentMethod>("COD");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const initialCoupon = searchParams?.get("coupon") || "";
   const [appliedCoupon, setAppliedCoupon] = useState(initialCoupon);
@@ -52,21 +57,24 @@ function CheckoutPageInner() {
 
   const deliveryOptions = useMemo(
     () => [
-      { id: "standard", name: t("standard_delivery"), time: t("delivery_days_standard"), price: 100 },
-      { id: "express", name: t("express_delivery"), time: t("delivery_days_express"), price: 250 },
-      { id: "pickup", name: t("store_pickup"), time: t("same_day"), price: 0 },
+      { id: "standard", name: t("standard_delivery"), time: t("delivery_days_standard"), price: 100, promise: "Order before 6 PM for priority dispatch" },
+      { id: "express", name: t("express_delivery"), time: t("delivery_days_express"), price: 250, promise: "Fastest delivery window for urgent orders" },
+      { id: "pickup", name: t("store_pickup"), time: t("same_day"), price: 0, promise: "Collect today when your order is packed" },
     ],
     [t],
   );
 
   const paymentMethods = useMemo(
     () => [
-      { id: "ESEWA", name: "eSewa", description: t("pay_via_esewa") },
-      { id: "KHALTI", name: "Khalti", description: t("digital_wallet") },
-      { id: "CONNECTIPS", name: "connectIPS", description: t("pay_from_bank_account") },
-      { id: "FONEPAY", name: "Fonepay", description: t("pay_via_fonepay") },
-      { id: "LOCAL_CARD", name: t("local_cards"), description: t("local_cards_via_khalti") },
-      { id: "COD", name: "Cash on Delivery", description: t("pay_on_receive") },
+      { id: "COD", name: "Cash on Delivery", description: "Pay after your package reaches you.", icon: Banknote, recommended: true },
+      { id: "ESEWA", name: "eSewa", description: t("pay_via_esewa"), icon: Smartphone },
+      { id: "KHALTI", name: "Khalti", description: t("digital_wallet"), icon: Wallet },
+      { id: "FONEPAY", name: "Fonepay", description: t("pay_via_fonepay"), icon: QrCode },
+      { id: "CONNECTIPS", name: "connectIPS", description: t("pay_from_bank_account"), icon: Landmark },
+      { id: "LOCAL_CARD", name: t("local_cards"), description: t("local_cards_via_khalti"), icon: CreditCard },
+      { id: "NEPALPAY_QR", name: "NepalPay QR", description: "QR payment option for Nepal banking apps.", icon: QrCode, comingSoon: true },
+      { id: "IMEPAY", name: "IME Pay", description: "Wallet payment option for Nepal shoppers.", icon: Smartphone, comingSoon: true },
+      { id: "PRABHUPAY", name: "PrabhuPay", description: "Wallet payment option for Nepal shoppers.", icon: Smartphone, comingSoon: true },
     ],
     [t],
   );
@@ -105,7 +113,7 @@ function CheckoutPageInner() {
                 return current;
               }
 
-              return (Object.entries(paymentConfig.methods).find(([, enabled]) => enabled)?.[0] || "COD") as SupportedPaymentMethod;
+              return paymentConfig.methods.COD ? "COD" : ((Object.entries(paymentConfig.methods).find(([, enabled]) => enabled)?.[0] || "COD") as SupportedPaymentMethod);
             });
           }
         }
@@ -151,6 +159,16 @@ function CheckoutPageInner() {
   );
   const shipping = total >= freeDeliveryThreshold ? 0 : selectedDeliveryOption.price;
   const grandTotal = total - couponDiscount + shipping;
+  const amountToFreeDelivery = Math.max(0, freeDeliveryThreshold - total);
+  const freeDeliveryLine = amountToFreeDelivery
+    ? `Add ${formatPriceNpr(amountToFreeDelivery)} more and we cover standard delivery.`
+    : "Order before 6 PM and standard delivery is on us.";
+
+  const getDeliveryPriceLabel = (option: (typeof deliveryOptions)[number]) => {
+    if (option.id === "pickup") return "No pickup charge";
+    if (total >= freeDeliveryThreshold && option.id === "standard") return "Delivery on us";
+    return formatPriceNpr(option.price);
+  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -419,57 +437,103 @@ function CheckoutPageInner() {
               </div>
 
               <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
-                <h2 className="mb-6 flex items-center gap-3 text-[20px] font-semibold">
-                  <Truck className="h-5 w-5 text-fb-pink" />
-                  {t("delivery_method")}
-                </h2>
+                <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <h2 className="flex items-center gap-3 text-[20px] font-semibold">
+                    <Truck className="h-5 w-5 text-fb-pink" />
+                    {t("delivery_method")}
+                  </h2>
+                  <span className="text-[12px] font-medium text-success">{freeDeliveryLine}</span>
+                </div>
 
                 <div className="space-y-3">
                   {deliveryOptions.map((option) => (
                     <label
                       key={option.id}
-                      className={`flex items-center justify-between rounded-[8px] border p-4 transition-shadow ${selectedDelivery === option.id ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light hover:shadow-[var(--shadow-sm)]"}`}
+                      className={`grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-[8px] border p-4 transition-shadow ${selectedDelivery === option.id ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light hover:shadow-[var(--shadow-sm)]"}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <input type="radio" name="delivery" value={option.id} checked={selectedDelivery === option.id} onChange={(event) => setSelectedDelivery(event.target.value)} />
-                        <div>
-                          <p className="font-semibold text-text-primary">{option.name}</p>
-                          <p className="text-[13px] text-text-muted">{option.time}</p>
-                        </div>
+                      <input
+                        type="radio"
+                        name="delivery"
+                        value={option.id}
+                        checked={selectedDelivery === option.id}
+                        onChange={(event) => setSelectedDelivery(event.target.value)}
+                        className="h-[18px] w-[18px]"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold leading-5 text-text-primary">{option.name}</p>
+                        <p className="mt-1 text-[13px] text-text-muted">{option.time} • {option.promise}</p>
                       </div>
-                      <span className="font-semibold text-text-primary">{option.price === 0 ? t("free") : formatPriceNpr(option.price)}</span>
+                      <span className="max-w-[150px] text-right text-[14px] font-semibold leading-5 text-text-primary">{getDeliveryPriceLabel(option)}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
-                <h2 className="mb-6 flex items-center gap-3 text-[20px] font-semibold">
-                  <Wallet className="h-5 w-5 text-fb-pink" />
-                  {t("payment_method")}
-                </h2>
+                <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <h2 className="flex items-center gap-3 text-[20px] font-semibold">
+                    <Wallet className="h-5 w-5 text-fb-pink" />
+                    {t("payment_method")}
+                  </h2>
+                  <span className="rounded-full bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-success">
+                    COD recommended
+                  </span>
+                </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  {paymentMethods.filter((method) => availablePayments[method.id as SupportedPaymentMethod]).map((method) => (
+                <div className="grid gap-3">
+                  {paymentMethods.map((method) => {
+                    const Icon = method.icon;
+                    const supportedPaymentId = isCheckoutPaymentId(method.id) ? method.id : null;
+                    const isEnabled = supportedPaymentId ? availablePayments[supportedPaymentId] : false;
+                    const isSelected = Boolean(supportedPaymentId && selectedPayment === supportedPaymentId);
+                    const disabled = !isEnabled;
+
+                    return (
                     <label
                       key={method.id}
-                      className={`rounded-[8px] border p-4 transition-shadow ${selectedPayment === method.id ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light hover:shadow-[var(--shadow-sm)]"}`}
+                      className={`grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] border p-4 transition-shadow ${
+                        isSelected
+                          ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]"
+                          : method.recommended
+                            ? "border-[rgba(15,138,109,0.25)] bg-[var(--green-bg)]/35 hover:shadow-[var(--shadow-sm)]"
+                            : disabled
+                              ? "border-border-light bg-[var(--bg-surface)] opacity-70"
+                              : "border-border-light hover:shadow-[var(--shadow-sm)]"
+                      } ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
                     >
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="radio"
-                          name="payment"
-                          value={method.id}
-                          checked={selectedPayment === method.id}
-                          onChange={(event) => setSelectedPayment(event.target.value as SupportedPaymentMethod)}
-                        />
-                        <div>
-                          <p className="font-semibold text-text-primary">{method.name}</p>
-                          <p className="text-[13px] text-text-muted">{method.description}</p>
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={method.id}
+                        checked={isSelected}
+                        disabled={disabled}
+                        onChange={(event) => {
+                          if (isCheckoutPaymentId(event.target.value)) {
+                            setSelectedPayment(event.target.value);
+                          }
+                        }}
+                        className="h-[18px] w-[18px]"
+                      />
+                      <span className={`flex h-10 w-10 items-center justify-center rounded-full ${method.recommended ? "bg-white text-success" : "bg-[var(--bg-surface)] text-fb-pink"}`}>
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-[15px] font-semibold leading-5 text-text-primary">{method.name}</p>
+                          {method.recommended ? (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-success">
+                              Preferred
+                            </span>
+                          ) : null}
                         </div>
+                        <p className="mt-1 text-[13px] leading-5 text-text-muted">{method.description}</p>
                       </div>
+                      <span className={`text-right text-[12px] font-semibold ${disabled ? "text-text-muted" : "text-success"}`}>
+                        {disabled ? "Setup soon" : method.recommended ? "Pay later" : "Online"}
+                      </span>
                     </label>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -504,7 +568,7 @@ function CheckoutPageInner() {
                   </div>
                   <div className="flex justify-between text-[14px]">
                     <span className="text-text-muted">{t("shipping")} ({selectedDeliveryOption.name})</span>
-                    <span>{shipping === 0 ? t("free") : formatPriceNpr(shipping)}</span>
+                    <span>{shipping === 0 ? "Delivery on us" : formatPriceNpr(shipping)}</span>
                   </div>
                 </div>
 

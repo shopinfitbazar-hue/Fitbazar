@@ -2,7 +2,7 @@
 
 import { useCallback, useDeferredValue, useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { CheckCircle2, ImagePlus, Search, Sparkles, Trash2 } from "lucide-react";
+import { BadgePercent, CalendarDays, CheckCircle2, ImagePlus, Search, Sparkles, Trash2 } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
 import { useLanguage } from "@/lib/LanguageContext";
 import VendorSidebar from "@/components/VendorSidebar";
@@ -308,15 +308,15 @@ export default function VendorProductsPage() {
               </div>
               <div>
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("price")}</label>
-                <input type="number" value={form.price} onChange={(event) => setForm((current) => ({ ...current, price: Number(event.target.value) }))} />
+                <input type="number" value={form.price || ""} onChange={(event) => setForm((current) => ({ ...current, price: Number(event.target.value) }))} />
               </div>
               <div>
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("original_price")}</label>
-                <input type="number" value={form.compareAtPrice} onChange={(event) => setForm((current) => ({ ...current, compareAtPrice: Number(event.target.value) }))} />
+                <input type="number" value={form.compareAtPrice || ""} onChange={(event) => setForm((current) => ({ ...current, compareAtPrice: Number(event.target.value) }))} />
               </div>
               <div>
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("stock")}</label>
-                <input type="number" value={form.stock} onChange={(event) => setForm((current) => ({ ...current, stock: Number(event.target.value) }))} />
+                <input type="number" value={form.stock || ""} onChange={(event) => setForm((current) => ({ ...current, stock: Number(event.target.value) }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 flex items-center gap-2 text-[12px] uppercase tracking-[1px] text-text-muted">
@@ -375,23 +375,46 @@ export default function VendorProductsPage() {
                 <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("colors_csv")}</label>
                 <input value={form.colors} onChange={(event) => setForm((current) => ({ ...current, colors: event.target.value }))} />
               </div>
-              <div className="md:col-span-2 flex gap-4">
-                {[
-                  { key: "isFestivalSale", label: t("festival_sale") },
-                  { key: "isYearRoundSale", label: t("always_on") },
-                ].map((item) => (
-                  <label key={item.key} className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={form[item.key as keyof typeof form] as boolean}
-                      onChange={(event) => setForm((current) => ({ ...current, [item.key]: event.target.checked }))}
-                    />
-                    <span className="text-[13px] text-text-secondary">{item.label}</span>
-                  </label>
-                ))}
-                <span className="rounded-full bg-[var(--amber-bg)] px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-orange">
-                  Draft until admin approves
-                </span>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Selling options</label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    { key: "isFestivalSale", label: t("festival_sale"), hint: "Seasonal campaign", icon: CalendarDays },
+                    { key: "isYearRoundSale", label: t("always_on"), hint: "Keep discount live", icon: BadgePercent },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const active = form[item.key as keyof typeof form] as boolean;
+
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setForm((current) => ({ ...current, [item.key]: !active }))}
+                        className={`flex min-h-[74px] items-center gap-3 rounded-[8px] border p-4 text-left transition-shadow ${
+                          active ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light bg-[var(--bg-surface)] hover:shadow-[var(--shadow-sm)]"
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${active ? "bg-white text-fb-pink" : "bg-white text-text-muted"}`}>
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[13px] font-semibold leading-5 text-text-primary">{item.label}</span>
+                          <span className="mt-0.5 block text-[12px] leading-4 text-text-muted">{item.hint}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <div className="flex min-h-[74px] items-center gap-3 rounded-[8px] border border-[rgba(188,108,37,0.18)] bg-[var(--amber-bg)] p-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-fb-orange">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-semibold leading-5 text-text-primary">Admin approval</span>
+                      <span className="mt-0.5 block text-[12px] leading-4 text-fb-orange">Draft until approved</span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-5 flex gap-3">

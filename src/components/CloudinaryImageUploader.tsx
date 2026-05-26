@@ -242,6 +242,7 @@ export default function CloudinaryImageUploader({
           <div className="mt-4 grid grid-cols-4 gap-2 md:grid-cols-6">
             {selectedFiles.map((file) => (
               <div key={file.url} className="relative aspect-[3/4] overflow-hidden rounded-[6px] bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element -- Object URLs are local upload previews, not remote product media. */}
                 <img src={file.url} alt={file.name} className="h-full w-full object-cover" />
               </div>
             ))}

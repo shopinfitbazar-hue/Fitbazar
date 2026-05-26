@@ -114,6 +114,9 @@ model Vendor {
   orders        Order[]
   reviews       VendorReview[]
   createdAt     DateTime  @default(now())
+
+  @@index([isApproved, isSuspended, isPartnered])
+  @@index([isTopShop, createdAt])
 }
 
 model VerificationToken {
@@ -167,6 +170,12 @@ model Product {
   reviews     Review[]
   wishlist    Wishlist[]
   cartItems   CartItem[]
+
+  @@index([status, isActive, createdAt])
+  @@index([status, category])
+  @@index([status, discountPct])
+  @@index([status, totalSold])
+  @@index([vendorId, status])
 }
 
 model Order {
@@ -330,6 +339,9 @@ model Notification {
   isRead    Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
 }
 
 model SupportTicket {

@@ -1,4 +1,12 @@
 import assert from "node:assert/strict";
+import {
+  buildBroadcastRecipientReport,
+  escapeHtml,
+  getRecipientNotificationLink,
+  normalizeBroadcastAudience,
+  normalizeBroadcastLink,
+  validateBroadcastContent,
+} from "../src/lib/admin-notifications";
 import { categoryQueryValue, normalizeCategory } from "../src/lib/categories";
 import { runCartStateTests } from "./cart-state.test";
 import { getGoogleOAuthCallbackUrls, hasConfiguredGoogleOAuth } from "../src/lib/google-auth";
@@ -186,6 +194,31 @@ run("safe image urls reject local machine hosts and malformed values", () => {
   assert.equal(getSafeImageUrl("not-a-url", fallback), fallback);
   assert.equal(getSafeImageUrl("/images/local-banner.jpg", fallback), "/images/local-banner.jpg");
   assert.equal(getSafeImageUrl("https://images.example.com/banner.jpg", fallback), "https://images.example.com/banner.jpg");
+});
+
+run("admin broadcast notifications keep links local and content bounded", () => {
+  assert.equal(normalizeBroadcastAudience("VENDORS"), "VENDORS");
+  assert.equal(normalizeBroadcastAudience("bad-value"), "CUSTOMERS");
+  assert.equal(normalizeBroadcastLink("https://evil.example/phish"), "/account/notifications");
+  assert.equal(normalizeBroadcastLink("//evil.example/phish"), "/account/notifications");
+  assert.equal(normalizeBroadcastLink("/products?tag=sale"), "/products?tag=sale");
+  assert.equal(getRecipientNotificationLink("VENDOR", "/account/notifications"), "/vendor/dashboard");
+  assert.equal(getRecipientNotificationLink("CUSTOMER", "/account/notifications"), "/account/notifications");
+  assert.equal(escapeHtml("<script>alert('x')</script>"), "&lt;script&gt;alert(&#039;x&#039;)&lt;/script&gt;");
+  assert.deepEqual(validateBroadcastContent({ title: "", message: "hello" }), { ok: false, error: "Title and message are required." });
+  assert.equal(validateBroadcastContent({ title: "Sale", message: "hello" }).ok, true);
+});
+
+run("admin broadcast recipient report is admin-only and starts without email leakage", () => {
+  const report = buildBroadcastRecipientReport([
+    { id: "u1", name: "Asha", email: "asha@example.com", role: "CUSTOMER" },
+    { id: "u2", name: null, email: "vendor@example.com", role: "VENDOR" },
+  ]);
+
+  assert.equal(report.length, 2);
+  assert.equal(report[0].notificationSent, true);
+  assert.equal(report[0].emailSent, false);
+  assert.equal(report[1].role, "VENDOR");
 });
 
 run("token hashing is deterministic and opaque", () => {

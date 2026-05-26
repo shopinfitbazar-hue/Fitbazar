@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, CheckCircle2, CircleDollarSign, LayoutDashboard, Package, Send, ShoppingCart, Users } from "lucide-react";
+import { BadgePercent, BellRing, CalendarDays, CheckCircle2, CircleDollarSign, LayoutDashboard, Package, Send, ShoppingCart, Star, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
@@ -190,6 +190,15 @@ interface AdminVendorReview {
   };
 }
 
+type BroadcastRecipient = {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  notificationSent: boolean;
+  emailSent: boolean;
+};
+
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -210,6 +219,8 @@ export default function AdminDashboard() {
     link: "/account/notifications",
     sendEmail: true,
   });
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastRecipients, setBroadcastRecipients] = useState<BroadcastRecipient[]>([]);
   const [settings, setSettings] = useState<SiteSettingsState>({
     commissionPct: 8,
     minFreeDelivery: 2000,
@@ -364,20 +375,36 @@ export default function AdminDashboard() {
   };
 
   const sendBroadcast = async () => {
-    const response = await fetch("/api/admin/notifications", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(broadcastDraft),
-    });
-    const result = (await response.json().catch(() => ({}))) as { error?: string; notified?: number; emailed?: number };
+    setBroadcastSending(true);
+    setBroadcastRecipients([]);
 
-    if (!response.ok) {
-      setMessage(result.error || "Failed to send notification.");
-      return;
+    try {
+      const response = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(broadcastDraft),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        notified?: number;
+        emailed?: number;
+        recipients?: BroadcastRecipient[];
+        privacy?: string;
+      };
+
+      if (!response.ok) {
+        setMessage(result.error || "Failed to send notification.");
+        return;
+      }
+
+      setBroadcastRecipients(result.recipients || []);
+      setMessage(
+        `Notification sent to ${result.notified || 0} account${result.notified === 1 ? "" : "s"}${result.emailed ? ` and emailed privately to ${result.emailed}` : ""}.`,
+      );
+      setBroadcastDraft((current) => ({ ...current, title: "", message: "" }));
+    } finally {
+      setBroadcastSending(false);
     }
-
-    setMessage(`Notification sent to ${result.notified || 0} account${result.notified === 1 ? "" : "s"}${result.emailed ? ` and emailed to ${result.emailed}` : ""}.`);
-    setBroadcastDraft((current) => ({ ...current, title: "", message: "" }));
   };
 
   const editProduct = (product: AdminProduct) => {
@@ -838,16 +865,16 @@ export default function AdminDashboard() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("price")}</label>
-                    <input type="number" value={productDraft.price} onChange={(event) => setProductDraft((current) => ({ ...current, price: Number(event.target.value) }))} />
+                    <input type="number" value={productDraft.price || ""} onChange={(event) => setProductDraft((current) => ({ ...current, price: Number(event.target.value) }))} />
                   </div>
                   <div>
                     <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("original_price")}</label>
-                    <input type="number" value={productDraft.compareAtPrice} onChange={(event) => setProductDraft((current) => ({ ...current, compareAtPrice: Number(event.target.value) }))} />
+                    <input type="number" value={productDraft.compareAtPrice || ""} onChange={(event) => setProductDraft((current) => ({ ...current, compareAtPrice: Number(event.target.value) }))} />
                   </div>
                 </div>
                 <div>
                   <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">{t("stock")}</label>
-                  <input type="number" value={productDraft.stock} onChange={(event) => setProductDraft((current) => ({ ...current, stock: Number(event.target.value) }))} />
+                  <input type="number" value={productDraft.stock || ""} onChange={(event) => setProductDraft((current) => ({ ...current, stock: Number(event.target.value) }))} />
                 </div>
               </div>
               <div className="grid gap-4">
@@ -897,19 +924,40 @@ export default function AdminDashboard() {
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 text-[13px] text-text-secondary">
-                    <input type="checkbox" checked={productDraft.isFeatured} onChange={(event) => setProductDraft((current) => ({ ...current, isFeatured: event.target.checked }))} />
-                    {t("feature")}
-                  </label>
-                  <label className="flex items-center gap-2 text-[13px] text-text-secondary">
-                    <input type="checkbox" checked={productDraft.isFestivalSale} onChange={(event) => setProductDraft((current) => ({ ...current, isFestivalSale: event.target.checked }))} />
-                    {t("festival_sale")}
-                  </label>
-                  <label className="flex items-center gap-2 text-[13px] text-text-secondary">
-                    <input type="checkbox" checked={productDraft.isYearRoundSale} onChange={(event) => setProductDraft((current) => ({ ...current, isYearRoundSale: event.target.checked }))} />
-                    {t("all_year_sale")}
-                  </label>
+                <div>
+                  <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Selling options</label>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {[
+                      { key: "isFeatured", label: t("feature"), hint: "Homepage boost", icon: Star },
+                      { key: "isFestivalSale", label: t("festival_sale"), hint: "Seasonal campaign", icon: CalendarDays },
+                      { key: "isYearRoundSale", label: t("all_year_sale"), hint: "Keep discount live", icon: BadgePercent },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const active = productDraft[item.key as keyof typeof productDraft] as boolean;
+
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setProductDraft((current) => ({ ...current, [item.key]: !active }))}
+                          className={`flex min-h-[74px] items-center gap-3 rounded-[8px] border p-4 text-left transition-shadow ${
+                            active ? "border-fb-pink bg-fb-pink-bg shadow-[var(--shadow-sm)]" : "border-border-light bg-[var(--bg-surface)] hover:shadow-[var(--shadow-sm)]"
+                          }`}
+                        >
+                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${active ? "bg-white text-fb-pink" : "bg-white text-text-muted"}`}>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[13px] font-semibold leading-5 text-text-primary">{item.label}</span>
+                            <span className="mt-0.5 block text-[12px] leading-4 text-text-muted">{item.hint}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
                   <label className="flex items-center gap-2 text-[13px] text-text-secondary">
                     <span>{t("product_status")}</span>
                     <select
@@ -1101,12 +1149,38 @@ export default function AdminDashboard() {
                   />
                   Also email
                 </label>
-                <button type="button" onClick={sendBroadcast} className="btn-primary inline-flex items-center gap-2">
+                <button type="button" onClick={sendBroadcast} disabled={broadcastSending} className="btn-primary inline-flex items-center gap-2 disabled:opacity-70">
                   <Send className="h-4 w-4" />
-                  Send
+                  {broadcastSending ? "Sending..." : "Send"}
                 </button>
               </div>
             </div>
+            {broadcastRecipients.length ? (
+              <div className="mt-4 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-text-primary">Sent recipients</h3>
+                    <p className="mt-1 text-[12px] text-text-muted">
+                      Admin-only list. Each email was sent separately, so customers cannot see other recipients.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-text-secondary">
+                    {broadcastRecipients.length} website • {broadcastRecipients.filter((recipient) => recipient.emailSent).length} email
+                  </span>
+                </div>
+                <div className="mt-3 max-h-64 overflow-y-auto rounded-[8px] border border-border-light bg-card">
+                  {broadcastRecipients.map((recipient) => (
+                    <div key={recipient.id} className="grid gap-2 border-b border-border-light px-4 py-3 text-[13px] last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] md:items-center">
+                      <span className="font-medium text-text-primary">{recipient.name || "Unnamed account"}</span>
+                      <span className="break-all text-text-secondary">{recipient.email}</span>
+                      <span className={`badge ${recipient.emailSent ? "badge-green" : "badge-amber"}`}>
+                        {recipient.emailSent ? "Email sent" : "Website only"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div id="coupons" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">

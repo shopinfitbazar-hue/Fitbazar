@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { categoryQueryValue, normalizeCategory } from "@/lib/categories";
 import { normalizeAuthCallbackPath } from "@/lib/auth-redirect";
+import NotificationBell from "@/components/NotificationBell";
 
 const desktopLinks = [
   { label: "Men", href: `/products?category=${encodeURIComponent(categoryQueryValue("Men"))}` },
@@ -130,6 +131,7 @@ export default function Header() {
         ),
         items: [
           { label: t("admin_panel"), href: "/admin" },
+          { label: t("notifications"), href: "/account/notifications" },
           { label: t("help_support"), href: "/help" },
           { label: t("logout"), href: "#logout" },
         ],
@@ -153,6 +155,7 @@ export default function Header() {
           { label: t("dashboard"), href: "/vendor/dashboard" },
           { label: t("my_products"), href: "/vendor/products" },
           { label: t("my_orders"), href: "/vendor/orders" },
+          { label: t("notifications"), href: "/account/notifications" },
           { label: t("help_support"), href: "/help" },
           { label: t("logout"), href: "#logout" },
         ],
@@ -170,6 +173,7 @@ export default function Header() {
         { label: t("my_orders"), href: "/account/orders" },
         { label: t("my_profile"), href: "/account/dashboard" },
         { label: t("wishlist"), href: "/account/wishlist" },
+        { label: t("notifications"), href: "/account/notifications" },
         { label: t("help_support"), href: "/help" },
         { label: t("logout"), href: "#logout" },
       ],
@@ -303,6 +307,8 @@ export default function Header() {
                 EN | नेपाली
               </button>
 
+              {sessionUser ? <NotificationBell /> : null}
+
               <div
                 className="relative"
                 onMouseEnter={() => setShowProfileMenu(true)}
@@ -374,6 +380,11 @@ export default function Header() {
                 </span>
               ) : null}
             </Link>
+            {sessionUser ? (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]">
+                <NotificationBell />
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
