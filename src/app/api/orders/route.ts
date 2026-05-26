@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createOrdersFromCheckoutPayload, mapCheckoutErrorToResponse, prepareCheckoutContext, type CheckoutPayload } from "@/lib/checkout-server";
 import { isSupportedPaymentMethod } from "@/lib/payment-types";
 import { isDeliveryMethod } from "@/lib/shipping";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
+
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const orders = await prisma.order.findMany({
-      where: { customerId: session.user.id },
+      where: { customerId: auth.session.user.id },
       include: {
         items: {
           include: {
@@ -50,10 +53,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = (await req.json()) as Partial<CheckoutPayload>;
@@ -78,7 +81,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unsupported delivery method." }, { status: 400 });
     }
 
-    const context = await prepareCheckoutContext(session.user.id, {
+    const context = await prepareCheckoutContext(auth.session.user.id, {
       items: body.items,
       address: body.address,
       paymentMethod,

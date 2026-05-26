@@ -31,12 +31,19 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<WishlistItem[]>([]);
   const mergedGuestRef = useRef<string | null>(null);
+  const userRole = session?.user?.role;
 
   useEffect(() => {
     if (status === "loading") return;
 
     async function loadWishlist() {
       if (session?.user?.id) {
+        if (userRole !== "CUSTOMER") {
+          setItems([]);
+          localStorage.removeItem(GUEST_WISHLIST_STORAGE_KEY);
+          return;
+        }
+
         const guestItems = readGuestWishlist();
         const mergeKey = `${session.user.id}:${guestItems.length}`;
 
@@ -96,7 +103,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
 
     void loadWishlist();
-  }, [session?.user?.id, status]);
+  }, [session?.user?.id, status, userRole]);
 
   useEffect(() => {
     if (status !== "unauthenticated") return;
@@ -104,6 +111,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   }, [items, status]);
 
   const addItem = useCallback((item: Omit<WishlistItem, "id">) => {
+    if (session?.user?.id && userRole !== "CUSTOMER") {
+      setItems([]);
+      return;
+    }
+
     const optimisticId = `wishlist_${item.productId}`;
 
     setItems((prev) =>
@@ -159,7 +171,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       .catch(() => {
         setItems((prev) => prev.filter((entry) => entry.id !== optimisticId));
       });
-  }, [session?.user?.id]);
+  }, [session?.user?.id, userRole]);
 
   const removeItem = useCallback((productId: string) => {
     const previous = items;

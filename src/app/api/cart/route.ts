@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUserSession } from "@/lib/server-auth";
+import { requireCustomerSession } from "@/lib/server-auth";
 import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 import { isPublicProductStatus } from "@/lib/product-status";
 
 export const dynamic = "force-dynamic";
+
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
 
 function serializeCartItem(item: {
   id: string;
@@ -68,9 +72,9 @@ async function fetchProductsForCart(productIds: string[]) {
 
 export async function GET() {
   try {
-    const auth = await requireUserSession();
+    const auth = await requireCustomerSession();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const items = await prisma.cartItem.findMany({
@@ -109,9 +113,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireUserSession();
+    const auth = await requireCustomerSession();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = (await request.json()) as {
@@ -212,9 +216,9 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   try {
-    const auth = await requireUserSession();
+    const auth = await requireCustomerSession();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     await prisma.cartItem.deleteMany({

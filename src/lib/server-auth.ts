@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getVendorAccessState } from "@/lib/vendor-access";
 
 type AuthError =
-  | { error: "Unauthorized" | "Forbidden" | "Vendor account not linked" | "Vendor not found" }
+  | { error: "Unauthorized" | "Forbidden" | "Customer account required" | "Vendor account not linked" | "Vendor not found" }
   | { error: "Vendor suspended" }
   | { error: "Vendor pending approval" };
 type UserSessionResult = { session: Session };
@@ -33,6 +33,17 @@ export async function requireUserSession(): Promise<AuthError | UserSessionResul
   }
 
   return { session };
+}
+
+export async function requireCustomerSession(): Promise<AuthError | UserSessionResult> {
+  const sessionResult = await requireUserSession();
+  if ("error" in sessionResult) return sessionResult;
+
+  if (sessionResult.session.user.role !== "CUSTOMER") {
+    return { error: "Customer account required" };
+  }
+
+  return sessionResult;
 }
 
 export async function requireVendorSession(

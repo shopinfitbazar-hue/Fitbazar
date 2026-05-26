@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,11 +18,14 @@ export default function CartPage() {
   const { addItem: addWishlistItem } = useWishlist();
   const { addToast } = useToast();
   const { t } = useLanguage();
+  const { data: session } = useSession();
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPct: number } | null>(null);
   const delivery = total > 2000 ? 0 : 100;
   const finalTotal = total - couponDiscount + delivery;
+  const accountRole = session?.user?.role;
+  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -65,7 +69,18 @@ export default function CartPage() {
     <main className="bg-page">
       <Header />
       <div className="container py-4">
-        {items.length === 0 ? (
+        {blocksShopping ? (
+          <div className="rounded-[8px] bg-card px-4 py-16 text-center shadow-[var(--shadow-sm)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--bg-surface)]">
+              <ShoppingBag className="h-8 w-8 text-text-muted" />
+            </div>
+            <h2 className="mt-4 text-[18px] font-semibold text-text-primary">{t("customer_account_required")}</h2>
+            <p className="mx-auto mt-2 max-w-md text-[14px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
+            <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-5 inline-flex">
+              {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+            </Link>
+          </div>
+        ) : items.length === 0 ? (
           <div className="rounded-[8px] bg-card px-4 py-16 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--bg-surface)]">
               <ShoppingBag className="h-8 w-8 text-text-muted" />
@@ -77,8 +92,9 @@ export default function CartPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[65%_35%]">
-            <section className="rounded-[8px] bg-card">
+          <>
+            <div className="grid gap-4 lg:grid-cols-[65%_35%]">
+              <section className="rounded-[8px] bg-card">
               <div className="border-b border-border-light px-4 py-4">
                 <h1 className="text-[20px] font-semibold text-text-primary">{t("my_bag").toUpperCase()} ({items.length} {t("items_label")})</h1>
               </div>
@@ -145,9 +161,9 @@ export default function CartPage() {
                   </p>
                 ) : null}
               </div>
-            </section>
+              </section>
 
-            <aside className="h-fit rounded-[8px] bg-card p-4 lg:sticky lg:top-[76px]">
+              <aside className="h-fit rounded-[8px] bg-card p-4 lg:sticky lg:top-[76px]">
               <div className="border-b border-border-light pb-3 text-[14px] font-semibold uppercase tracking-[1px] text-text-primary">
                 {t("order_summary")}
               </div>
@@ -180,8 +196,20 @@ export default function CartPage() {
               <Link href={`/checkout${appliedCoupon ? `?coupon=${encodeURIComponent(appliedCoupon.code)}` : ""}`} className="btn-primary mt-4 flex h-12 w-full items-center justify-center text-[16px]">
                 {t("proceed_checkout")}
               </Link>
-            </aside>
-          </div>
+              </aside>
+            </div>
+            <div className="fixed inset-x-0 bottom-12 z-[900] border-t border-border-light bg-card/95 px-3 py-3 shadow-[0_-12px_30px_rgba(32,26,23,0.12)] backdrop-blur lg:hidden">
+              <div className="mx-auto flex max-w-site items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("total_amount")}</p>
+                  <p className="text-[17px] font-bold leading-5 text-text-primary">{formatPriceNpr(finalTotal)}</p>
+                </div>
+                <Link href={`/checkout${appliedCoupon ? `?coupon=${encodeURIComponent(appliedCoupon.code)}` : ""}`} className="btn-primary flex h-11 shrink-0 items-center justify-center px-5 text-[12px]">
+                  {t("proceed_checkout")}
+                </Link>
+              </div>
+            </div>
+          </>
         )}
       </div>
       <Footer />

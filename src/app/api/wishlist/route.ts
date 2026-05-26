@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
+
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const wishlist = await prisma.wishlist.findMany({
-      where: { userId: session.user.id },
+      where: { userId: auth.session.user.id },
       include: {
         product: {
           include: {
@@ -51,9 +54,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = (await request.json()) as { productId?: string };
@@ -63,14 +66,14 @@ export async function POST(request: Request) {
 
     const item = await prisma.wishlist.upsert({
       where: {
-        userId_productId: {
-          userId: session.user.id,
+          userId_productId: {
+          userId: auth.session.user.id,
           productId: body.productId,
         },
       },
       update: {},
       create: {
-        userId: session.user.id,
+        userId: auth.session.user.id,
         productId: body.productId,
       },
     });

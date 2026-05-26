@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUserSession } from "@/lib/server-auth";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const auth = await requireUserSession();
+    const auth = await requireCustomerSession();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const { id } = await params;
@@ -59,9 +63,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const auth = await requireUserSession();
+    const auth = await requireCustomerSession();
     if ("error" in auth) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const { id } = await params;

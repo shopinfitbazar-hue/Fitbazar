@@ -111,6 +111,15 @@ function normalizeCoupon(record: {
 }
 
 export async function prepareCheckoutContext(customerId: string, payload: CheckoutPayload): Promise<PreparedCheckoutContext> {
+  const customer = await prisma.user.findUnique({
+    where: { id: customerId },
+    select: { role: true },
+  });
+
+  if (!customer || customer.role !== "CUSTOMER") {
+    throw buildCheckoutError("CUSTOMER_ONLY", "Vendor and admin accounts cannot place customer orders. Please use a customer account to shop.");
+  }
+
   if (!payload.items?.length) {
     throw buildCheckoutError("MISSING_ITEMS", "Your cart is empty.");
   }
@@ -448,6 +457,8 @@ export function mapCheckoutErrorToResponse(error: unknown) {
   }
 
   switch (error.name) {
+    case "CUSTOMER_ONLY":
+      return { status: 403, message: error.message };
     case "MISSING_ITEMS":
     case "MISSING_ADDRESS":
     case "INVALID_PAYMENT_METHOD":

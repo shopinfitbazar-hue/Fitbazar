@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, Menu, Search, ShoppingBag, User, X, ChevronRight } from "lucide-react";
+import { Heart, LayoutDashboard, Menu, Search, ShoppingBag, User, X, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -93,6 +93,7 @@ export default function Header() {
   }, [pathname]);
 
   const role = sessionUser?.role;
+  const canShop = !sessionUser || role === "CUSTOMER";
   const userName = sessionUser?.name || t("welcome");
   const userEmail = sessionUser?.email || "Shop smarter with Fit Bazar";
 
@@ -235,14 +236,14 @@ export default function Header() {
 
       <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
         <div className="container hidden py-3 xl:block">
-          <div className="grid min-h-[72px] grid-cols-[auto_minmax(0,1.2fr)_minmax(260px,0.95fr)_auto] items-center gap-x-4 xl:gap-x-6">
+          <div className="grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_minmax(220px,0.65fr)_auto] items-center gap-x-3 2xl:grid-cols-[auto_minmax(0,1.2fr)_minmax(260px,0.95fr)_auto] 2xl:gap-x-6">
             <Link href="/" className="shrink-0 py-2">
               <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
               <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
             </Link>
 
             <div className="min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-              <nav className="flex min-w-max items-center gap-5 xl:gap-6">
+              <nav className="flex min-w-max items-center gap-3 2xl:gap-6">
                 {desktopLinks.map((link) => {
                   const linkCategory = normalizeCategory(new URLSearchParams(link.href.split("?")[1] || "").get("category"));
                   const active = linkCategory
@@ -254,7 +255,7 @@ export default function Header() {
                     <Link
                       key={link.label}
                       href={link.href}
-                      className={`whitespace-nowrap border-b-2 border-transparent py-1 text-[13px] font-medium uppercase tracking-[0.08em] text-text-primary hover:border-fb-pink hover:text-text-primary ${active ? "border-fb-pink" : ""}`}
+                      className={`whitespace-nowrap border-b-2 border-transparent py-1 text-[12px] font-medium uppercase tracking-[0.05em] text-text-primary hover:border-fb-pink hover:text-text-primary 2xl:text-[13px] 2xl:tracking-[0.08em] ${active ? "border-fb-pink" : ""}`}
                     >
                       {link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}
                     </Link>
@@ -263,7 +264,7 @@ export default function Header() {
               </nav>
             </div>
 
-            <div className="relative min-w-0 w-full max-w-[480px] justify-self-end">
+            <div className="relative min-w-0 w-full max-w-[320px] justify-self-end 2xl:max-w-[480px]">
               <form
                 onSubmit={submitSearch}
                 className={`flex h-10 w-full items-center gap-2 rounded-[20px] border px-4 ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-[#F8F8F8]"}`}
@@ -344,13 +345,21 @@ export default function Header() {
                 )}
               </div>
 
-              <IconLink href="/account/wishlist" label={t("wishlist")} badge={wishlistCount}>
-                <Heart className="h-[22px] w-[22px]" />
-              </IconLink>
+              {canShop ? (
+                <>
+                  <IconLink href="/account/wishlist" label={t("wishlist")} badge={wishlistCount}>
+                    <Heart className="h-[22px] w-[22px]" />
+                  </IconLink>
 
-              <IconLink href="/cart" label={t("bag")} badge={bagCount}>
-                <ShoppingBag className="h-[22px] w-[22px]" />
-              </IconLink>
+                  <IconLink href="/cart" label={t("bag")} badge={bagCount}>
+                    <ShoppingBag className="h-[22px] w-[22px]" />
+                  </IconLink>
+                </>
+              ) : (
+                <IconLink href={role === "ADMIN" ? "/admin" : "/vendor/dashboard"} label={role === "ADMIN" ? t("admin_panel") : t("dashboard")}>
+                  <LayoutDashboard className="h-[22px] w-[22px]" />
+                </IconLink>
+              )}
             </div>
           </div>
         </div>
@@ -372,9 +381,9 @@ export default function Header() {
                 className="min-w-0 flex-1 !border-none !bg-transparent !px-0 !py-0 text-[13px] !shadow-none focus:!border-none focus:!shadow-none"
               />
             </form>
-            <Link href="/cart" className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={t("bag")}>
-              <ShoppingBag className="h-5 w-5 text-text-primary" />
-              {bagCount > 0 ? (
+            <Link href={canShop ? "/cart" : role === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={canShop ? t("bag") : t("dashboard")}>
+              {canShop ? <ShoppingBag className="h-5 w-5 text-text-primary" /> : <LayoutDashboard className="h-5 w-5 text-text-primary" />}
+              {canShop && bagCount > 0 ? (
                 <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-fb-pink px-1 text-[9px] font-semibold text-white">
                   {bagCount}
                 </span>
@@ -450,33 +459,37 @@ export default function Header() {
             </div>
           ) : null}
 
-          {desktopLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
-            >
-              <span>{link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}</span>
-              <ChevronRight className="h-4 w-4 text-text-muted" />
-            </Link>
-          ))}
-          <Link
-            href="/account/wishlist"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
-          >
-            <span>{t("wishlist")}</span>
-            <ChevronRight className="h-4 w-4 text-text-muted" />
-          </Link>
-          <Link
-            href="/cart"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
-          >
-            <span>{t("bag")}</span>
-            <ChevronRight className="h-4 w-4 text-text-muted" />
-          </Link>
+          {canShop ? (
+            <>
+              {desktopLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
+                >
+                  <span>{link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}</span>
+                  <ChevronRight className="h-4 w-4 text-text-muted" />
+                </Link>
+              ))}
+              <Link
+                href="/account/wishlist"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
+              >
+                <span>{t("wishlist")}</span>
+                <ChevronRight className="h-4 w-4 text-text-muted" />
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
+              >
+                <span>{t("bag")}</span>
+                <ChevronRight className="h-4 w-4 text-text-muted" />
+              </Link>
+            </>
+          ) : null}
           <Link
             href="/help"
             onClick={() => setMobileOpen(false)}

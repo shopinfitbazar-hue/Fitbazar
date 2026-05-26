@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Heart, Star } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { useWishlist } from "@/lib/wishlist";
@@ -67,12 +68,14 @@ function ProductCard({
   const { t } = useLanguage();
   const { addItem, removeItem, isInWishlist } = useWishlist();
   const { addToast } = useToast();
+  const { data: session } = useSession();
   const router = useRouter();
   const [animateHeart, setAnimateHeart] = useState(false);
   const href = `/products/${slug || id}`;
   const image = getShowcaseImageUrl(getSafeImageUrl(images[0], FALLBACK_PRODUCT_IMAGE));
   const vendorPath = `/shop/${vendorSlug || slugify(vendorName)}`;
   const wishlisted = isInWishlist(id);
+  const canShop = !session?.user || session.user.role === "CUSTOMER";
 
   const badges = useMemo(() => {
     const items: Array<{ label: string; className: string }> = [];
@@ -148,14 +151,16 @@ function ProductCard({
           </div>
         ) : null}
 
-        <button
-          type="button"
-          onClick={toggleWishlist}
-          className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-sm)] backdrop-blur-md ${animateHeart ? "wishlist-pop" : ""}`}
-          aria-label={t("toggle_wishlist")}
-        >
-          <Heart className={`h-4 w-4 ${wishlisted ? "fill-fb-pink text-fb-pink" : "text-text-muted"}`} />
-        </button>
+        {canShop ? (
+          <button
+            type="button"
+            onClick={toggleWishlist}
+            className={`absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.92)] shadow-[var(--shadow-sm)] backdrop-blur-md ${animateHeart ? "wishlist-pop" : ""}`}
+            aria-label={t("toggle_wishlist")}
+          >
+            <Heart className={`h-4 w-4 ${wishlisted ? "fill-fb-pink text-fb-pink" : "text-text-muted"}`} />
+          </button>
+        ) : null}
 
         <div className="absolute inset-x-4 bottom-4 hidden translate-y-5 items-center justify-center rounded-full bg-[rgba(24,24,27,0.84)] px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 md:flex h-10 backdrop-blur-md">
           {t("view_details")}

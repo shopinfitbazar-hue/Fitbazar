@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Grid3X3, Home, Search, ShoppingBag, User } from "lucide-react";
+import { Bell, Grid3X3, Home, LayoutDashboard, Package, Search, Settings, ShoppingBag, User, WalletCards } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useCart } from "@/lib/cart";
 import { useLanguage } from "@/lib/LanguageContext";
 
-const items = [
+type BottomNavItem = {
+  href: string;
+  icon: typeof Home;
+  labelKey: string;
+  badgeKey?: "bag";
+};
+
+const customerItems: BottomNavItem[] = [
   { href: "/", icon: Home, labelKey: "home" },
   { href: "/search", icon: Search, labelKey: "search_label" },
   { href: "/products", icon: Grid3X3, labelKey: "category" },
@@ -14,10 +22,29 @@ const items = [
   { href: "/account/dashboard", icon: User, labelKey: "profile" },
 ];
 
+const vendorItems: BottomNavItem[] = [
+  { href: "/vendor/dashboard", icon: LayoutDashboard, labelKey: "dashboard" },
+  { href: "/vendor/products", icon: Package, labelKey: "products" },
+  { href: "/vendor/orders", icon: ShoppingBag, labelKey: "orders" },
+  { href: "/vendor/payouts", icon: WalletCards, labelKey: "payouts" },
+  { href: "/vendor/settings", icon: Settings, labelKey: "settings" },
+];
+
+const adminItems: BottomNavItem[] = [
+  { href: "/admin", icon: LayoutDashboard, labelKey: "admin_panel" },
+  { href: "/admin#orders", icon: ShoppingBag, labelKey: "orders" },
+  { href: "/admin#products", icon: Package, labelKey: "products" },
+  { href: "/admin#customers", icon: User, labelKey: "customers" },
+  { href: "/account/notifications", icon: Bell, labelKey: "notifications" },
+];
+
 export default function BottomNav() {
   const pathname = usePathname() ?? "";
   const { itemCount } = useCart();
   const { t } = useLanguage();
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const items = role === "VENDOR" ? vendorItems : role === "ADMIN" ? adminItems : customerItems;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border-light bg-card lg:hidden">

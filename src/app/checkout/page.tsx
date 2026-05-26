@@ -54,6 +54,7 @@ function CheckoutPageInner() {
     FONEPAY: true,
     LOCAL_CARD: true,
   });
+  const accountRole = session?.user?.role;
 
   const deliveryOptions = useMemo(
     () => [
@@ -313,6 +314,24 @@ function CheckoutPageInner() {
     );
   }
 
+  if (accountRole !== "CUSTOMER") {
+    return (
+      <main className="bg-page">
+        <Header />
+        <div className="container py-8">
+          <div className="rounded-[8px] bg-card p-8 text-center shadow-[var(--shadow-sm)]">
+            <h1>{t("customer_account_required")}</h1>
+            <p className="mx-auto mt-3 max-w-lg text-[14px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
+            <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-5 inline-flex">
+              {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
   if (!items.length) {
     return (
       <main className="bg-page">
@@ -367,7 +386,7 @@ function CheckoutPageInner() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form id="checkout-form" onSubmit={handleSubmit}>
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               <div className="rounded-[8px] border border-border-light bg-card p-6 shadow-[var(--shadow-sm)]">
@@ -585,6 +604,17 @@ function CheckoutPageInner() {
             </div>
           </div>
         </form>
+        <div className="fixed inset-x-0 bottom-12 z-[900] border-t border-border-light bg-card/95 px-3 py-3 shadow-[0_-12px_30px_rgba(32,26,23,0.12)] backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-site items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("total")}</p>
+              <p className="text-[17px] font-bold leading-5 text-text-primary">{formatPriceNpr(grandTotal)}</p>
+            </div>
+            <button type="submit" form="checkout-form" disabled={isProcessing} className="btn-primary h-11 shrink-0 px-5 text-[12px] disabled:opacity-70">
+              {isProcessing ? t("placing_order") : t("place_order")}
+            </button>
+          </div>
+        </div>
       </div>
 
       <Footer />

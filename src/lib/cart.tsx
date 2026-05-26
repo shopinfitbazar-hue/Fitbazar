@@ -30,12 +30,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<CartItem[]>([]);
   const mergedGuestRef = useRef<string | null>(null);
+  const userRole = session?.user?.role;
 
   useEffect(() => {
     if (status === "loading") return;
 
     async function loadCart() {
       if (session?.user?.id) {
+        if (userRole !== "CUSTOMER") {
+          setItems([]);
+          localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+          return;
+        }
+
         const guestItems = readGuestCart();
         const mergeKey = `${session.user.id}:${guestItems.length}`;
 
@@ -77,7 +84,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     void loadCart();
-  }, [session?.user?.id, status]);
+  }, [session?.user?.id, status, userRole]);
 
   useEffect(() => {
     if (status !== "unauthenticated") return;
@@ -86,6 +93,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback((item: Omit<CartItem, "id">) => {
     if (session?.user?.id) {
+      if (userRole !== "CUSTOMER") {
+        setItems([]);
+        return;
+      }
+
       const previous = items;
 
       setItems((prev) =>
@@ -131,7 +143,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         },
       ]),
     );
-  }, [items, session?.user?.id]);
+  }, [items, session?.user?.id, userRole]);
 
   const removeItem = useCallback((itemId: string) => {
     const previous = items;

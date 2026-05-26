@@ -67,7 +67,7 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const { status: authStatus } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const { addItem } = useCart();
   const { addToast } = useToast();
   const safeImages = useMemo(
@@ -93,6 +93,8 @@ export default function ProductDetailClient({
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
+  const accountRole = session?.user?.role;
+  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
 
   useEffect(() => {
     if (!pincode) {
@@ -160,9 +162,14 @@ export default function ProductDetailClient({
   const requireSize = product.sizes.length > 0;
 
   const handleAddToCart = () => {
+    if (blocksShopping) {
+      addToast(t("vendor_account_shopping_blocked"), "error");
+      return false;
+    }
+
     if (requireSize && !selectedSize) {
       addToast(t("select_size"), "error");
-      return;
+      return false;
     }
 
     addItem({
@@ -183,11 +190,13 @@ export default function ProductDetailClient({
     setAdded(true);
     addToast(t("added_to_bag"), "success");
     window.setTimeout(() => setAdded(false), 1500);
+    return true;
   };
 
   const handleBuyNow = () => {
-    handleAddToCart();
-    router.push("/checkout");
+    if (handleAddToCart()) {
+      router.push("/checkout");
+    }
   };
 
   const handleCheckDelivery = () => {
@@ -373,14 +382,24 @@ export default function ProductDetailClient({
             <span className="text-[12px] text-text-muted">{product.stock} {t("left_in_stock")}</span>
           </div>
 
-          <div className="mt-6 space-y-3">
-            <button type="button" onClick={handleAddToCart} className="btn-ghost flex h-[52px] w-full items-center justify-center">
-              {added ? t("added_check") : t("add_to_cart")}
-            </button>
-            <button type="button" onClick={handleBuyNow} className="btn-primary flex h-[52px] w-full items-center justify-center">
-              {t("buy_now")}
-            </button>
-          </div>
+          {blocksShopping ? (
+            <div className="mt-6 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+              <p className="text-[14px] font-semibold text-text-primary">{t("customer_account_required")}</p>
+              <p className="mt-1 text-[13px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
+              <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-4 inline-flex">
+                {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              <button type="button" onClick={handleAddToCart} className="btn-ghost flex h-[52px] w-full items-center justify-center">
+                {added ? t("added_check") : t("add_to_cart")}
+              </button>
+              <button type="button" onClick={handleBuyNow} className="btn-primary flex h-[52px] w-full items-center justify-center">
+                {t("buy_now")}
+              </button>
+            </div>
+          )}
 
           <div className="mt-5 rounded-[24px] border border-border-light p-4">
             <div className="mb-2 text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("delivery")}</div>

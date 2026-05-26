@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { createOrdersFromCheckoutPayload, mapCheckoutErrorToResponse, prepareCheckoutContext, type CheckoutPayload } from "@/lib/checkout-server";
 import { isSupportedPaymentMethod } from "@/lib/payment-types";
 import { buildCheckoutId, clearExpiredPaymentAttempts, createPaymentAttempt, initiateConnectIpsPayment, initiateEsewaPayment, initiateFonepayPayment, initiateKhaltiPayment } from "@/lib/payment-server";
 import { isDeliveryMethod } from "@/lib/shipping";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
+
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await requireCustomerSession();
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = (await req.json()) as Partial<CheckoutPayload>;
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
 
     await clearExpiredPaymentAttempts().catch(() => undefined);
 
-    const context = await prepareCheckoutContext(session.user.id, {
+    const context = await prepareCheckoutContext(auth.session.user.id, {
       items: body.items || [],
       address: body.address as CheckoutPayload["address"],
       paymentMethod,
@@ -51,12 +54,12 @@ export async function POST(req: Request) {
     const checkoutId = buildCheckoutId();
     const attempt = await createPaymentAttempt({
       checkoutId,
-      customerId: session.user.id,
+      customerId: auth.session.user.id,
       amount: context.grandTotal,
       paymentMethod,
       payload: {
         checkoutId,
-        customerId: session.user.id,
+        customerId: auth.session.user.id,
         items: context.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,

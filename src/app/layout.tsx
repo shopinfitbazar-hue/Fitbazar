@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
+import BottomNav from "@/components/BottomNav";
 import type { Language } from "@/lib/translations";
 import { buildMetadata } from "@/config/site";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <Providers initialLang={initialLang}>
           {children}
           <BackToTop />
+          <BottomNav />
         </Providers>
       </body>
     </html>
