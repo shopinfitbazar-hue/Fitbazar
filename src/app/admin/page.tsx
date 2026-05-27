@@ -127,6 +127,7 @@ interface SiteSettingsState {
   heroPrimaryHref: string;
   heroSecondaryLabel: string;
   heroSecondaryHref: string;
+  seoImage: string;
 }
 
 interface FestivalState {
@@ -237,6 +238,7 @@ export default function AdminDashboard() {
     heroPrimaryHref: "/products",
     heroSecondaryLabel: "Explore Collections",
     heroSecondaryHref: "/discover",
+    seoImage: "/opengraph-image",
   });
   const [festival, setFestival] = useState<FestivalState>({
     name: "Dashain",
@@ -320,7 +322,9 @@ export default function AdminDashboard() {
       setSupportArchiveCount(supportData.archivedCount || 0);
     }
     if (vendorReviewsResponse.ok) setVendorReviews(vendorReviewsData.reviews || []);
-    if (settingsResponse.ok && settingsData.settings) setSettings(settingsData.settings);
+    if (settingsResponse.ok && settingsData.settings) {
+      setSettings((current) => ({ ...current, ...settingsData.settings }));
+    }
     if (festivalResponse.ok && festivalData) {
       setFestival({
         name: festivalData.name || "Dashain",
@@ -1266,6 +1270,39 @@ export default function AdminDashboard() {
                   <input type="checkbox" checked={settings.announcementActive} onChange={(event) => setSettings((current) => ({ ...current, announcementActive: event.target.checked }))} />
                   {t("enable_announcement_bar")}
                 </label>
+                <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                  <h3 className="text-[14px] font-semibold text-text-primary">SEO Search Image</h3>
+                  <p className="mt-1 text-[13px] text-text-muted">
+                    Controls the preview image shared through Open Graph and used as a search result image candidate after crawlers refresh.
+                  </p>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+                    <div className="relative aspect-[16/10] overflow-hidden rounded-[8px] border border-border-light bg-card">
+                      <SmartImage
+                        src={settings.seoImage || "/opengraph-image"}
+                        alt="SEO search preview image"
+                        fill
+                        sizes="220px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-3">
+                      <div>
+                        <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Image URL</label>
+                        <input
+                          value={settings.seoImage || ""}
+                          placeholder="/opengraph-image or uploaded image URL"
+                          onChange={(event) => setSettings((current) => ({ ...current, seoImage: event.target.value }))}
+                        />
+                      </div>
+                      <CloudinaryImageUploader
+                        buttonLabel="Upload SEO Image"
+                        multiple={false}
+                        enableCamera
+                        onUploaded={(urls) => setSettings((current) => ({ ...current, seoImage: urls[0] || current.seoImage }))}
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
                   <h3 className="text-[14px] font-semibold text-text-primary">{t("hero_content")}</h3>
                   <p className="mt-1 text-[13px] text-text-muted">{t("hero_content_help")}</p>

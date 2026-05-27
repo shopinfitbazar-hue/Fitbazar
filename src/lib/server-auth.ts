@@ -26,6 +26,33 @@ type RequireVendorSessionOptions = {
   allowSuspended?: boolean;
 };
 
+const vendorSessionSelect = {
+  id: true,
+  shopName: true,
+  slug: true,
+  isApproved: true,
+  isSuspended: true,
+  commissionPct: true,
+} as const;
+
+async function resolveVendorForSession(session: Session) {
+  const tokenVendorId = session.user.vendorId || null;
+
+  if (tokenVendorId) {
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: tokenVendorId },
+      select: vendorSessionSelect,
+    });
+
+    if (vendor) return vendor;
+  }
+
+  return prisma.vendor.findUnique({
+    where: { userId: session.user.id },
+    select: vendorSessionSelect,
+  });
+}
+
 export async function requireUserSession(): Promise<AuthError | UserSessionResult> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -58,30 +85,13 @@ export async function requireVendorSession(
     return { error: "Forbidden" };
   }
 
-  const vendorId =
-    session.user.role === "ADMIN"
-      ? session.user.vendorId || null
-      : session.user.vendorId || null;
+  const vendor = await resolveVendorForSession(session);
 
-  if (!vendorId) {
+  if (!vendor) {
     return { error: "Vendor account not linked" };
   }
 
-  const vendor = await prisma.vendor.findUnique({
-    where: { id: vendorId },
-    select: {
-      id: true,
-      shopName: true,
-      slug: true,
-      isApproved: true,
-      isSuspended: true,
-      commissionPct: true,
-    },
-  });
-
-  if (!vendor) {
-    return { error: "Vendor not found" };
-  }
+  session.user.vendorId = vendor.id;
 
   const accessState = getVendorAccessState(vendor);
   if (!accessState.canOperate) {

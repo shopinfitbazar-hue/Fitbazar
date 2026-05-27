@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
-import { SITE_SETTINGS_ID, cleanInternalHref, defaultSiteSettings } from "@/lib/site-settings";
+import { SITE_SETTINGS_ID, cleanInternalHref, cleanSeoImageUrl, defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +45,7 @@ export async function PUT(request: Request) {
       heroPrimaryHref?: string;
       heroSecondaryLabel?: string;
       heroSecondaryHref?: string;
+      seoImage?: string;
     };
 
     const data = {
@@ -63,6 +64,7 @@ export async function PUT(request: Request) {
       heroPrimaryHref: cleanInternalHref(body.heroPrimaryHref, defaultSiteSettings.heroPrimaryHref),
       heroSecondaryLabel: body.heroSecondaryLabel?.trim() || defaultSiteSettings.heroSecondaryLabel,
       heroSecondaryHref: cleanInternalHref(body.heroSecondaryHref, defaultSiteSettings.heroSecondaryHref),
+      seoImage: cleanSeoImageUrl(body.seoImage, defaultSiteSettings.seoImage),
     };
 
     const settings = await prisma.siteSettings.upsert({

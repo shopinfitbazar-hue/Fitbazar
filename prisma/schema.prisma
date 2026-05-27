@@ -327,6 +327,7 @@ model SiteSettings {
   heroPrimaryHref    String  @default("/products")
   heroSecondaryLabel String  @default("Explore Collections")
   heroSecondaryHref  String  @default("/discover")
+  seoImage           String?
 }
 
 model Notification {

@@ -1,4 +1,5 @@
 import { NextAuthOptions } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -13,6 +14,42 @@ const hasGoogleOAuth = hasConfiguredGoogleOAuth({
 });
 
 const providers: NextAuthOptions["providers"] = [];
+
+async function findUserSessionIdentity(email?: string | null) {
+  if (!email) return null;
+
+  return prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+      name: true,
+      image: true,
+      role: true,
+      isBanned: true,
+      vendorProfile: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+}
+
+function applyUserIdentityToToken(
+  token: JWT,
+  user: Awaited<ReturnType<typeof findUserSessionIdentity>>,
+) {
+  if (!user) return;
+
+  token.id = user.id;
+  token.email = user.email;
+  token.name = user.name;
+  token.picture = user.image;
+  token.role = user.role;
+  token.vendorId = user.vendorProfile?.id ?? null;
+}
 
 if (hasGoogleOAuth) {
   providers.push(
@@ -80,10 +117,7 @@ export const authOptions: NextAuthOptions = {
       if (!user.email) return false;
 
       try {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          include: { vendorProfile: true },
-        });
+        const dbUser = await findUserSessionIdentity(user.email);
 
         if (dbUser?.isBanned) {
           throw new Error("Your account has been suspended.");
@@ -116,21 +150,16 @@ export const authOptions: NextAuthOptions = {
         token.vendorId = user.vendorId ?? null;
       }
 
-      if (trigger === "update" && token.email) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: token.email },
-            include: { vendorProfile: true },
-          });
+      const needsDatabaseRefresh =
+        Boolean(token.email) &&
+        (Boolean(user) ||
+          trigger === "update" ||
+          ((token.role === Role.VENDOR || token.role === Role.ADMIN) && !token.vendorId));
 
-          if (dbUser) {
-            token.id = dbUser.id;
-            token.email = dbUser.email;
-            token.name = dbUser.name;
-            token.picture = dbUser.image;
-            token.role = dbUser.role;
-            token.vendorId = dbUser.vendorProfile?.id ?? null;
-          }
+      if (needsDatabaseRefresh) {
+        try {
+          const dbUser = await findUserSessionIdentity(token.email);
+          applyUserIdentityToToken(token, dbUser);
         } catch {
           console.error("Failed to refresh user data in JWT callback");
         }

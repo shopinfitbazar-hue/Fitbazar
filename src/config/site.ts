@@ -12,7 +12,7 @@ export const siteConfig = {
   icon: "/fitbazar-icon-20260527.png",
   appleIcon: "/apple-touch-icon.png",
   favicon: "/fitbazar-favicon-20260527.ico",
-  ogImage: "/opengraph-image",
+  ogImage: "/search-preview-image",
   locale: "en_NP",
   keywords: [
     "FitBazar",

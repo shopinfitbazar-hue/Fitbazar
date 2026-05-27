@@ -16,6 +16,7 @@ export const defaultSiteSettings = {
   heroPrimaryHref: "/products",
   heroSecondaryLabel: "Explore Collections",
   heroSecondaryHref: "/discover",
+  seoImage: "/opengraph-image",
 };
 
 export function cleanInternalHref(value: string | undefined, fallback: string) {
@@ -27,4 +28,20 @@ export function cleanInternalHref(value: string | undefined, fallback: string) {
   }
 
   return fallback;
+}
+
+export function cleanSeoImageUrl(value: string | undefined | null, fallback: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return fallback;
+
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    return trimmed;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : fallback;
+  } catch {
+    return fallback;
+  }
 }
