@@ -2,26 +2,42 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SmartImage from "@/components/ui/SmartImage";
-import { categoryQueryValue } from "@/lib/categories";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Nepal Fashion Trends and Style Guide",
+  description:
+    "Discover Nepali fashion trends, festive outfit ideas, styling notes, and curated shopping collections on FitBazar.",
+  alternates: {
+    canonical: canonicalUrl("/discover"),
+  },
+  openGraph: {
+    url: canonicalUrl("/discover"),
+    title: "Nepal Fashion Trends and Style Guide | FitBazar",
+    description:
+      "Discover Nepali fashion trends, festive outfit ideas, styling notes, and curated shopping collections on FitBazar.",
+  },
+});
 
 const editorialCards = [
   {
     title: "Festive Dressing, Done Right",
     description: "Classic Nepali silhouettes, softer layering, and elevated accessories for weddings, Dashain, and family celebrations.",
     image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=1200&auto=format&fit=crop",
-    href: `/products?category=${encodeURIComponent(categoryQueryValue("Ethnic"))}`,
+    href: "/collections/ethnic",
   },
   {
     title: "Everyday Layers for Kathmandu Weather",
     description: "Light jackets, textured knits, and versatile separates that work from cool mornings to late evenings.",
     image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=1200&auto=format&fit=crop",
-    href: `/products?category=${encodeURIComponent(categoryQueryValue("Sports"))}`,
+    href: "/collections/sportswear",
   },
   {
     title: "Pashmina, Dhaka, and Handwoven Details",
     description: "Pieces that feel local, premium, and timeless enough to stay in rotation well beyond one season.",
     image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1200&auto=format&fit=crop",
-    href: "/products?minDiscount=20&sort=discount",
+    href: "/collections/sale",
   },
 ];
 

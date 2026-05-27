@@ -2,6 +2,23 @@ import Link from "next/link";
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "AI Virtual Try-On for Nepali Fashion",
+  description:
+    "Explore FitBazar's upcoming AI virtual try-on experience for Nepali fashion, festive wear, colors, and outfit recommendations.",
+  alternates: {
+    canonical: canonicalUrl("/ai-try-on"),
+  },
+  openGraph: {
+    url: canonicalUrl("/ai-try-on"),
+    title: "AI Virtual Try-On for Nepali Fashion | FitBazar",
+    description:
+      "Explore FitBazar's upcoming AI virtual try-on experience for Nepali fashion, festive wear, colors, and outfit recommendations.",
+  },
+});
 
 const studioHighlights = [
   {

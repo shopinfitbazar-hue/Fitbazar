@@ -8,17 +8,19 @@ import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
-import { categoryQueryValue, normalizeCategory } from "@/lib/categories";
+import { normalizeCategory } from "@/lib/categories";
 import { normalizeAuthCallbackPath } from "@/lib/auth-redirect";
 import NotificationBell from "@/components/NotificationBell";
 
 const desktopLinks = [
-  { label: "Men", href: `/products?category=${encodeURIComponent(categoryQueryValue("Men"))}` },
-  { label: "Women", href: `/products?category=${encodeURIComponent(categoryQueryValue("Women"))}` },
-  { label: "Kids", href: `/products?category=${encodeURIComponent(categoryQueryValue("Kids"))}` },
-  { label: "Ethnic", href: `/products?category=${encodeURIComponent(categoryQueryValue("Ethnic"))}` },
-  { label: "Sports", href: `/products?category=${encodeURIComponent(categoryQueryValue("Sports"))}` },
-  { label: "All Sale", href: "/products?minDiscount=20&sort=discount" },
+  { label: "Men", href: "/collections/mens-fashion-nepal", category: "Men" },
+  { label: "Women", href: "/collections/womens-fashion-nepal", category: "Women" },
+  { label: "Kids", href: "/collections/kids", category: "Kids" },
+  { label: "Ethnic", href: "/collections/ethnic", category: "Ethnic Wear" },
+  { label: "Streetwear", href: "/collections/streetwear-nepal" },
+  { label: "Hoodies", href: "/collections/hoodies-nepal" },
+  { label: "Blog", href: "/blog" },
+  { label: "All Sale", href: "/collections/sale", sale: true },
 ];
 
 const searchSuggestions = [
@@ -245,11 +247,11 @@ export default function Header() {
             <div className="min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden">
               <nav className="flex min-w-max items-center gap-3 2xl:gap-6">
                 {desktopLinks.map((link) => {
-                  const linkCategory = normalizeCategory(new URLSearchParams(link.href.split("?")[1] || "").get("category"));
-                  const active = linkCategory
-                    ? pathname === "/products" && activeCategory === linkCategory
-                    : pathname === "/products" && link.href.includes("minDiscount")
-                      ? saleLinkActive
+                  const linkCategory = normalizeCategory(link.category);
+                  const active = link.sale
+                    ? pathname === "/collections/sale" || (pathname === "/products" && saleLinkActive)
+                    : linkCategory
+                      ? pathname === link.href || (pathname === "/products" && activeCategory === linkCategory)
                       : pathname === link.href;
                   return (
                     <Link
@@ -257,7 +259,7 @@ export default function Header() {
                       href={link.href}
                       className={`whitespace-nowrap border-b-2 border-transparent py-1 text-[12px] font-medium uppercase tracking-[0.05em] text-text-primary hover:border-fb-pink hover:text-text-primary 2xl:text-[13px] 2xl:tracking-[0.08em] ${active ? "border-fb-pink" : ""}`}
                     >
-                      {link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}
+                      {link.label === "Streetwear" || link.label === "Hoodies" || link.label === "Blog" ? link.label : t(link.label.toLowerCase())}
                     </Link>
                   );
                 })}
@@ -468,7 +470,7 @@ export default function Header() {
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
                 >
-                  <span>{link.label === "Sports" ? t("sportswear") : t(link.label.toLowerCase())}</span>
+                  <span>{link.label === "Streetwear" || link.label === "Hoodies" || link.label === "Blog" ? link.label : t(link.label.toLowerCase())}</span>
                   <ChevronRight className="h-4 w-4 text-text-muted" />
                 </Link>
               ))}

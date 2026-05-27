@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Return and Refund Policy",
+  description:
+    "Review FitBazar return and refund guidance for orders, damaged products, seller policies, and support requests in Nepal.",
+  alternates: {
+    canonical: canonicalUrl("/return-refund-policy"),
+  },
+});
 
 export default async function ReturnRefundPolicyPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

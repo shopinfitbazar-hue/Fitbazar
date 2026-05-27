@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Press",
+  description:
+    "Find FitBazar press and media contact information for Nepal fashion marketplace stories and business enquiries.",
+  alternates: {
+    canonical: canonicalUrl("/press"),
+  },
+});
 
 export default async function PressPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

@@ -325,6 +325,65 @@ button, a {
     linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.9) 100%);
 }
 
+.blog-content {
+  color: var(--text-secondary);
+}
+
+.blog-content h2 {
+  margin-top: 2rem;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.blog-content h3 {
+  margin-top: 1.5rem;
+  font-size: 1.12rem;
+  line-height: 1.35;
+}
+
+.blog-content p {
+  margin-top: 1rem;
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+
+.blog-content ul,
+.blog-content ol {
+  margin-top: 1rem;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.blog-content li {
+  margin-top: 0.45rem;
+  line-height: 1.7;
+}
+
+.blog-content a {
+  color: var(--fb-pink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.blog-content blockquote {
+  margin-top: 1.25rem;
+  border-left: 3px solid var(--fb-pink);
+  background: var(--bg-surface);
+  padding: 1rem;
+  color: var(--text-primary);
+}
+
+.blog-content code {
+  border-radius: 6px;
+  background: var(--bg-surface);
+  padding: 0.12rem 0.32rem;
+  font-size: 0.9em;
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);

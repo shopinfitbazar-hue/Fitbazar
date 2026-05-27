@@ -10,9 +10,16 @@ import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 export const metadata = buildMetadata({
-  title: "Fit Bazzar | Premium Fashion Marketplace in Nepal",
+  title: "FitBazar | Online Fashion Shopping in Nepal",
   description:
-    "Browse premium Nepal-first fashion, curated storefronts, and fast mobile shopping across Fit Bazzar.",
+    "Shop clothing, ethnic wear, sportswear, footwear, and accessories online in Nepal from trusted fashion stores on FitBazar.",
+  keywords: [
+    "online shopping Nepal",
+    "fashion Nepal",
+    "clothing online Nepal",
+    "Nepal fashion marketplace",
+    "FitBazar",
+  ],
 });
 
 async function getHomepageFestivalConfig() {

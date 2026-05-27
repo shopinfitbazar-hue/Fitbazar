@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Terms and Conditions",
+  description:
+    "Read FitBazar marketplace terms for customers, vendors, orders, product listings, and platform usage in Nepal.",
+  alternates: {
+    canonical: canonicalUrl("/terms-conditions"),
+  },
+});
 
 export default async function TermsConditionsPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

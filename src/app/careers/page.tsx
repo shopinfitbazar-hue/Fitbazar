@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Careers",
+  description:
+    "Explore career and future collaboration opportunities with FitBazar as we build a stronger fashion marketplace for Nepal.",
+  alternates: {
+    canonical: canonicalUrl("/careers"),
+  },
+});
 
 export default async function CareersPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

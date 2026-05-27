@@ -285,7 +285,9 @@ export default function ProductDetailClient({
             {product.vendor.shopName}
           </Link>
           <h1 className="mt-2 text-[2rem] font-semibold tracking-[-0.05em] text-text-primary">{product.name}</h1>
-          <p className="mt-2 text-[0.98rem] text-text-secondary">Premium marketplace presentation with faster selection, clearer pricing, and mobile-first purchase controls.</p>
+          <p className="mt-2 text-[0.98rem] text-text-secondary">
+            {product.description || `${product.name} from ${product.vendor.shopName}, available for online fashion shopping in Nepal.`}
+          </p>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-text-secondary">
             <div className="flex items-center gap-1">

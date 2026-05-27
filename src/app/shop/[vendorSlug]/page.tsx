@@ -5,14 +5,87 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import VendorReviewSection from "@/components/VendorReviewSection";
+import JsonLd from "@/components/JsonLd";
 import { Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { t, type Language } from "@/lib/translations";
 import { publicVendorVisibilityFilter } from "@/lib/public-storefront";
 import { ProductStatus } from "@prisma/client";
+import { buildMetadata } from "@/config/site";
+import { breadcrumbJsonLd, canonicalUrl, itemListJsonLd, truncateSeo } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ vendorSlug: string }> | { vendorSlug: string };
+}) {
+  const { vendorSlug } = await params;
+  const vendor = await prisma.vendor.findFirst({
+    where: {
+      slug: vendorSlug,
+      ...publicVendorVisibilityFilter,
+    },
+    select: {
+      shopName: true,
+      slug: true,
+      description: true,
+      logo: true,
+      category: true,
+      _count: {
+        select: {
+          products: true,
+          reviews: true,
+        },
+      },
+    },
+  });
+
+  if (!vendor) {
+    return buildMetadata({
+      title: "Store Not Found",
+      robots: {
+        index: false,
+        follow: true,
+      },
+    });
+  }
+
+  const title = `${vendor.shopName} Store in Nepal`;
+  const description = truncateSeo(
+    vendor.description ||
+      `Shop ${vendor.shopName} products on FitBazar. Browse ${vendor.category || "fashion"} from a trusted Nepal seller with mobile-friendly checkout.`,
+  );
+  const url = canonicalUrl(`/shop/${vendor.slug}`);
+
+  return buildMetadata({
+    title,
+    description,
+    keywords: [
+      vendor.shopName,
+      `${vendor.shopName} Nepal`,
+      `${vendor.category || "fashion"} Nepal`,
+      "Nepal fashion store",
+      "FitBazar vendor",
+    ],
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      url,
+      title,
+      description,
+      images: vendor.logo ? [{ url: vendor.logo, alt: `${vendor.shopName} logo` }] : undefined,
+    },
+    twitter: {
+      title,
+      description,
+      images: vendor.logo ? [vendor.logo] : undefined,
+    },
+  });
+}
 
 export default async function VendorStorePage({
   params,
@@ -116,6 +189,23 @@ export default async function VendorStorePage({
 
   return (
     <main className="bg-page">
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Shops", path: "/products" },
+            { name: vendor.shopName, path: `/shop/${vendor.slug}` },
+          ]),
+          itemListJsonLd(
+            products.slice(0, 24).map((product) => ({
+              name: product.name,
+              path: `/products/${product.slug}`,
+              image: product.images[0],
+            })),
+            `${vendor.shopName} products`,
+          ),
+        ]}
+      />
       <Header />
       <div className="container py-4">
         <section className="rounded-[8px] bg-card p-5">

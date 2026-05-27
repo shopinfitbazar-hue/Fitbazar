@@ -5,8 +5,10 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
 import BottomNav from "@/components/BottomNav";
+import JsonLd from "@/components/JsonLd";
 import type { Language } from "@/lib/translations";
 import { buildMetadata } from "@/config/site";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 const fitBazarSans = localFont({
   src: [
@@ -41,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang={initialLang}>
       <body className={`${fitBazarSans.variable} bg-page font-sans text-text-primary antialiased`}>
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <Providers initialLang={initialLang}>
           {children}
           <BackToTop />

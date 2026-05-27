@@ -4,20 +4,28 @@ import { getAppBaseUrl } from "@/lib/app-url";
 const baseUrl = getAppBaseUrl();
 
 export const siteConfig = {
-  name: "Fit Bazzar",
-  shortName: "Fit Bazzar",
-  title: "Fit Bazzar | Premium Fashion Marketplace in Nepal",
+  name: "FitBazar",
+  shortName: "FitBazar",
+  title: "FitBazar | Online Fashion Shopping in Nepal",
   description:
-    "Fit Bazzar is a premium Nepal-first fashion marketplace with fast discovery, elegant storefronts, and modern commerce built for mobile shoppers.",
+    "Shop men's, women's, kids', ethnic, sportswear, footwear, and accessories from trusted fashion stores across Nepal on FitBazar.",
   url: baseUrl,
-  ogImage: "/opengraph-image.png",
+  icon: "/icon.png",
+  appleIcon: "/apple-icon.png",
+  favicon: "/favicon.ico",
+  ogImage: "/opengraph-image",
   locale: "en_NP",
   keywords: [
-    "Fit Bazzar",
+    "FitBazar",
+    "Fit Bazar",
     "Nepal fashion marketplace",
     "online shopping Nepal",
     "fashion ecommerce Nepal",
-    "premium clothing Nepal",
+    "clothing online Nepal",
+    "men fashion Nepal",
+    "women fashion Nepal",
+    "ethnic wear Nepal",
+    "Kathmandu fashion store",
   ],
   social: {
     instagram: "https://instagram.com/fitbazzar",
@@ -26,19 +34,28 @@ export const siteConfig = {
 } as const;
 
 export function buildMetadata(overrides?: Metadata): Metadata {
-  return {
+  const defaults: Metadata = {
     metadataBase: new URL(baseUrl),
     title: {
       default: siteConfig.title,
-      template: "%s | Fit Bazzar",
+      template: "%s | FitBazar",
     },
     description: siteConfig.description,
     applicationName: siteConfig.shortName,
     keywords: [...siteConfig.keywords],
-    category: "fashion",
+    category: "fashion ecommerce",
     creator: siteConfig.name,
     publisher: siteConfig.name,
     authors: [{ name: siteConfig.name }],
+    generator: "Next.js",
+    icons: {
+      icon: [
+        { url: siteConfig.favicon, sizes: "64x64", type: "image/x-icon" },
+        { url: siteConfig.icon, sizes: "512x512", type: "image/png" },
+      ],
+      shortcut: siteConfig.favicon,
+      apple: [{ url: siteConfig.appleIcon, sizes: "180x180", type: "image/png" }],
+    },
     robots: {
       index: true,
       follow: true,
@@ -75,6 +92,37 @@ export function buildMetadata(overrides?: Metadata): Metadata {
     alternates: {
       canonical: baseUrl,
     },
+  };
+
+  if (!overrides) return defaults;
+
+  const defaultRobots = defaults.robots && typeof defaults.robots === "object" ? defaults.robots : {};
+  const overrideRobots = overrides.robots && typeof overrides.robots === "object" ? overrides.robots : {};
+  const defaultGoogleBot = defaultRobots.googleBot && typeof defaultRobots.googleBot === "object" ? defaultRobots.googleBot : {};
+  const overrideGoogleBot = overrideRobots.googleBot && typeof overrideRobots.googleBot === "object" ? overrideRobots.googleBot : {};
+
+  return {
+    ...defaults,
     ...overrides,
+    openGraph: {
+      ...(defaults.openGraph && typeof defaults.openGraph === "object" ? defaults.openGraph : {}),
+      ...(overrides.openGraph && typeof overrides.openGraph === "object" ? overrides.openGraph : {}),
+    },
+    twitter: {
+      ...(defaults.twitter && typeof defaults.twitter === "object" ? defaults.twitter : {}),
+      ...(overrides.twitter && typeof overrides.twitter === "object" ? overrides.twitter : {}),
+    },
+    robots: {
+      ...defaultRobots,
+      ...overrideRobots,
+      googleBot: {
+        ...defaultGoogleBot,
+        ...overrideGoogleBot,
+      },
+    },
+    alternates: {
+      ...(defaults.alternates && typeof defaults.alternates === "object" ? defaults.alternates : {}),
+      ...(overrides.alternates && typeof overrides.alternates === "object" ? overrides.alternates : {}),
+    },
   };
 }

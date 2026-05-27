@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Privacy Policy",
+  description:
+    "Read how FitBazar handles customer, vendor, order, delivery, and support information for its Nepal fashion marketplace.",
+  alternates: {
+    canonical: canonicalUrl("/privacy-policy"),
+  },
+});
 
 export default async function PrivacyPolicyPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

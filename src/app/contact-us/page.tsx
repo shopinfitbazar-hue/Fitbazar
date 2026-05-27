@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Contact FitBazar",
+  description:
+    "Contact FitBazar for order support, delivery questions, returns, vendor issues, and marketplace partnerships in Nepal.",
+  alternates: {
+    canonical: canonicalUrl("/contact-us"),
+  },
+});
 
 export default async function ContactUsPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

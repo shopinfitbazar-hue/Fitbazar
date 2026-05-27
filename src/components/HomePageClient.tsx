@@ -7,7 +7,7 @@ import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import VendorCard from "@/components/VendorCard";
 import SectionHeading from "@/components/ui/SectionHeading";
 import SmartImage from "@/components/ui/SmartImage";
-import { categoryQueryValue } from "@/lib/categories";
+import { categorySlug } from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
 import { getSafeHref } from "@/lib/media";
 
@@ -63,6 +63,15 @@ function formatCountdown(endDate: string) {
   const minutes = Math.floor((distance / (1000 * 60)) % 60);
   const seconds = Math.floor((distance / 1000) % 60);
   return `Ends in ${days} days ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function collectionHrefForCategory(name: string) {
+  const slug = categorySlug(name);
+  if (slug === "men") return "/collections/mens-fashion-nepal";
+  if (slug === "women") return "/collections/womens-fashion-nepal";
+  if (slug === "ethnic-wear") return "/collections/ethnic";
+  if (slug === "sports") return "/collections/streetwear-nepal";
+  return `/collections/${slug}`;
 }
 
 export default function HomePageClient({
@@ -229,7 +238,7 @@ export default function HomePageClient({
           {displayCategories.map((category, index) => (
             <Link
               key={category.slug}
-              href={`/products?category=${encodeURIComponent(categoryQueryValue(category.name))}`}
+              href={collectionHrefForCategory(category.name)}
               className="min-w-[92px] text-center"
             >
               <div
@@ -300,7 +309,7 @@ export default function HomePageClient({
           <SectionHeading
             eyebrow="Offers"
             title="Up to 50% Off — Special Picks"
-            actionHref="/products?minDiscount=20&sort=discount"
+            actionHref="/collections/sale"
             actionLabel={t("view_all")}
           />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

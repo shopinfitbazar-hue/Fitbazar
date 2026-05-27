@@ -1,5 +1,16 @@
 import { cookies } from "next/headers";
 import InfoPageLayout from "@/components/InfoPageLayout";
+import { buildMetadata } from "@/config/site";
+import { canonicalUrl } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "About FitBazar",
+  description:
+    "Learn about FitBazar, a Nepal-focused multivendor fashion marketplace connecting shoppers with trusted local stores.",
+  alternates: {
+    canonical: canonicalUrl("/about-us"),
+  },
+});
 
 export default async function AboutUsPage() {
   const lang = (await cookies()).get("fitbazar_lang")?.value === "ne" ? "ne" : "en";

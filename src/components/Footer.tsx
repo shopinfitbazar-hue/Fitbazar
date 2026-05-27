@@ -4,17 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Facebook, Instagram, Music2 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
-import { categoryQueryValue } from "@/lib/categories";
 
 const groups = [
   {
     title: "online_shopping",
     links: [
-      { label: "men", href: `/products?category=${encodeURIComponent(categoryQueryValue("Men"))}` },
-      { label: "women", href: `/products?category=${encodeURIComponent(categoryQueryValue("Women"))}` },
-      { label: "kids", href: `/products?category=${encodeURIComponent(categoryQueryValue("Kids"))}` },
-      { label: "ethnic", href: `/products?category=${encodeURIComponent(categoryQueryValue("Ethnic"))}` },
-      { label: "sportswear", href: `/products?category=${encodeURIComponent(categoryQueryValue("Sports"))}` },
+      { label: "men", href: "/collections/mens-fashion-nepal" },
+      { label: "women", href: "/collections/womens-fashion-nepal" },
+      { label: "kids", href: "/collections/kids" },
+      { label: "ethnic", href: "/collections/ethnic" },
+      { label: "streetwear", href: "/collections/streetwear-nepal" },
+      { label: "hoodies", href: "/collections/hoodies-nepal" },
     ],
   },
   {
@@ -32,6 +32,7 @@ const groups = [
     links: [
       { label: "about_us", href: "/about-us" },
       { label: "contact", href: "/contact-us" },
+      { label: "blog", href: "/blog" },
       { label: "careers", href: "/careers" },
       { label: "press", href: "/press" },
       { label: "become_vendor", href: "/vendor/register" },
@@ -73,7 +74,7 @@ export default function Footer() {
               <div className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
-                    {t(link.label)}
+                    {link.label === "hoodies" ? "Hoodies" : link.label === "streetwear" ? "Streetwear" : link.label === "blog" ? "Blog" : t(link.label)}
                   </Link>
                 ))}
               </div>
@@ -104,7 +105,7 @@ export default function Footer() {
                   <div className="mt-3 space-y-3">
                     {group.links.map((link) => (
                       <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
-                        {t(link.label)}
+                        {link.label === "hoodies" ? "Hoodies" : link.label === "streetwear" ? "Streetwear" : link.label === "blog" ? "Blog" : t(link.label)}
                       </Link>
                     ))}
                   </div>

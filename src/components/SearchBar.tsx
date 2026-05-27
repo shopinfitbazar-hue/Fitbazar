@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X, TrendingUp } from "lucide-react";
-import { categoryQueryValue } from "@/lib/categories";
+import { categorySlug } from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
 
 interface SearchResult {
@@ -30,6 +30,15 @@ const trendingSearches = [
   "Daura Suruwal",
   "Dhoti",
 ];
+
+function collectionHrefForCategory(name: string) {
+  const slug = categorySlug(name);
+  if (slug === "men") return "/collections/mens-fashion-nepal";
+  if (slug === "women") return "/collections/womens-fashion-nepal";
+  if (slug === "ethnic-wear") return "/collections/ethnic";
+  if (slug === "sports") return "/collections/streetwear-nepal";
+  return `/collections/${slug}`;
+}
 
 export default function SearchBar({ compact = false }: { compact?: boolean }) {
   const { t } = useLanguage();
@@ -142,7 +151,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
                   item.type === "product" && item.slug
                     ? `/products/${item.slug}`
                     : item.type === "category"
-                      ? `/products?category=${encodeURIComponent(categoryQueryValue(item.name))}`
+                      ? collectionHrefForCategory(item.name)
                       : `/search?q=${encodeURIComponent(item.name)}`
                 }
                 onClick={() => setOpen(false)}
