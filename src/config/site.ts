@@ -47,7 +47,6 @@ export function buildMetadata(overrides?: Metadata): Metadata {
     publisher: siteConfig.name,
     authors: [{ name: siteConfig.name }],
     generator: "Next.js",
-    manifest: "/manifest.webmanifest",
     icons: {
       icon: [
         { url: siteConfig.favicon, sizes: "64x64", type: "image/x-icon" },
