@@ -2,12 +2,6 @@ import type { Metadata } from "next";
 import { getAppBaseUrl } from "@/lib/app-url";
 
 const baseUrl = getAppBaseUrl();
-const iconVersion = "20260527";
-
-function versionedIcon(path: string) {
-  return `${path}?v=${iconVersion}`;
-}
-
 export const siteConfig = {
   name: "FitBazar",
   shortName: "FitBazar",
@@ -15,9 +9,9 @@ export const siteConfig = {
   description:
     "Shop men's, women's, kids', ethnic, sportswear, footwear, and accessories from trusted fashion stores across Nepal on FitBazar.",
   url: baseUrl,
-  icon: "/icon.png",
-  appleIcon: "/apple-icon.png",
-  favicon: "/favicon.ico",
+  icon: "/fitbazar-icon-20260527.png",
+  appleIcon: "/apple-touch-icon.png",
+  favicon: "/fitbazar-favicon-20260527.ico",
   ogImage: "/opengraph-image",
   locale: "en_NP",
   keywords: [
@@ -53,13 +47,24 @@ export function buildMetadata(overrides?: Metadata): Metadata {
     publisher: siteConfig.name,
     authors: [{ name: siteConfig.name }],
     generator: "Next.js",
+    manifest: "/manifest.webmanifest",
     icons: {
       icon: [
-        { url: versionedIcon(siteConfig.favicon), sizes: "64x64", type: "image/x-icon" },
-        { url: versionedIcon(siteConfig.icon), sizes: "512x512", type: "image/png" },
+        { url: siteConfig.favicon, sizes: "64x64", type: "image/x-icon" },
+        { url: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon-64x64.png", sizes: "64x64", type: "image/png" },
+        { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+        { url: siteConfig.icon, sizes: "512x512", type: "image/png" },
       ],
-      shortcut: versionedIcon(siteConfig.favicon),
-      apple: [{ url: versionedIcon(siteConfig.appleIcon), sizes: "180x180", type: "image/png" }],
+      shortcut: siteConfig.favicon,
+      apple: [{ url: siteConfig.appleIcon, sizes: "180x180", type: "image/png" }],
+    },
+    other: {
+      "msapplication-TileColor": "#111827",
+      "msapplication-TileImage": "/mstile-150x150.png",
     },
     robots: {
       index: true,
