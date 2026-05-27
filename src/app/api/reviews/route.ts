@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 const MAX_COMMENT_LENGTH = 1200;
 
@@ -16,6 +17,10 @@ function normalizeRating(value: unknown) {
 function normalizeComment(value: unknown) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, MAX_COMMENT_LENGTH);
+}
+
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
 }
 
 async function hasDeliveredProductOrder(userId: string, productId: string) {
@@ -118,9 +123,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = await request.json();
@@ -139,7 +144,7 @@ export async function POST(request: NextRequest) {
         where: { id: productId },
         select: { id: true },
       }),
-      hasDeliveredProductOrder(session.user.id, productId),
+      hasDeliveredProductOrder(auth.session.user.id, productId),
     ]);
 
     if (!product) {
@@ -153,7 +158,7 @@ export async function POST(request: NextRequest) {
     const existingReview = await prisma.review.findFirst({
       where: {
         productId,
-        userId: session.user.id,
+        userId: auth.session.user.id,
       },
       select: {
         id: true,
@@ -166,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     const review = await prisma.review.create({
       data: {
-        userId: session.user.id,
+        userId: auth.session.user.id,
         productId,
         rating: normalizedRating,
         comment: normalizeComment(comment),
@@ -195,9 +200,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = await request.json();
@@ -218,7 +223,7 @@ export async function PUT(request: NextRequest) {
     const existingReview = await prisma.review.findFirst({
       where: {
         id: reviewId,
-        userId: session.user.id,
+        userId: auth.session.user.id,
       },
     });
 
@@ -256,9 +261,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const { searchParams } = new URL(request.url);
@@ -274,7 +279,7 @@ export async function DELETE(request: NextRequest) {
     const review = await prisma.review.findFirst({
       where: {
         id: reviewId,
-        userId: session.user.id,
+        userId: auth.session.user.id,
       },
       select: {
         id: true,

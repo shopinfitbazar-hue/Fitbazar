@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
+
+function authStatus(error: string) {
+  return error === "Unauthorized" ? 401 : 403;
+}
 
 async function resolveVendor(vendorId?: string | null, slug?: string | null) {
   if (vendorId) {
@@ -96,9 +101,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireCustomerSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
     const body = (await request.json()) as {
@@ -126,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     const deliveredOrder = await prisma.order.findFirst({
       where: {
-        customerId: session.user.id,
+        customerId: auth.session.user.id,
         vendorId: vendor.id,
         status: "DELIVERED",
       },
@@ -141,7 +146,7 @@ export async function POST(request: NextRequest) {
     const existingReview = await prisma.vendorReview.findUnique({
       where: {
         userId_vendorId: {
-          userId: session.user.id,
+          userId: auth.session.user.id,
           vendorId: vendor.id,
         },
       },
@@ -154,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     const review = await prisma.vendorReview.create({
       data: {
-        userId: session.user.id,
+        userId: auth.session.user.id,
         vendorId: vendor.id,
         orderId: deliveredOrder.id,
         rating: Math.round(body.rating),
@@ -171,7 +176,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: vendor.userId,
         title: "New store review",
-        message: `${session.user.name || "A customer"} rated ${vendor.shopName} ${review.rating}/5.`,
+        message: `${auth.session.user.name || "A customer"} rated ${vendor.shopName} ${review.rating}/5.`,
         type: "VENDOR_REVIEW",
         link: `/vendor/dashboard`,
       },

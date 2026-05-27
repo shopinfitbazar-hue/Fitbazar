@@ -481,11 +481,21 @@ export default function AdminDashboard() {
   };
 
   const updateCustomer = async (id: string, isBanned: boolean) => {
-    await fetch(`/api/admin/customers/${id}`, {
+    const response = await fetch(`/api/admin/customers/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isBanned }),
     });
+
+    const result = (await response.json().catch(() => ({}))) as { customer?: AdminCustomer; error?: string };
+
+    if (!response.ok || !result.customer) {
+      setMessage(result.error || "Failed to update customer access.");
+      return;
+    }
+
+    setCustomers((current) => current.map((customer) => (customer.id === id ? result.customer as AdminCustomer : customer)));
+    setMessage(isBanned ? "Customer banned. Active checkout attempts are now blocked." : "Customer unbanned.");
     await loadAdmin();
   };
 

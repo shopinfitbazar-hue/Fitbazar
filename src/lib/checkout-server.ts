@@ -113,11 +113,18 @@ function normalizeCoupon(record: {
 export async function prepareCheckoutContext(customerId: string, payload: CheckoutPayload): Promise<PreparedCheckoutContext> {
   const customer = await prisma.user.findUnique({
     where: { id: customerId },
-    select: { role: true },
+    select: {
+      role: true,
+      isBanned: true,
+    },
   });
 
   if (!customer || customer.role !== "CUSTOMER") {
     throw buildCheckoutError("CUSTOMER_ONLY", "Vendor and admin accounts cannot place customer orders. Please use a customer account to shop.");
+  }
+
+  if (customer.isBanned) {
+    throw buildCheckoutError("ACCOUNT_SUSPENDED", "Your account has been suspended and cannot place orders.");
   }
 
   if (!payload.items?.length) {
@@ -457,6 +464,7 @@ export function mapCheckoutErrorToResponse(error: unknown) {
   }
 
   switch (error.name) {
+    case "ACCOUNT_SUSPENDED":
     case "CUSTOMER_ONLY":
       return { status: 403, message: error.message };
     case "MISSING_ITEMS":

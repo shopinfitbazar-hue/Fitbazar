@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getVendorAccessState } from "@/lib/vendor-access";
 
 type AuthError =
-  | { error: "Unauthorized" | "Forbidden" | "Customer account required" | "Vendor account not linked" | "Vendor not found" }
+  | { error: "Unauthorized" | "Forbidden" | "Account suspended" | "Customer account required" | "Vendor account not linked" | "Vendor not found" }
   | { error: "Vendor suspended" }
   | { error: "Vendor pending approval" };
 type UserSessionResult = { session: Session };
@@ -58,6 +58,24 @@ export async function requireUserSession(): Promise<AuthError | UserSessionResul
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
   }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      role: true,
+      isBanned: true,
+    },
+  });
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  if (user.isBanned) {
+    return { error: "Account suspended" };
+  }
+
+  session.user.role = user.role;
 
   return { session };
 }
