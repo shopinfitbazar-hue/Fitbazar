@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { getAppBaseUrl } from "@/lib/app-url";
 
 const baseUrl = getAppBaseUrl();
+const iconVersion = "20260527";
+
+function versionedIcon(path: string) {
+  return `${path}?v=${iconVersion}`;
+}
 
 export const siteConfig = {
   name: "FitBazar",
@@ -50,11 +55,11 @@ export function buildMetadata(overrides?: Metadata): Metadata {
     generator: "Next.js",
     icons: {
       icon: [
-        { url: siteConfig.favicon, sizes: "64x64", type: "image/x-icon" },
-        { url: siteConfig.icon, sizes: "512x512", type: "image/png" },
+        { url: versionedIcon(siteConfig.favicon), sizes: "64x64", type: "image/x-icon" },
+        { url: versionedIcon(siteConfig.icon), sizes: "512x512", type: "image/png" },
       ],
-      shortcut: siteConfig.favicon,
-      apple: [{ url: siteConfig.appleIcon, sizes: "180x180", type: "image/png" }],
+      shortcut: versionedIcon(siteConfig.favicon),
+      apple: [{ url: versionedIcon(siteConfig.appleIcon), sizes: "180x180", type: "image/png" }],
     },
     robots: {
       index: true,
