@@ -8,6 +8,7 @@ import { WishlistProvider } from "@/lib/wishlist";
 import { ToastProvider } from "@/lib/ToastContext";
 import type { Language } from "@/lib/translations";
 import { captureMessage } from "@/lib/monitoring";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export default function Providers({ children, initialLang = "en" }: ProvidersPro
         <CartProvider>
           <WishlistProvider>
             <ToastProvider>
+              <AnalyticsTracker />
               {children}
             </ToastProvider>
           </WishlistProvider>

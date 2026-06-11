@@ -19,7 +19,7 @@ Open `http://localhost:3002`.
 npm test
 npm run lint
 npx tsc --noEmit
-npm run build
+npm run build:local
 ```
 
 ## Seeded Accounts
@@ -96,13 +96,14 @@ Useful commands:
 ```bash
 npx prisma generate
 npx prisma db seed
-npm run build
+npm run build:local
 ```
 
 Build note:
 
 - Vercel and local installs run `prisma generate` automatically through `postinstall`.
-- The production build also runs `prisma generate` before `next build` as a safety net.
+- The production build runs `prisma generate`, `prisma migrate deploy`, then `next build`.
+- Use `npm run build:local` when you want to compile without applying migrations.
 
 ## Launch Notes
 

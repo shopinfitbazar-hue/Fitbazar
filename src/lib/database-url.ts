@@ -23,9 +23,14 @@ export function resolveDatabaseUrl(options?: {
   databaseUrl?: string | null;
   directUrl?: string | null;
   allowPlaceholder?: boolean;
+  preferDirectUrl?: boolean;
 }) {
   const normalizedDatabaseUrl = normalizeDatabaseUrl(options?.databaseUrl);
   const normalizedDirectUrl = normalizeDatabaseUrl(options?.directUrl);
+
+  if (options?.preferDirectUrl && normalizedDirectUrl) {
+    return normalizedDirectUrl;
+  }
 
   if (normalizedDatabaseUrl) {
     return normalizedDatabaseUrl;

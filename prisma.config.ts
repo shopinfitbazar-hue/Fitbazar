@@ -11,6 +11,7 @@ export default defineConfig({
     url: resolveDatabaseUrl({
       databaseUrl: process.env.DATABASE_URL,
       directUrl: process.env.DIRECT_URL,
+      preferDirectUrl: true,
       allowPlaceholder: true,
     }),
   },

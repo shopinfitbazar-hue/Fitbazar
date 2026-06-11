@@ -82,6 +82,8 @@ model User {
   supportTickets SupportTicket[]
   cartItems      CartItem[]
   supportMessages SupportMessage[]
+  analyticsEvents AnalyticsEvent[]
+  performanceMetrics PerformanceMetric[]
 }
 
 model Vendor {
@@ -411,4 +413,45 @@ model PaymentAttempt {
   updatedAt         DateTime @updatedAt
 
   @@index([customerId, status])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  anonymousId String?
+  channel     String   @default("WEB")
+  eventType   String
+  path        String?
+  referrer    String?
+  userAgent   String?
+  ipHash      String?
+  deviceType  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([channel, createdAt])
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+  @@index([anonymousId, createdAt])
+}
+
+model PerformanceMetric {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  anonymousId String?
+  channel     String   @default("WEB")
+  path        String?
+  metricName  String
+  value       Float
+  unit        String   @default("ms")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([channel, createdAt])
+  @@index([metricName, createdAt])
+  @@index([userId, createdAt])
 }

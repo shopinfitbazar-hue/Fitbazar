@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 const navItems = [
   { id: "dashboard", labelKey: "dashboard" },
+  { id: "analytics", labelKey: "analytics" },
   { id: "vendors", labelKey: "vendors" },
   { id: "products", labelKey: "products" },
   { id: "orders", labelKey: "orders" },

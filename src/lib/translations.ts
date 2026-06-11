@@ -427,6 +427,7 @@ export const translations: Record<string, Record<Language, string>> = {
   addresses: { en: "Addresses", ne: "ठेगानाहरू" },
   myReviews: { en: "Reviews", ne: "समीक्षाहरू" },
   dashboard: { en: "Dashboard", ne: "ड्यासबोर्ड" },
+  analytics: { en: "Analytics", ne: "विश्लेषण" },
   settings: { en: "Settings", ne: "सेटिङहरू" },
   total_orders: { en: "Total Orders", ne: "कुल अर्डरहरू" },
   total_spent: { en: "Total Spent", ne: "कुल खर्च" },

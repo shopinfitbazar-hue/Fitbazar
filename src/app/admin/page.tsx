@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BadgePercent, BellRing, CalendarDays, CheckCircle2, CircleDollarSign, LayoutDashboard, Package, Send, ShoppingCart, Star, Users } from "lucide-react";
+import { Activity, BadgePercent, BellRing, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, Gauge, LayoutDashboard, MousePointerClick, Package, Send, ShoppingCart, Smartphone, Star, UserCheck, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
@@ -200,10 +200,84 @@ type BroadcastRecipient = {
   emailSent: boolean;
 };
 
+type AnalyticsCount = {
+  label: string | null;
+  count: number;
+};
+
+type AnalyticsPeakHour = {
+  hour: number;
+  count: number;
+};
+
+type AnalyticsPerformance = {
+  path: string | null;
+  averageMs: number;
+  samples: number;
+};
+
+type AnalyticsRecentEvent = {
+  id: string;
+  eventType: string;
+  channel: string;
+  path: string | null;
+  anonymousId: string | null;
+  deviceType: string | null;
+  createdAt: string;
+  user: {
+    name: string | null;
+    email: string;
+    role: string;
+  } | null;
+};
+
+type AnalyticsState = {
+  range: {
+    days: number;
+    startDate?: string;
+    endDate?: string;
+  };
+  summary: {
+    totalEvents: number;
+    pageViews: number;
+    uniqueVisitors: number;
+    signedInVisitors: number;
+    mobileEvents: number;
+    orders: number;
+  };
+  topPages: AnalyticsCount[];
+  channels: AnalyticsCount[];
+  devices: AnalyticsCount[];
+  peakHours: AnalyticsPeakHour[];
+  daily: Array<{ date: string; count: number }>;
+  performance: AnalyticsPerformance[];
+  recentEvents: AnalyticsRecentEvent[];
+};
+
+const emptyAnalytics: AnalyticsState = {
+  range: { days: 30 },
+  summary: {
+    totalEvents: 0,
+    pageViews: 0,
+    uniqueVisitors: 0,
+    signedInVisitors: 0,
+    mobileEvents: 0,
+    orders: 0,
+  },
+  topPages: [],
+  channels: [],
+  devices: [],
+  peakHours: [],
+  daily: [],
+  performance: [],
+  recentEvents: [],
+};
+
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("dashboard");
   const [stats, setStats] = useState({ totalGmv: 0, vendors: 0, orders: 0, totalCommission: 0 });
+  const [analytics, setAnalytics] = useState<AnalyticsState>(emptyAnalytics);
   const [vendors, setVendors] = useState<AdminVendor[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -282,7 +356,7 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState("");
 
   async function loadAdmin() {
-    const [statsResponse, vendorsResponse, productsResponse, ordersResponse, customersResponse, bannersResponse, settingsResponse, festivalResponse, couponsResponse, supportResponse, vendorReviewsResponse] = await Promise.all([
+    const [statsResponse, vendorsResponse, productsResponse, ordersResponse, customersResponse, bannersResponse, settingsResponse, festivalResponse, couponsResponse, supportResponse, vendorReviewsResponse, analyticsResponse] = await Promise.all([
       fetch("/api/admin/stats", { cache: "no-store" }),
       fetch("/api/admin/vendors", { cache: "no-store" }),
       fetch("/api/admin/products", { cache: "no-store" }),
@@ -294,9 +368,10 @@ export default function AdminDashboard() {
       fetch("/api/admin/coupons", { cache: "no-store" }),
       fetch("/api/admin/support", { cache: "no-store" }),
       fetch("/api/admin/vendor-reviews", { cache: "no-store" }),
+      fetch("/api/admin/analytics?days=30", { cache: "no-store" }),
     ]);
 
-    const [statsData, vendorsData, productsData, ordersData, customersData, bannersData, settingsData, festivalData, couponsData, supportData, vendorReviewsData] = await Promise.all([
+    const [statsData, vendorsData, productsData, ordersData, customersData, bannersData, settingsData, festivalData, couponsData, supportData, vendorReviewsData, analyticsData] = await Promise.all([
       statsResponse.json(),
       vendorsResponse.json(),
       productsResponse.json(),
@@ -308,6 +383,7 @@ export default function AdminDashboard() {
       couponsResponse.json(),
       supportResponse.json(),
       vendorReviewsResponse.json(),
+      analyticsResponse.json(),
     ]);
 
     if (statsResponse.ok) setStats(statsData.stats);
@@ -322,6 +398,7 @@ export default function AdminDashboard() {
       setSupportArchiveCount(supportData.archivedCount || 0);
     }
     if (vendorReviewsResponse.ok) setVendorReviews(vendorReviewsData.reviews || []);
+    if (analyticsResponse.ok) setAnalytics({ ...emptyAnalytics, ...analyticsData });
     if (settingsResponse.ok && settingsData.settings) {
       setSettings((current) => ({ ...current, ...settingsData.settings }));
     }
@@ -356,6 +433,40 @@ export default function AdminDashboard() {
     { label: t("orders"), value: String(stats.orders), icon: ShoppingCart },
     { label: t("commission"), value: formatPriceNpr(stats.totalCommission), icon: Package },
   ];
+
+  const analyticsCards = [
+    { label: "Unique visitors", value: String(analytics.summary.uniqueVisitors), icon: Users },
+    { label: "Page views", value: String(analytics.summary.pageViews), icon: MousePointerClick },
+    { label: "Signed-in people", value: String(analytics.summary.signedInVisitors), icon: UserCheck },
+    { label: "Mobile app events", value: String(analytics.summary.mobileEvents), icon: Smartphone },
+    { label: "Orders in range", value: String(analytics.summary.orders), icon: ShoppingCart },
+    { label: "Total events", value: String(analytics.summary.totalEvents), icon: Activity },
+  ];
+
+  const busiestHour = analytics.peakHours[0];
+
+  const formatPeakHour = (hour: number) => {
+    const date = new Date();
+    date.setHours(hour, 0, 0, 0);
+    return date.toLocaleTimeString("en-NP", { hour: "numeric" });
+  };
+
+  const formatAnalyticsLabel = (label: string | null) => {
+    if (!label) return "Unknown";
+    return label
+      .toLowerCase()
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
+
+  const formatRecentVisitor = (event: AnalyticsRecentEvent) => {
+    if (event.user) {
+      return `${event.user.name || event.user.email} (${event.user.role.toLowerCase()})`;
+    }
+
+    return event.anonymousId ? `Guest ${event.anonymousId.slice(0, 8)}` : "Guest visitor";
+  };
 
   const updateVendor = async (
     id: string,
@@ -722,6 +833,159 @@ export default function AdminDashboard() {
               </div>
             </div>
             <p className="text-[14px] text-text-muted">{t("orders")}: {stats.orders} • {t("vendors")}: {stats.vendors} • {t("total_gmv")}: {formatPriceNpr(stats.totalGmv)}</p>
+          </div>
+
+          <div id="analytics" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">
+                  <Gauge className="h-4 w-4 text-fb-pink" />
+                  Website, app, and traffic intelligence
+                </div>
+                <h2 className="mt-2 text-[18px] font-semibold text-text-primary">Analytics Control Room</h2>
+                <p className="mt-1 text-[13px] text-text-muted">
+                  Last {analytics.range.days} days. Native customer and vendor apps will report into the same dashboard.
+                </p>
+              </div>
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] px-4 py-3 text-[13px] text-text-secondary">
+                <div className="flex items-center gap-2 font-semibold text-text-primary">
+                  <Clock3 className="h-4 w-4 text-fb-pink" />
+                  Peak hour
+                </div>
+                <div className="mt-1 text-[12px] text-text-muted">
+                  {busiestHour ? `${formatPeakHour(busiestHour.hour)} • ${busiestHour.count} events` : "Waiting for traffic"}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+              {analyticsCards.map((item) => (
+                <div key={item.label} className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                  <div className="flex items-center gap-2 text-[12px] text-text-muted">
+                    <item.icon className="h-4 w-4 text-fb-pink" />
+                    {item.label}
+                  </div>
+                  <div className="mt-3 text-[24px] font-semibold text-text-primary">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 grid gap-4 xl:grid-cols-2">
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <h3 className="text-[14px] font-semibold text-text-primary">Top pages</h3>
+                <div className="mt-4 space-y-3">
+                  {analytics.topPages.map((item) => {
+                    const width = analytics.summary.pageViews ? Math.max(8, Math.round((item.count / analytics.summary.pageViews) * 100)) : 0;
+                    return (
+                      <div key={item.label || "unknown"}>
+                        <div className="flex items-center justify-between gap-3 text-[13px]">
+                          <span className="min-w-0 truncate text-text-secondary">{item.label || "Unknown page"}</span>
+                          <span className="font-semibold text-text-primary">{item.count}</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-white">
+                          <div className="h-full rounded-full bg-fb-pink" style={{ width: `${width}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!analytics.topPages.length ? <p className="text-[13px] text-text-muted">Page views will appear after visitors browse the site.</p> : null}
+                </div>
+              </div>
+
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <h3 className="text-[14px] font-semibold text-text-primary">Peak hours</h3>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {analytics.peakHours.map((item) => (
+                    <div key={item.hour} className="flex items-center justify-between rounded-[8px] bg-white px-3 py-2 text-[13px]">
+                      <span className="text-text-secondary">{formatPeakHour(item.hour)}</span>
+                      <span className="font-semibold text-text-primary">{item.count} events</span>
+                    </div>
+                  ))}
+                  {!analytics.peakHours.length ? <p className="text-[13px] text-text-muted">Peak-hour data appears after analytics events are recorded.</p> : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <h3 className="text-[14px] font-semibold text-text-primary">Channels</h3>
+                <div className="mt-4 space-y-2">
+                  {analytics.channels.map((item) => (
+                    <div key={item.label || "unknown"} className="flex items-center justify-between text-[13px]">
+                      <span className="text-text-secondary">{formatAnalyticsLabel(item.label)}</span>
+                      <span className="font-semibold text-text-primary">{item.count}</span>
+                    </div>
+                  ))}
+                  {!analytics.channels.length ? <p className="text-[13px] text-text-muted">No channel data yet.</p> : null}
+                </div>
+              </div>
+
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <h3 className="text-[14px] font-semibold text-text-primary">Devices</h3>
+                <div className="mt-4 space-y-2">
+                  {analytics.devices.map((item) => (
+                    <div key={item.label || "unknown"} className="flex items-center justify-between text-[13px]">
+                      <span className="text-text-secondary">{formatAnalyticsLabel(item.label)}</span>
+                      <span className="font-semibold text-text-primary">{item.count}</span>
+                    </div>
+                  ))}
+                  {!analytics.devices.length ? <p className="text-[13px] text-text-muted">No device data yet.</p> : null}
+                </div>
+              </div>
+
+              <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+                <h3 className="text-[14px] font-semibold text-text-primary">Page load speed</h3>
+                <div className="mt-4 space-y-2">
+                  {analytics.performance.slice(0, 5).map((item) => (
+                    <div key={item.path || "unknown"} className="grid gap-1 text-[13px]">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate text-text-secondary">{item.path || "Unknown page"}</span>
+                        <span className="font-semibold text-text-primary">{item.averageMs}ms</span>
+                      </div>
+                      <span className="text-[11px] text-text-muted">{item.samples} sample{item.samples === 1 ? "" : "s"}</span>
+                    </div>
+                  ))}
+                  {!analytics.performance.length ? <p className="text-[13px] text-text-muted">Load speed samples will appear after browser visits.</p> : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
+              <h3 className="text-[14px] font-semibold text-text-primary">Recent visitor activity</h3>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[760px]">
+                  <thead>
+                    <tr className="border-b border-border-light text-left text-[12px] uppercase tracking-[1px] text-text-muted">
+                      <th className="py-3">Person</th>
+                      <th className="py-3">Event</th>
+                      <th className="py-3">Path</th>
+                      <th className="py-3">Channel</th>
+                      <th className="py-3">Device</th>
+                      <th className="py-3">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.recentEvents.map((event) => (
+                      <tr key={event.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
+                        <td className="py-3 font-medium text-text-primary">{formatRecentVisitor(event)}</td>
+                        <td>{formatAnalyticsLabel(event.eventType)}</td>
+                        <td className="max-w-[240px] truncate">{event.path || "-"}</td>
+                        <td>{formatAnalyticsLabel(event.channel)}</td>
+                        <td>{formatAnalyticsLabel(event.deviceType)}</td>
+                        <td>{new Date(event.createdAt).toLocaleString("en-NP")}</td>
+                      </tr>
+                    ))}
+                    {!analytics.recentEvents.length ? (
+                      <tr>
+                        <td colSpan={6} className="py-4 text-[13px] text-text-muted">
+                          Activity will appear here once visitors use the website.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <div id="vendors" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
