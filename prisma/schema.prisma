@@ -84,6 +84,9 @@ model User {
   supportMessages SupportMessage[]
   analyticsEvents AnalyticsEvent[]
   performanceMetrics PerformanceMetric[]
+
+  @@index([role, createdAt])
+  @@index([role, isBanned])
 }
 
 model Vendor {
@@ -119,6 +122,8 @@ model Vendor {
 
   @@index([isApproved, isSuspended, isPartnered])
   @@index([isTopShop, createdAt])
+  @@index([createdAt])
+  @@index([shopName])
 }
 
 model VerificationToken {
@@ -178,6 +183,7 @@ model Product {
   @@index([status, discountPct])
   @@index([status, totalSold])
   @@index([vendorId, status])
+  @@index([createdAt])
 }
 
 model Order {
@@ -205,6 +211,8 @@ model Order {
   vendorReviews   VendorReview[]
 
   @@index([checkoutGroupId])
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model OrderItem {

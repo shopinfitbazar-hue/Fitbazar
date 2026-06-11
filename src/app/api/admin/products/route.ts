@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { buildPaginationMeta, getAdminPagination, getAdminSearch } from "@/lib/admin-pagination";
 import { requireAdminSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
 import { deriveProductStatus } from "@/lib/product-status";
@@ -34,31 +35,53 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q")?.trim();
+    const q = getAdminSearch(searchParams);
+    const { page, pageSize, skip, take } = getAdminPagination(searchParams);
+    const where = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { slug: { contains: q, mode: "insensitive" as const } },
+            { category: { contains: q, mode: "insensitive" as const } },
+            { vendor: { shopName: { contains: q, mode: "insensitive" as const } } },
+          ],
+        }
+      : undefined;
 
-    const products = await prisma.product.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { category: { contains: q, mode: "insensitive" } },
-              { vendor: { shopName: { contains: q, mode: "insensitive" } } },
-            ],
-          }
-        : undefined,
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-          },
+    const includeVendor = {
+      vendor: {
+        select: {
+          id: true,
+          shopName: true,
+          slug: true,
         },
       },
-      orderBy: { createdAt: "desc" },
-    });
+    };
 
-    return NextResponse.json({ products });
+    const [products, total, pendingCount, awaitingApproval] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: includeVendor,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.product.count({ where }),
+      prisma.product.count({ where: { status: "DRAFT" } }),
+      prisma.product.findMany({
+        where: { status: "DRAFT" },
+        include: includeVendor,
+        orderBy: { createdAt: "asc" },
+        take: 8,
+      }),
+    ]);
+
+    return NextResponse.json({
+      products,
+      pendingCount,
+      awaitingApproval,
+      pagination: buildPaginationMeta(total, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching admin products:", error);
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });

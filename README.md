@@ -20,6 +20,7 @@ npm test
 npm run lint
 npx tsc --noEmit
 npm run build:local
+npm run load:test
 ```
 
 ## Seeded Accounts

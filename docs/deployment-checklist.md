@@ -11,4 +11,5 @@
 - Configure `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` if Sentry is enabled in production.
 - Verify Vercel project settings use Node.js compatible with Next 14.
 - Run `npm run build:local`, `npm test`, and `npx tsc --noEmit` before each release when you do not want local checks to touch the database.
+- Run `npm run load:test` against staging or production after deploy for a traffic smoke test.
 - Confirm checkout, auth, upload, and vendor/admin flows against the production domain.

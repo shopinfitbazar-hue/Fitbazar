@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "npx ts-node --project tests/tsconfig.json tests/run-tests.ts",
+    "load:test": "node scripts/load-test.mjs",
     "seed": "npx ts-node --project prisma/tsconfig.seed.json prisma/seed.ts",
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",

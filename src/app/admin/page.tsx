@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Activity, BadgePercent, BellRing, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, Gauge, LayoutDashboard, MousePointerClick, Package, Send, ShoppingCart, Smartphone, Star, UserCheck, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, BadgePercent, BellRing, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Gauge, LayoutDashboard, MousePointerClick, Package, Search, Send, ShoppingCart, Smartphone, Star, UserCheck, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
 import ImagePreviewStrip from "@/components/ImagePreviewStrip";
 import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
+import type { PaginationMeta } from "@/lib/admin-pagination";
 import { useLanguage } from "@/lib/LanguageContext";
 import { FALLBACK_PRODUCT_IMAGE, getSafeImageUrl, getShowcaseImageUrl } from "@/lib/media";
 
@@ -273,13 +274,59 @@ const emptyAnalytics: AnalyticsState = {
   recentEvents: [],
 };
 
+type AdminListKey = "vendors" | "products" | "orders" | "customers" | "support";
+type AdminSearchState = Record<AdminListKey, string>;
+type AdminPageState = Record<AdminListKey, number>;
+type AdminPaginationState = Record<AdminListKey, PaginationMeta>;
+
+const ADMIN_LIST_KEYS: AdminListKey[] = ["vendors", "products", "orders", "customers", "support"];
+const ADMIN_PAGE_SIZE = 25;
+const emptyPagination: PaginationMeta = {
+  page: 1,
+  pageSize: ADMIN_PAGE_SIZE,
+  total: 0,
+  totalPages: 1,
+  hasNext: false,
+  hasPrev: false,
+};
+
+const initialAdminSearch: AdminSearchState = {
+  vendors: "",
+  products: "",
+  orders: "",
+  customers: "",
+  support: "",
+};
+
+const initialAdminPages: AdminPageState = {
+  vendors: 1,
+  products: 1,
+  orders: 1,
+  customers: 1,
+  support: 1,
+};
+
+const initialAdminPagination: AdminPaginationState = ADMIN_LIST_KEYS.reduce(
+  (meta, key) => ({
+    ...meta,
+    [key]: emptyPagination,
+  }),
+  {} as AdminPaginationState,
+);
+
 export default function AdminDashboard() {
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState("dashboard");
   const [stats, setStats] = useState({ totalGmv: 0, vendors: 0, orders: 0, totalCommission: 0 });
   const [analytics, setAnalytics] = useState<AnalyticsState>(emptyAnalytics);
+  const [adminSearch, setAdminSearch] = useState<AdminSearchState>(initialAdminSearch);
+  const [adminPages, setAdminPages] = useState<AdminPageState>(initialAdminPages);
+  const [adminPagination, setAdminPagination] = useState<AdminPaginationState>(initialAdminPagination);
   const [vendors, setVendors] = useState<AdminVendor[]>([]);
+  const [topShops, setTopShops] = useState<AdminVendor[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [draftProducts, setDraftProducts] = useState<AdminProduct[]>([]);
+  const [pendingProductCount, setPendingProductCount] = useState(0);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [banners, setBanners] = useState<AdminBanner[]>([]);
@@ -355,18 +402,30 @@ export default function AdminDashboard() {
   });
   const [message, setMessage] = useState("");
 
-  async function loadAdmin() {
+  function buildAdminListUrl(path: string, key: AdminListKey, searchState: AdminSearchState, pageState: AdminPageState) {
+    const params = new URLSearchParams({
+      page: String(pageState[key]),
+      pageSize: String(ADMIN_PAGE_SIZE),
+    });
+    const query = searchState[key].trim();
+    if (query) params.set("q", query);
+    return `${path}?${params.toString()}`;
+  }
+
+  async function loadAdmin(options?: { search?: AdminSearchState; pages?: AdminPageState }) {
+    const searchState = options?.search || adminSearch;
+    const pageState = options?.pages || adminPages;
     const [statsResponse, vendorsResponse, productsResponse, ordersResponse, customersResponse, bannersResponse, settingsResponse, festivalResponse, couponsResponse, supportResponse, vendorReviewsResponse, analyticsResponse] = await Promise.all([
       fetch("/api/admin/stats", { cache: "no-store" }),
-      fetch("/api/admin/vendors", { cache: "no-store" }),
-      fetch("/api/admin/products", { cache: "no-store" }),
-      fetch("/api/admin/orders", { cache: "no-store" }),
-      fetch("/api/admin/customers", { cache: "no-store" }),
+      fetch(buildAdminListUrl("/api/admin/vendors", "vendors", searchState, pageState), { cache: "no-store" }),
+      fetch(buildAdminListUrl("/api/admin/products", "products", searchState, pageState), { cache: "no-store" }),
+      fetch(buildAdminListUrl("/api/admin/orders", "orders", searchState, pageState), { cache: "no-store" }),
+      fetch(buildAdminListUrl("/api/admin/customers", "customers", searchState, pageState), { cache: "no-store" }),
       fetch("/api/admin/banners", { cache: "no-store" }),
       fetch("/api/admin/settings", { cache: "no-store" }),
       fetch("/api/festival-config", { cache: "no-store" }),
       fetch("/api/admin/coupons", { cache: "no-store" }),
-      fetch("/api/admin/support", { cache: "no-store" }),
+      fetch(buildAdminListUrl("/api/admin/support", "support", searchState, pageState), { cache: "no-store" }),
       fetch("/api/admin/vendor-reviews", { cache: "no-store" }),
       fetch("/api/admin/analytics?days=30", { cache: "no-store" }),
     ]);
@@ -387,15 +446,31 @@ export default function AdminDashboard() {
     ]);
 
     if (statsResponse.ok) setStats(statsData.stats);
-    if (vendorsResponse.ok) setVendors(vendorsData.vendors || []);
-    if (productsResponse.ok) setProducts(productsData.products || []);
-    if (ordersResponse.ok) setOrders(ordersData.orders || []);
-    if (customersResponse.ok) setCustomers(customersData.customers || []);
+    if (vendorsResponse.ok) {
+      setVendors(vendorsData.vendors || []);
+      setTopShops(vendorsData.topShops || []);
+      if (vendorsData.pagination) setAdminPagination((current) => ({ ...current, vendors: vendorsData.pagination }));
+    }
+    if (productsResponse.ok) {
+      setProducts(productsData.products || []);
+      setDraftProducts(productsData.awaitingApproval || []);
+      setPendingProductCount(productsData.pendingCount || 0);
+      if (productsData.pagination) setAdminPagination((current) => ({ ...current, products: productsData.pagination }));
+    }
+    if (ordersResponse.ok) {
+      setOrders(ordersData.orders || []);
+      if (ordersData.pagination) setAdminPagination((current) => ({ ...current, orders: ordersData.pagination }));
+    }
+    if (customersResponse.ok) {
+      setCustomers(customersData.customers || []);
+      if (customersData.pagination) setAdminPagination((current) => ({ ...current, customers: customersData.pagination }));
+    }
     if (bannersResponse.ok) setBanners(bannersData.banners || []);
     if (couponsResponse.ok) setCoupons(couponsData.coupons || []);
     if (supportResponse.ok) {
       setSupportTickets(supportData.tickets || []);
       setSupportArchiveCount(supportData.archivedCount || 0);
+      if (supportData.pagination) setAdminPagination((current) => ({ ...current, support: supportData.pagination }));
     }
     if (vendorReviewsResponse.ok) setVendorReviews(vendorReviewsData.reviews || []);
     if (analyticsResponse.ok) setAnalytics({ ...emptyAnalytics, ...analyticsData });
@@ -414,6 +489,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     void loadAdmin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -466,6 +542,96 @@ export default function AdminDashboard() {
     }
 
     return event.anonymousId ? `Guest ${event.anonymousId.slice(0, 8)}` : "Guest visitor";
+  };
+
+  const updateAdminSearch = (key: AdminListKey, value: string) => {
+    setAdminSearch((current) => ({ ...current, [key]: value }));
+  };
+
+  const runAdminSearch = (key: AdminListKey) => {
+    const nextPages = { ...adminPages, [key]: 1 };
+    setAdminPages(nextPages);
+    void loadAdmin({ pages: nextPages });
+  };
+
+  const clearAdminSearch = (key: AdminListKey) => {
+    const nextSearch = { ...adminSearch, [key]: "" };
+    const nextPages = { ...adminPages, [key]: 1 };
+    setAdminSearch(nextSearch);
+    setAdminPages(nextPages);
+    void loadAdmin({ search: nextSearch, pages: nextPages });
+  };
+
+  const goToAdminPage = (key: AdminListKey, page: number) => {
+    const meta = adminPagination[key];
+    const safePage = Math.min(Math.max(page, 1), meta.totalPages);
+    const nextPages = { ...adminPages, [key]: safePage };
+    setAdminPages(nextPages);
+    void loadAdmin({ pages: nextPages });
+  };
+
+  const renderAdminListControls = (key: AdminListKey, placeholder: string) => {
+    const meta = adminPagination[key];
+    const from = meta.total ? (meta.page - 1) * meta.pageSize + 1 : 0;
+    const to = meta.total ? Math.min(meta.page * meta.pageSize, meta.total) : 0;
+
+    return (
+      <div className="mt-4 flex flex-col gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3 xl:flex-row xl:items-center xl:justify-between">
+        <form
+          className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            runAdminSearch(key);
+          }}
+        >
+          <label className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+            <input
+              value={adminSearch[key]}
+              onChange={(event) => updateAdminSearch(key, event.target.value)}
+              placeholder={placeholder}
+              className="h-11 pl-10"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="btn-primary px-4 py-2">
+              Search
+            </button>
+            {adminSearch[key] ? (
+              <button type="button" onClick={() => clearAdminSearch(key)} className="btn-ghost px-4 py-2">
+                Clear
+              </button>
+            ) : null}
+          </div>
+        </form>
+        <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-muted">
+          <span>
+            {from}-{to} of {meta.total}
+          </span>
+          <button
+            type="button"
+            onClick={() => goToAdminPage(key, meta.page - 1)}
+            disabled={!meta.hasPrev}
+            aria-label={`Previous ${key} page`}
+            className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-border-light bg-white text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="min-w-[72px] text-center">
+            Page {meta.page} / {meta.totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => goToAdminPage(key, meta.page + 1)}
+            disabled={!meta.hasNext}
+            aria-label={`Next ${key} page`}
+            className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-border-light bg-white text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const updateVendor = async (
@@ -760,15 +926,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const topShops = useMemo(
-    () => vendors.filter((vendor) => vendor.isPartnered && vendor.isTopShop).slice(0, 4),
-    [vendors],
-  );
-  const draftProducts = useMemo(
-    () => products.filter((product) => product.status === "DRAFT"),
-    [products],
-  );
-
   const updateSupportTicket = async (id: string, payload: { status?: string; adminResponse?: string; replyMessage?: string }) => {
     const response = await fetch(`/api/admin/support/${id}`, {
       method: "PATCH",
@@ -990,8 +1147,9 @@ export default function AdminDashboard() {
 
           <div id="vendors" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
             <h2 className="text-[16px] font-semibold text-text-primary">{t("vendors")}</h2>
+            {renderAdminListControls("vendors", "Search shop, owner, email, phone, PAN, or district")}
             <div className="mt-4 space-y-3">
-              {vendors.slice(0, 5).map((vendor) => (
+              {vendors.map((vendor) => (
                 <div key={vendor.id} className="flex flex-col gap-3 rounded-[8px] border border-border-light p-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="text-[14px] font-semibold text-text-primary">{vendor.shopName}</div>
@@ -1052,6 +1210,11 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+              {!vendors.length ? (
+                <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4 text-[13px] text-text-muted">
+                  No vendors found for this search.
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -1059,7 +1222,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <h2 className="text-[16px] font-semibold text-text-primary">{t("products")}</h2>
               <span className="rounded-full bg-[var(--amber-bg)] px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-orange">
-                {draftProducts.length} awaiting approval
+                {pendingProductCount} awaiting approval
               </span>
             </div>
             {draftProducts.length ? (
@@ -1266,6 +1429,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
+            {renderAdminListControls("products", "Search products by name, slug, category, or vendor")}
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[720px]">
                 <thead>
@@ -1318,6 +1482,13 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                  {!products.length ? (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-[13px] text-text-muted">
+                        No products found for this search.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
@@ -1325,6 +1496,7 @@ export default function AdminDashboard() {
 
           <div id="orders" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
             <h2 className="text-[16px] font-semibold text-text-primary">{t("recent_orders")}</h2>
+            {renderAdminListControls("orders", "Search order number, customer, vendor, status, or payment")}
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[720px]">
                 <thead>
@@ -1337,7 +1509,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.slice(0, 8).map((order) => (
+                  {orders.map((order) => (
                     <tr key={order.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
                       <td className="py-4 font-medium text-text-primary">{order.orderNumber}</td>
                       <td>{order.vendor.shopName}</td>
@@ -1350,6 +1522,13 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ))}
+                  {!orders.length ? (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-[13px] text-text-muted">
+                        No orders found for this search.
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
@@ -1357,6 +1536,7 @@ export default function AdminDashboard() {
 
           <div id="customers" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
             <h2 className="text-[16px] font-semibold text-text-primary">{t("customers")}</h2>
+            {renderAdminListControls("customers", "Search customers by name, email, or phone")}
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
               {customers.map((customer) => (
                 <div key={customer.id} className="flex flex-col gap-3 rounded-[8px] border border-border-light p-4 md:flex-row md:items-center md:justify-between">
@@ -1382,6 +1562,11 @@ export default function AdminDashboard() {
                   </button>
                 </div>
               ))}
+              {!customers.length ? (
+                <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4 text-[13px] text-text-muted xl:col-span-2">
+                  No customers found for this search.
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -1733,6 +1918,7 @@ export default function AdminDashboard() {
                 {supportArchiveCount} resolved record{supportArchiveCount === 1 ? "" : "s"} archived after 7 days
               </span>
             </div>
+            {renderAdminListControls("support", "Search support by name, email, topic, order, or message")}
             <div className="mt-4 space-y-3">
               {supportTickets.map((ticket) => (
                 <div key={ticket.id} className="rounded-[8px] border border-border-light p-4">
