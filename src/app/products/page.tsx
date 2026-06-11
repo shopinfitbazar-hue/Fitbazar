@@ -4,6 +4,11 @@ import JsonLd from "@/components/JsonLd";
 import { buildMetadata } from "@/config/site";
 import { normalizeCategory } from "@/lib/categories";
 import {
+  getCachedPublicProducts,
+  parsePublicProductQuery,
+  PUBLIC_CATALOG_REVALIDATE_SECONDS,
+} from "@/lib/public-catalog";
+import {
   breadcrumbJsonLd,
   buildCollectionMetadata,
   buildNoIndexMetadata,
@@ -12,7 +17,7 @@ import {
   collectionPathForCategory,
 } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
 type ProductsSearchParams = {
   category?: string;
@@ -29,6 +34,22 @@ async function resolveSearchParams(searchParams?: ProductsSearchParams | Promise
 
 function hasRefiningFilters(searchParams: ProductsSearchParams) {
   return Boolean(searchParams.size || searchParams.color || searchParams.maxPrice);
+}
+
+function buildInitialProductParams(searchParams: ProductsSearchParams) {
+  const params = new URLSearchParams();
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => params.append(key, item));
+    } else if (value) {
+      params.set(key, value);
+    }
+  });
+
+  if (!params.get("sort")) params.set("sort", "newest");
+  if (!params.get("maxPrice")) params.set("maxPrice", "10000");
+  return params;
 }
 
 export async function generateMetadata({
@@ -107,6 +128,8 @@ export default async function ProductsPage({
 }) {
   const params = await resolveSearchParams(searchParams);
   const category = normalizeCategory(params.category);
+  const initialParams = buildInitialProductParams(params);
+  const initialData = await getCachedPublicProducts(parsePublicProductQuery(initialParams));
 
   return (
     <>
@@ -117,7 +140,7 @@ export default async function ProductsPage({
           ...(category ? [{ name: category, path: collectionPathForCategory(category) }] : []),
         ])}
       />
-      <ProductsPageClient />
+      <ProductsPageClient initialData={initialData} initialQueryString={initialParams.toString()} />
     </>
   );
 }

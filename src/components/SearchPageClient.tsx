@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -42,6 +42,18 @@ interface SearchCategory {
   name: string;
 }
 
+interface SearchApiResponse {
+  products: SearchProduct[];
+  vendors: SearchVendor[];
+  categories: SearchCategory[];
+  total: number;
+}
+
+interface SearchPageClientProps {
+  initialData?: SearchApiResponse;
+  initialQueryString?: string;
+}
+
 function collectionHrefForCategory(name: string) {
   const slug = categorySlug(name);
   if (slug === "men") return "/collections/mens-fashion-nepal";
@@ -51,7 +63,7 @@ function collectionHrefForCategory(name: string) {
   return `/collections/${slug}`;
 }
 
-function SearchPageInner() {
+function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
@@ -59,10 +71,11 @@ function SearchPageInner() {
   const [query, setQuery] = useState(q);
   const [tab, setTab] = useState<"products" | "vendors">("products");
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<SearchProduct[]>([]);
-  const [vendors, setVendors] = useState<SearchVendor[]>([]);
-  const [categories, setCategories] = useState<SearchCategory[]>([]);
-  const [total, setTotal] = useState(0);
+  const [products, setProducts] = useState<SearchProduct[]>(initialData?.products || []);
+  const [vendors, setVendors] = useState<SearchVendor[]>(initialData?.vendors || []);
+  const [categories, setCategories] = useState<SearchCategory[]>(initialData?.categories || []);
+  const [total, setTotal] = useState(initialData?.total || 0);
+  const lastLoadedQueryRef = useRef(initialQueryString);
 
   useEffect(() => {
     setQuery(q);
@@ -78,13 +91,17 @@ function SearchPageInner() {
     }
 
     const controller = new AbortController();
+    const nextQueryString = `q=${encodeURIComponent(q)}`;
+
+    if (lastLoadedQueryRef.current === nextQueryString) {
+      return;
+    }
 
     async function runSearch() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+        const response = await fetch(`/api/search?${nextQueryString}`, {
           signal: controller.signal,
-          cache: "no-store",
         });
         const data = await response.json();
         if (!response.ok) {
@@ -94,6 +111,7 @@ function SearchPageInner() {
         setVendors(data.vendors || []);
         setCategories(data.categories || []);
         setTotal(data.total || 0);
+        lastLoadedQueryRef.current = nextQueryString;
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setProducts([]);
@@ -234,10 +252,10 @@ function SearchPageInner() {
   );
 }
 
-export default function SearchPage() {
+export default function SearchPage(props: SearchPageClientProps) {
   return (
     <Suspense>
-      <SearchPageInner />
+      <SearchPageInner {...props} />
     </Suspense>
   );
 }

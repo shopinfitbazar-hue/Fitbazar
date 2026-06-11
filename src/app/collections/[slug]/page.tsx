@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { categorySlug, normalizeCategory } from "@/lib/categories";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { buildMetadata } from "@/config/site";
 import type { Prisma } from "@prisma/client";
 import {
@@ -21,7 +22,7 @@ import {
   itemListJsonLd,
 } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
 type CollectionDefinition = {
   slug: string;

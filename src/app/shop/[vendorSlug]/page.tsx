@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,13 +8,14 @@ import JsonLd from "@/components/JsonLd";
 import { Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { t, type Language } from "@/lib/translations";
 import { publicVendorVisibilityFilter } from "@/lib/public-storefront";
 import { ProductStatus } from "@prisma/client";
 import { buildMetadata } from "@/config/site";
 import { breadcrumbJsonLd, canonicalUrl, itemListJsonLd, truncateSeo } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
 export async function generateMetadata({
   params,
@@ -96,7 +96,7 @@ export default async function VendorStorePage({
 }) {
   const { vendorSlug } = await params;
   const { category, sort = "popular" } = await searchParams;
-  const lang = (cookies().get("fitbazar_lang")?.value === "ne" ? "ne" : "en") as Language;
+  const lang = "en" as Language;
 
   const vendor = await prisma.vendor.findFirst({
     where: {
@@ -167,6 +167,7 @@ export default async function VendorStorePage({
         },
       },
       orderBy,
+      take: 48,
     }),
     prisma.product.findMany({
       where: {

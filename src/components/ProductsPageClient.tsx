@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -34,6 +34,38 @@ interface ProductApiItem {
   };
 }
 
+interface ProductApiResponse {
+  products: ProductApiItem[];
+  total: number;
+  filters: { categories: string[]; sizes: string[]; colors: string[] };
+}
+
+interface ProductsPageClientProps {
+  initialData?: ProductApiResponse;
+  initialQueryString?: string;
+}
+
+const mapProductsToCards = (items: ProductApiItem[]): ProductCardProps[] =>
+  items.map((product) => ({
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.compareAtPrice ?? undefined,
+    discountPercent: product.discountPct || undefined,
+    images: product.images,
+    vendorName: product.vendor?.shopName || "Fit Bazar",
+    vendorSlug: product.vendor?.slug,
+    rating: product.reviews?.length
+      ? Number((product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length).toFixed(1))
+      : undefined,
+    reviewCount: product._count?.reviews,
+    soldCount: product.totalSold,
+    sizes: product.sizes,
+    isFestival: product.isFestivalSale,
+    isSale: product.isYearRoundSale || product.discountPct > 0,
+  }));
+
 const sortOptions = [
   { labelKey: "recommended", value: "newest" },
   { labelKey: "whats_new", value: "newest" },
@@ -51,7 +83,7 @@ const discountOptions = [
   { labelKey: "discount_50_above", value: "50" },
 ];
 
-function ProductsPageInner() {
+function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -72,14 +104,15 @@ function ProductsPageInner() {
   const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [showMobileSort, setShowMobileSort] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<ProductCardProps[]>([]);
-  const [total, setTotal] = useState(0);
-  const [filters, setFilters] = useState<{ categories: string[]; sizes: string[]; colors: string[] }>({
+  const [loading, setLoading] = useState(!initialData);
+  const [products, setProducts] = useState<ProductCardProps[]>(initialData ? mapProductsToCards(initialData.products) : []);
+  const [total, setTotal] = useState(initialData?.total || 0);
+  const [filters, setFilters] = useState<{ categories: string[]; sizes: string[]; colors: string[] }>(initialData?.filters || {
     categories: [],
     sizes: [],
     colors: [],
   });
+  const lastLoadedQueryRef = useRef(initialQueryString);
   const pageHeading = selectedCategory
     ? `${selectedCategory} Fashion in Nepal`
     : selectedDiscount
@@ -139,44 +172,28 @@ function ProductsPageInner() {
     const params = new URLSearchParams(searchParamsString);
     if (!params.get("sort")) params.set("sort", "newest");
     if (!params.get("maxPrice")) params.set("maxPrice", "10000");
+    const nextQueryString = params.toString();
+
+    if (lastLoadedQueryRef.current === nextQueryString) {
+      return;
+    }
 
     const controller = new AbortController();
 
     async function loadProducts() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/products?${params.toString()}`, {
+        const response = await fetch(`/api/products?${nextQueryString}`, {
           signal: controller.signal,
-          cache: "no-store",
         });
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error || "Failed to load products");
         }
-
-        setProducts(
-          data.products.map((product: ProductApiItem) => ({
-            id: product.id,
-            slug: product.slug,
-            name: product.name,
-            price: product.price,
-            originalPrice: product.compareAtPrice ?? undefined,
-            discountPercent: product.discountPct || undefined,
-            images: product.images,
-            vendorName: product.vendor?.shopName || "Fit Bazar",
-            vendorSlug: product.vendor?.slug,
-            rating: product.reviews?.length
-              ? Number((product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length).toFixed(1))
-              : undefined,
-            reviewCount: product._count?.reviews,
-            soldCount: product.totalSold,
-            sizes: product.sizes,
-            isFestival: product.isFestivalSale,
-            isSale: product.isYearRoundSale || product.discountPct > 0,
-          })),
-        );
+        setProducts(mapProductsToCards(data.products));
         setTotal(data.total || 0);
         setFilters(data.filters || { categories: [], sizes: [], colors: [] });
+        lastLoadedQueryRef.current = nextQueryString;
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           setProducts([]);
@@ -471,10 +488,10 @@ function ProductsPageInner() {
   );
 }
 
-export default function ProductsPage() {
+export default function ProductsPage(props: ProductsPageClientProps) {
   return (
     <Suspense>
-      <ProductsPageInner />
+      <ProductsPageInner {...props} />
     </Suspense>
   );
 }

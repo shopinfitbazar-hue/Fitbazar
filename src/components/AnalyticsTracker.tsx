@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useReportWebVitals } from "next/web-vitals";
 import { useEffect, useRef } from "react";
 
 const ANONYMOUS_ID_KEY = "fitbazar.analytics.anonymousId";
@@ -53,6 +54,24 @@ function postAnalytics(payload: Record<string, unknown>) {
 export default function AnalyticsTracker() {
   const pathname = usePathname();
   const lastPathRef = useRef<string | null>(null);
+
+  useReportWebVitals((metric) => {
+    if (typeof window === "undefined") return;
+
+    const path = `${window.location.pathname}${window.location.search}`;
+    postAnalytics({
+      channel: getChannel(path),
+      path,
+      metricName: metric.name.toLowerCase(),
+      value: metric.value,
+      unit: metric.name === "CLS" ? "score" : "ms",
+      metadata: {
+        id: metric.id,
+        label: metric.label,
+        rating: metric.rating,
+      },
+    });
+  });
 
   useEffect(() => {
     if (!pathname || typeof window === "undefined") return;

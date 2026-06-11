@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
 import BottomNav from "@/components/BottomNav";
 import JsonLd from "@/components/JsonLd";
-import type { Language } from "@/lib/translations";
 import { buildMetadata } from "@/config/site";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
@@ -36,15 +34,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = cookies();
-  const langCookie = cookieStore.get("fitbazar_lang")?.value;
-  const initialLang: Language = langCookie === "ne" ? "ne" : "en";
-
   return (
-    <html lang={initialLang}>
+    <html lang="en">
       <body className={`${fitBazarSans.variable} bg-page font-sans text-text-primary antialiased`}>
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-        <Providers initialLang={initialLang}>
+        <Providers initialLang="en">
           {children}
           <BackToTop />
           <BottomNav />

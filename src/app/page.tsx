@@ -7,8 +7,9 @@ import { getSafeImageUrl, FALLBACK_BANNER_IMAGE } from "@/lib/media";
 import { ProductStatus } from "@prisma/client";
 import { buildMetadata } from "@/config/site";
 import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 export const metadata = buildMetadata({
   title: "FitBazar | Online Fashion Shopping in Nepal",
   description:

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import SearchPageClient from "@/components/SearchPageClient";
 import JsonLd from "@/components/JsonLd";
 import { buildMetadata } from "@/config/site";
+import { getCachedPublicSearch, parsePublicSearchQuery, PUBLIC_SEARCH_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { breadcrumbJsonLd, buildNoIndexMetadata, canonicalUrl, truncateSeo } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_SEARCH_REVALIDATE_SECONDS;
 
 type SearchParams = {
   q?: string;
@@ -43,6 +44,9 @@ export default async function SearchPage({
 }) {
   const params = await resolveSearchParams(searchParams);
   const query = params.q?.trim();
+  const initialParams = new URLSearchParams();
+  if (query) initialParams.set("q", query);
+  const initialData = await getCachedPublicSearch(parsePublicSearchQuery(initialParams));
 
   return (
     <>
@@ -52,7 +56,7 @@ export default async function SearchPage({
           { name: "Search", path: query ? `/search?q=${encodeURIComponent(query)}` : "/search" },
         ])}
       />
-      <SearchPageClient />
+      <SearchPageClient initialData={initialData} initialQueryString={initialParams.toString()} />
     </>
   );
 }
