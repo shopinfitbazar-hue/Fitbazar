@@ -5,6 +5,7 @@ import Providers from "@/components/Providers";
 import BackToTop from "@/components/BackToTop";
 import BottomNav from "@/components/BottomNav";
 import JsonLd from "@/components/JsonLd";
+import { Analytics } from "@vercel/analytics/next";
 import { buildMetadata } from "@/config/site";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
           <BackToTop />
           <BottomNav />
         </Providers>
+          <Analytics />
       </body>
     </html>
   );

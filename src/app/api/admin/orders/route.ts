@@ -40,6 +40,7 @@ export async function GET(request: Request) {
         include: {
           vendor: {
             select: {
+              id: true,
               shopName: true,
             },
           },
@@ -47,6 +48,18 @@ export async function GET(request: Request) {
             select: {
               name: true,
               email: true,
+              phone: true,
+            },
+          },
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  images: true,
+                },
+              },
             },
           },
         },

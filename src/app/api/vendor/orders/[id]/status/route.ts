@@ -5,7 +5,11 @@ import { OrderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const allowedStatuses: OrderStatus[] = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED", "DISPUTED"];
+const vendorStatusTransitions: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  PENDING: ["RECEIVED"],
+  RECEIVED: ["PACKED"],
+  PACKED: ["HANDED_TO_DELIVERY"],
+};
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -18,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = (await request.json()) as { status?: OrderStatus };
 
-    if (!body.status || !allowedStatuses.includes(body.status)) {
+    if (!body.status || !Object.values(OrderStatus).includes(body.status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
@@ -31,11 +35,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         id: true,
         customerId: true,
         orderNumber: true,
+        status: true,
       },
     });
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const allowedNextStatuses = vendorStatusTransitions[order.status] || [];
+    if (!allowedNextStatuses.includes(body.status)) {
+      return NextResponse.json(
+        { error: "This status can only be changed by an admin." },
+        { status: 403 },
+      );
     }
 
     const updatedOrder = await prisma.order.update({

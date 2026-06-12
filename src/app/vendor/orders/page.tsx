@@ -42,7 +42,17 @@ type VendorOrdersResponse = {
   };
 };
 
-const statusOptions = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED"];
+const statusFilterOptions = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED", "DISPUTED"];
+const vendorStatusTransitions: Record<string, string[]> = {
+  PENDING: ["RECEIVED"],
+  RECEIVED: ["PACKED"],
+  PACKED: ["HANDED_TO_DELIVERY"],
+};
+const vendorActionLabels: Record<string, string> = {
+  RECEIVED: "Mark Received",
+  PACKED: "Mark Packed",
+  HANDED_TO_DELIVERY: "Hand to Delivery",
+};
 
 export default function VendorOrdersPage() {
   const { t } = useLanguage();
@@ -123,7 +133,7 @@ export default function VendorOrdersPage() {
           </div>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="w-full md:max-w-[220px]">
             <option value="ALL">{t("all_status")}</option>
-            {statusOptions.map((status) => (
+            {statusFilterOptions.map((status) => (
               <option key={status} value={status}>{status}</option>
             ))}
           </select>
@@ -178,20 +188,18 @@ export default function VendorOrdersPage() {
                       <div>
                         <h4 className="mb-3 font-semibold text-text-primary">{t("update_status")}</h4>
                         <div className="flex flex-wrap gap-2">
-                          {statusOptions.map((statusOption) => (
+                          {(vendorStatusTransitions[order.status] || []).map((statusOption) => (
                             <button
                               key={statusOption}
                               onClick={() => updateOrderStatus(order.id, statusOption)}
-                              disabled={order.status === "CANCELLED" || order.status === "DELIVERED"}
-                              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                                order.status === statusOption
-                                  ? "bg-fb-pink text-white"
-                                  : "border border-border-default bg-card hover:border-fb-pink"
-                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              className="rounded-full bg-fb-pink px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
                             >
-                              {statusOption}
+                              {vendorActionLabels[statusOption] || statusOption}
                             </button>
                           ))}
+                          {!(vendorStatusTransitions[order.status] || []).length ? (
+                            <p className="text-sm text-text-muted">No vendor action available. Admin controls final, cancelled, or disputed status.</p>
+                          ) : null}
                         </div>
                       </div>
                     </div>

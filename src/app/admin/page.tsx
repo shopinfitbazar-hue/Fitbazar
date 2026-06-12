@@ -68,13 +68,40 @@ interface AdminOrder {
   orderNumber: string;
   totalAmount: number;
   status: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  createdAt: string;
+  deliveryAddress?: {
+    name?: string;
+    phone?: string;
+    line1?: string;
+    zone?: string;
+    district?: string;
+    pincode?: string;
+    email?: string;
+    deliveryMethod?: string;
+  };
   vendor: {
+    id: string;
     shopName: string;
   };
   customer: {
     name: string | null;
     email: string;
+    phone?: string | null;
   };
+  items: Array<{
+    id: string;
+    quantity: number;
+    size?: string | null;
+    color?: string | null;
+    price: number;
+    product?: {
+      id: string;
+      name: string;
+      images: string[];
+    } | null;
+  }>;
 }
 
 interface AdminCustomer {
@@ -313,6 +340,8 @@ const initialAdminPagination: AdminPaginationState = ADMIN_LIST_KEYS.reduce(
   }),
   {} as AdminPaginationState,
 );
+
+const adminOrderStatusOptions = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED", "DISPUTED"];
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
