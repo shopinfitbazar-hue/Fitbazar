@@ -508,10 +508,10 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
     const tax = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.tax, 0));
     const total = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.total, 0));
 
-    await sendMail({
+    const customerMail = await sendMail({
       to: customerEmail,
-      subject: `Fit Bazar bill: ${orderNumbers}`,
-      text: `Your Fit Bazar bill for ${orderNumbers} is ready. Total: ${formatPlainCurrency(total)}. Open or print it here: ${billUrl}`,
+      subject: `Fit Bazar official bill and thank you: ${orderNumbers}`,
+      text: `Thank you for shopping with Fit Bazar. Your official bill for order number ${orderNumbers} is ready. Total: ${formatPlainCurrency(total)}. तपाईंको किनमेलको लागि धन्यवाद। शुभ दिनको कामना। Open or print it here: ${billUrl}`,
       html: renderOrderBillEmail({
         customerName: context.address.name || "Customer",
         customerEmail,
@@ -525,6 +525,13 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
         total,
       }),
     });
+
+    if (!customerMail.delivered) {
+      console.error("[orders] Customer bill email was not delivered:", {
+        orderNumbers,
+        reason: customerMail.reason,
+      });
+    }
   }
 
   await Promise.all(
@@ -533,13 +540,20 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
       const vendorEmail = product?.vendor.user.email;
       if (!product || !vendorEmail) return;
 
-      await sendMail({
+      const vendorMail = await sendMail({
         to: vendorEmail,
         from: process.env.VENDOR_SUPPORT_EMAIL_FROM || "vendorSupport@fitbazar.com",
         subject: `New Fit Bazar order: ${order.orderNumber}`,
         text: `Order ${order.orderNumber} is waiting in your vendor dashboard.`,
         html: renderVendorOrderEmail(product.vendor.shopName, order.orderNumber, buildAbsoluteAppUrl("/vendor/orders")),
       });
+
+      if (!vendorMail.delivered) {
+        console.error("[orders] Vendor order email was not delivered:", {
+          orderNumber: order.orderNumber,
+          reason: vendorMail.reason,
+        });
+      }
     }),
   );
 }

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { CheckCircle, Clock, FileText, Package, Package2, Printer, Truck, XCircle } from "lucide-react";
+import { CheckCircle, Clock, FileText, Mail, Package, Package2, Printer, Truck, XCircle } from "lucide-react";
 import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useToast } from "@/lib/ToastContext";
 
 interface DeliveryAddress {
   name?: string;
@@ -276,8 +277,10 @@ function OrderInvoice({ order }: { order: OrderListItem }) {
 
 export default function OrdersPage() {
   const { t } = useLanguage();
+  const { addToast } = useToast();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [emailingOrder, setEmailingOrder] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const updateBillUrl = (orderNumber?: string) => {
@@ -315,6 +318,27 @@ export default function OrdersPage() {
   const printBill = (order: OrderListItem) => {
     openBill(order);
     window.setTimeout(() => window.print(), 180);
+  };
+
+  const emailBill = async (order: OrderListItem) => {
+    setEmailingOrder(order.id);
+    try {
+      const response = await fetch(`/api/orders/${encodeURIComponent(order.id)}/email-bill`, {
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        addToast(data.error || "Bill email could not be sent.", "error");
+        return;
+      }
+
+      addToast("Bill email sent successfully.", "success");
+    } catch {
+      addToast("Bill email could not be sent.", "error");
+    } finally {
+      setEmailingOrder(null);
+    }
   };
 
   useEffect(() => {
@@ -434,6 +458,15 @@ export default function OrdersPage() {
                           <Printer className="h-4 w-4" />
                           Print
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => emailBill(order)}
+                          disabled={emailingOrder === order.id}
+                          className="inline-flex h-10 items-center gap-2 rounded-full border border-border-default bg-card px-4 text-[13px] font-semibold text-text-primary transition-colors hover:border-fb-pink hover:text-fb-pink disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {emailingOrder === order.id ? "Sending" : "Email Bill"}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -455,6 +488,15 @@ export default function OrdersPage() {
                         >
                           <Printer className="h-4 w-4" />
                           Print Bill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => emailBill(order)}
+                          disabled={emailingOrder === order.id}
+                          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-border-default bg-card px-4 text-[13px] font-semibold text-text-primary transition-colors hover:border-fb-pink hover:text-fb-pink disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {emailingOrder === order.id ? "Sending" : "Email Bill"}
                         </button>
                       </div>
 

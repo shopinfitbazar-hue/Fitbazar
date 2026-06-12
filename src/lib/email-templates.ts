@@ -257,8 +257,9 @@ export function renderOrderBillEmail(input: OrderBillEmailInput) {
           </tr>
           <tr>
             <td style="padding:26px 24px;background:#ffffff;border-left:1px solid #eaeaec;border-right:1px solid #eaeaec;">
-              <h2 style="margin:0 0 10px;font-size:24px;color:#282c3f;font-weight:900;">Your bill is ready</h2>
-              <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#535766;">Hello ${escapeHtml(input.customerName || "there")}, your Fit Bazar bill for ${escapeHtml(orderNumbers)} is below. You can also open it from your account anytime.</p>
+              <h2 style="margin:0 0 10px;font-size:24px;color:#282c3f;font-weight:900;">Thank you for your order</h2>
+              <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#535766;">Hello ${escapeHtml(input.customerName || "there")}, your Fit Bazar order has been placed successfully. Your official bill is included below for order number ${escapeHtml(orderNumbers)}.</p>
+              <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#282c3f;font-weight:700;">तपाईंको किनमेलको लागि धन्यवाद। तपाईंलाई शुभ दिनको कामना।</p>
 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:18px;border:1px solid #eaeaec;border-radius:12px;background:#fafafa;">
                 <tr>
