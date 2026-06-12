@@ -21,6 +21,14 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const displayImages = useMemo(
+    () =>
+      (images.length > 0 ? images : defaultImages).map((image) =>
+        getShowcaseImageUrl(getSafeImageUrl(image, FALLBACK_GALLERY_IMAGE), { width: 1200, height: 1350 }),
+      ),
+    [images],
+  );
+  const imageCount = displayImages.length;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isZoomed) return;
@@ -31,29 +39,21 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
   };
 
   const goToPrevious = () => {
-    setSelectedIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+    setSelectedIndex((prev) => (prev === 0 ? imageCount - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    setSelectedIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+    setSelectedIndex((prev) => (prev === imageCount - 1 ? 0 : prev + 1));
   };
 
-  const displayImages = useMemo(
-    () =>
-      (images.length > 0 ? images : defaultImages).map((image) =>
-        getShowcaseImageUrl(getSafeImageUrl(image, FALLBACK_GALLERY_IMAGE), { width: 1200, height: 1350 }),
-      ),
-    [images],
-  );
-
   return (
-    <div className="flex flex-col-reverse gap-4 lg:flex-row">
+    <div className="flex flex-col-reverse gap-3 lg:flex-row lg:gap-4">
       <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
         {displayImages.map((img, idx) => (
           <button
             key={idx}
             onClick={() => setSelectedIndex(idx)}
-            className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-[20px] border transition-all lg:h-24 lg:w-24 ${
+            className={`relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[16px] border transition-all sm:h-16 sm:w-16 lg:h-24 lg:w-24 lg:rounded-[20px] ${
               selectedIndex === idx
                 ? "border-fb-pink shadow-[0_10px_30px_rgba(255,63,108,0.16)]"
                 : "border-transparent opacity-70 hover:opacity-100"
@@ -66,7 +66,7 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
 
       <div className="flex-1 relative">
         <div
-          className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-[32px] border border-white/70 bg-[linear-gradient(180deg,#f8f5f1,#f0ece6)] lg:aspect-[1/1.05]"
+          className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(180deg,#f8f5f1,#f0ece6)] md:aspect-[16/10] lg:aspect-[1/1.05] lg:rounded-[32px]"
           onMouseEnter={() => setIsZoomed(true)}
           onMouseLeave={() => setIsZoomed(false)}
           onMouseMove={handleMouseMove}
@@ -92,26 +92,26 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
             <>
               <button
                 onClick={goToPrevious}
-                className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] shadow-[var(--shadow-md)] backdrop-blur-md transition-colors hover:bg-white"
+                className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] shadow-[var(--shadow-md)] backdrop-blur-md transition-colors hover:bg-white lg:left-4 lg:h-11 lg:w-11"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="h-4 w-4 lg:h-5 lg:w-5" />
               </button>
               <button
                 onClick={goToNext}
-                className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] shadow-[var(--shadow-md)] backdrop-blur-md transition-colors hover:bg-white"
+                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] shadow-[var(--shadow-md)] backdrop-blur-md transition-colors hover:bg-white lg:right-4 lg:h-11 lg:w-11"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="h-4 w-4 lg:h-5 lg:w-5" />
               </button>
             </>
           )}
 
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] px-3 py-1.5 text-sm font-medium backdrop-blur-md">
+          <div className="absolute bottom-4 right-4 hidden items-center gap-2 rounded-full border border-white/70 bg-[rgba(255,255,255,0.88)] px-3 py-1.5 text-sm font-medium backdrop-blur-md lg:flex">
             <ZoomIn className="w-4 h-4" />
             Hover to zoom
           </div>
         </div>
 
-        <div className="mt-4 flex justify-center gap-2 lg:hidden">
+        <div className="mt-3 flex justify-center gap-2 lg:hidden">
           {displayImages.map((_, idx) => (
             <button
               key={idx}

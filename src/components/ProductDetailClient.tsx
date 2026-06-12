@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronDown, Minus, Plus, Star } from "lucide-react";
+import { ChevronDown, Minus, Plus, ShoppingBag, Star, Zap } from "lucide-react";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import ImageGallery from "@/components/ImageGallery";
 import { formatPriceNpr } from "@/lib/catalog";
@@ -80,7 +80,7 @@ export default function ProductDetailClient({
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || "");
   const [selectedColor, setSelectedColor] = useState(product.colors[0] || "");
   const [quantity, setQuantity] = useState(1);
-  const [activeAccordion, setActiveAccordion] = useState("details");
+  const [activeAccordion, setActiveAccordion] = useState("");
   const [added, setAdded] = useState(false);
   const [pincode, setPincode] = useState("");
   const [deliveryMessage, setDeliveryMessage] = useState(t("enter_pincode_hint"));
@@ -95,6 +95,9 @@ export default function ProductDetailClient({
   const [reviewMessage, setReviewMessage] = useState("");
   const accountRole = session?.user?.role;
   const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
+  const productSummary =
+    product.description ||
+    `${product.name} from ${product.vendor.shopName}, available for online fashion shopping in Nepal.`;
 
   useEffect(() => {
     if (!pincode) {
@@ -274,22 +277,19 @@ export default function ProductDetailClient({
   };
 
   return (
-    <div className="container py-6">
-      <div className="grid gap-6 lg:grid-cols-[55%_45%]">
-        <section className="section-shell">
+    <div className="container pb-28 pt-4 md:py-6 lg:pb-6">
+      <div className="grid gap-4 lg:grid-cols-[52%_48%] lg:gap-6">
+        <section className="section-shell !p-3 md:!p-5 lg:!p-6">
           <ImageGallery images={safeImages} productName={product.name} />
         </section>
 
-        <section className="section-shell lg:sticky lg:top-[76px] lg:h-fit">
-          <Link href={`/shop/${product.vendor.slug}`} className="text-[16px] font-bold uppercase text-text-primary">
+        <section className="section-shell !p-4 md:!p-5 lg:sticky lg:top-[76px] lg:h-fit lg:!p-6">
+          <Link href={`/shop/${product.vendor.slug}`} className="text-[13px] font-bold uppercase text-text-primary md:text-[16px]">
             {product.vendor.shopName}
           </Link>
-          <h1 className="mt-2 text-[2rem] font-semibold tracking-[-0.05em] text-text-primary">{product.name}</h1>
-          <p className="mt-2 text-[0.98rem] text-text-secondary">
-            {product.description || `${product.name} from ${product.vendor.shopName}, available for online fashion shopping in Nepal.`}
-          </p>
+          <h1 className="mt-1 text-[1.45rem] font-semibold leading-tight tracking-[-0.03em] text-text-primary md:mt-2 md:text-[2rem] md:tracking-[-0.05em]">{product.name}</h1>
 
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-text-secondary">
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-text-secondary md:mt-3">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-[#FFC94A] text-[#FFC94A]" />
               <span>{ratingData.average}</span>
@@ -301,12 +301,12 @@ export default function ProductDetailClient({
             </Link>
           </div>
 
-          <hr className="my-4" />
+          <hr className="my-3 md:my-4" />
 
           <div className="py-1">
             <div className="flex flex-wrap items-end gap-2">
               <span className="text-[12px] text-text-muted">MRP:</span>
-              <span className="text-[24px] font-bold text-text-primary">{formatPriceNpr(product.price)}</span>
+              <span className="text-[22px] font-bold text-text-primary md:text-[24px]">{formatPriceNpr(product.price)}</span>
               {product.compareAtPrice && product.compareAtPrice > product.price ? (
                 <>
                   <span className="text-[14px] text-text-muted line-through">{formatPriceNpr(product.compareAtPrice)}</span>
@@ -318,7 +318,7 @@ export default function ProductDetailClient({
           </div>
 
           {product.sizes.length ? (
-            <div className="mt-5">
+            <div className="mt-4 md:mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("select_size")}</span>
                 <button type="button" className="text-[12px] font-semibold text-fb-pink">
@@ -341,7 +341,7 @@ export default function ProductDetailClient({
           ) : null}
 
           {product.colors.length ? (
-            <div className="mt-5">
+            <div className="mt-4 md:mt-5">
               <div className="mb-2 text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">
                 {t("color")}: <span className="text-text-primary">{selectedColor}</span>
               </div>
@@ -360,7 +360,7 @@ export default function ProductDetailClient({
             </div>
           ) : null}
 
-          <div className="mt-5 flex items-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-3 md:mt-5">
             <span className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("quantity_short")}:</span>
             <div className="flex items-center rounded-[20px] border border-border-default">
               <button
@@ -393,7 +393,7 @@ export default function ProductDetailClient({
               </Link>
             </div>
           ) : (
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 hidden space-y-3 lg:block">
               <button type="button" onClick={handleAddToCart} className="btn-ghost flex h-[52px] w-full items-center justify-center">
                 {added ? t("added_check") : t("add_to_cart")}
               </button>
@@ -402,6 +402,11 @@ export default function ProductDetailClient({
               </button>
             </div>
           )}
+
+          <div className="mt-5 rounded-[20px] border border-border-light bg-[var(--bg-surface)] p-4">
+            <div className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("product_details")}</div>
+            <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{productSummary}</p>
+          </div>
 
           <div className="mt-5 rounded-[24px] border border-border-light p-4">
             <div className="mb-2 text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("delivery")}</div>
@@ -415,7 +420,6 @@ export default function ProductDetailClient({
           </div>
 
           {[
-            { key: "details", title: t("product_details"), body: product.description || t("authentic_nepali_fashion") },
             { key: "care", title: t("material_care"), body: t("material_care_hint") },
             { key: "reviews", title: t("ratings_reviews_title"), body: ratingData.count ? `${ratingData.count} shoppers have rated this product ${ratingData.average} out of 5.` : t("be_first_review") },
           ].map((item) => (
@@ -446,6 +450,21 @@ export default function ProductDetailClient({
           </div>
         </section>
       </div>
+
+      {!blocksShopping ? (
+        <div className="fixed inset-x-0 bottom-12 z-[999] border-t border-border-light bg-card/95 px-3 py-2 shadow-[0_-16px_35px_rgba(32,26,23,0.12)] backdrop-blur-md lg:hidden">
+          <div className="mx-auto grid max-w-site grid-cols-2 gap-2">
+            <button type="button" onClick={handleAddToCart} className="btn-ghost flex h-11 items-center justify-center gap-2 px-3">
+              <ShoppingBag className="h-4 w-4" />
+              {added ? t("added_check") : t("cart")}
+            </button>
+            <button type="button" onClick={handleBuyNow} className="btn-primary flex h-11 items-center justify-center gap-2 px-3">
+              <Zap className="h-4 w-4" />
+              {t("buy_now")}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <section id="reviews" className="section mt-4 scroll-mt-24 rounded-[8px]">
         <div className="grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">

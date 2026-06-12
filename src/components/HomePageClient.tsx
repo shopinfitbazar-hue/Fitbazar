@@ -2,7 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import {
+  Baby,
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Footprints,
+  Gem,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Tag,
+  type LucideIcon,
+} from "lucide-react";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import VendorCard from "@/components/VendorCard";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -70,8 +82,26 @@ function collectionHrefForCategory(name: string) {
   if (slug === "men") return "/collections/mens-fashion-nepal";
   if (slug === "women") return "/collections/womens-fashion-nepal";
   if (slug === "ethnic-wear") return "/collections/ethnic";
-  if (slug === "sports") return "/collections/streetwear-nepal";
+  if (slug === "sports" || slug === "sportswear") return "/collections/streetwear-nepal";
   return `/collections/${slug}`;
+}
+
+const categoryIcons: Record<string, LucideIcon> = {
+  men: Shirt,
+  women: Shirt,
+  kids: Baby,
+  ethnic: Sparkles,
+  "ethnic-wear": Sparkles,
+  sports: Dumbbell,
+  sportswear: Dumbbell,
+  accessories: Gem,
+  footwear: Footprints,
+  sale: Tag,
+  "all-sale": Tag,
+};
+
+function getCategoryIcon(name: string) {
+  return categoryIcons[categorySlug(name)] ?? ShoppingBag;
 }
 
 export default function HomePageClient({
@@ -128,100 +158,120 @@ export default function HomePageClient({
   );
 
   const activeBannerItem = banners[activeBanner];
+  const showcaseItems = [
+    {
+      label: "Showcase",
+      title: mostPopular[0]?.name || "Fresh outfit showcase",
+      href: mostPopular[0] ? `/products/${mostPopular[0].slug || mostPopular[0].id}` : "/products",
+      image: mostPopular[0]?.images?.[0] || activeBannerItem?.imageUrl,
+    },
+    {
+      label: "Trends",
+      title: mostPopular[1]?.name || "Trending picks",
+      href: "/products?sort=popularity",
+      image: mostPopular[1]?.images?.[0] || activeBannerItem?.imageUrl,
+    },
+  ];
 
   return (
     <div className="container py-6">
       <section className="section">
-        <div className="hero-shell relative min-h-[560px] overflow-hidden rounded-[32px] p-6 md:p-10">
-          <div className="absolute inset-0">
-            {banners.length ? (
-              <SmartImage
-                src={activeBannerItem?.imageUrl}
-                alt={activeBannerItem?.title || t("hero_banner_alt")}
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover"
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="hero-shell relative min-h-[340px] overflow-hidden rounded-[24px] p-5 md:min-h-[420px] md:p-8">
+            <div className="absolute inset-0">
+              {banners.length ? (
+                <SmartImage
+                  src={activeBannerItem?.imageUrl}
+                  alt={activeBannerItem?.title || t("hero_banner_alt")}
+                  fill
+                  priority
+                  sizes="(max-width: 1023px) 100vw, 70vw"
+                  className="object-cover"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,24,20,0.76)_0%,rgba(34,24,20,0.45)_42%,rgba(34,24,20,0.1)_100%)]" />
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent_0%,rgba(34,24,20,0.38)_100%)]" />
+            </div>
+
+            {activeBannerItem?.linkUrl ? (
+              <Link
+                href={getSafeHref(activeBannerItem.linkUrl, "/")}
+                className="absolute inset-0 z-0"
+                aria-label={activeBannerItem.title || t("hero_banner_alt")}
               />
             ) : null}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,24,20,0.72)_0%,rgba(34,24,20,0.42)_36%,rgba(34,24,20,0.08)_72%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent_0%,rgba(34,24,20,0.34)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_30%)]" />
-          </div>
 
-          <div className="relative z-[1] max-w-[36rem]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-4 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
-              <Sparkles className="h-3.5 w-3.5 text-white" />
-              {hero.eyebrow}
+            <div className="relative z-[1] max-w-[34rem]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5 text-white" />
+                {hero.eyebrow}
+              </div>
+              <h1 className="mt-4 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)] md:mt-5">{hero.title}</h1>
+              <p className="mt-3 max-w-[30rem] text-[0.95rem] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] md:text-[1rem]">
+                {hero.subtitle}
+              </p>
+              <div className="relative z-[2] mt-6 flex flex-wrap gap-3">
+                <Link href={hero.primaryHref} className="btn-primary">
+                  {hero.primaryLabel}
+                </Link>
+                <Link href={hero.secondaryHref} className="btn-ghost border-white/20 bg-white/10 text-white hover:text-text-primary">
+                  {hero.secondaryLabel}
+                </Link>
+              </div>
             </div>
-            <h1 className="mt-5 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)]">{hero.title}</h1>
-            <p className="mt-4 max-w-[30rem] text-[1rem] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">
-              {hero.subtitle}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={hero.primaryHref} className="btn-primary">
-                {hero.primaryLabel}
-              </Link>
-              <Link href={hero.secondaryHref} className="btn-ghost border-white/20 bg-white/10 text-white hover:text-text-primary">
-                {hero.secondaryLabel}
-              </Link>
-            </div>
-          </div>
 
-          <div className="relative mt-8 md:mt-10">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: "Fast delivery signals", value: "95+" },
-                { label: "Premium partner stores", value: "40+" },
-                { label: "Fashion picks refreshed", value: "Daily" },
-              ].map((item) => (
-                <div key={item.label} className="rounded-[24px] border border-white/50 bg-white/18 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)] backdrop-blur-md">
-                  <p className="text-[1.5rem] font-semibold tracking-[-0.05em] text-white">{item.value}</p>
-                  <p className="mt-1 text-sm font-semibold text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.65)]">{item.label}</p>
-                </div>
+            {banners.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveBanner((current) => (current - 1 + banners.length) % banners.length)}
+                  className="absolute bottom-5 right-16 z-[2] flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[var(--shadow-sm)] backdrop-blur-md"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveBanner((current) => (current + 1) % banners.length)}
+                  className="absolute bottom-5 right-5 z-[2] flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[var(--shadow-sm)] backdrop-blur-md"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            ) : null}
+
+            <div className="absolute bottom-6 left-5 z-[2] flex gap-2 md:left-8">
+              {(banners.length ? banners : [null]).map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveBanner(index)}
+                  className={`rounded-full transition-all ${index === activeBanner ? "h-2.5 w-8 bg-white" : "h-2.5 w-2.5 bg-white/38"}`}
+                  aria-label={t("go_to_banner", { index: String(index + 1) })}
+                />
               ))}
             </div>
           </div>
 
-          {banners.length ? (
-            <>
-              {activeBannerItem?.linkUrl ? (
-                <Link
-                  href={getSafeHref(activeBannerItem.linkUrl, "/")}
-                  className="absolute inset-0"
-                  aria-label={activeBannerItem.title || t("hero_banner_alt")}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 lg:grid-rows-2">
+            {showcaseItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="group relative min-h-[154px] overflow-hidden rounded-[24px] border border-white/70 bg-card shadow-[var(--shadow-card)] lg:min-h-0"
+              >
+                <SmartImage
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  sizes="(max-width: 1023px) 50vw, 320px"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
                 />
-              ) : null}
-              {banners.length > 1 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setActiveBanner((current) => (current - 1 + banners.length) % banners.length)}
-                    className="absolute bottom-6 right-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[var(--shadow-sm)] backdrop-blur-md"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveBanner((current) => (current + 1) % banners.length)}
-                    className="absolute bottom-6 right-6 flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[var(--shadow-sm)] backdrop-blur-md"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </>
-              ) : null}
-            </>
-          ) : null}
-
-          <div className="relative z-[1] mt-8 flex justify-center gap-2 md:justify-start">
-            {(banners.length ? banners : [null]).map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => setActiveBanner(index)}
-                className={`rounded-full transition-all ${index === activeBanner ? "h-2.5 w-10 bg-white" : "h-2.5 w-2.5 bg-white/38"}`}
-                aria-label={t("go_to_banner", { index: String(index + 1) })}
-              />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(32,26,23,0.02)_0%,rgba(32,26,23,0.72)_100%)]" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/82">{item.label}</p>
+                  <h3 className="mt-1 line-clamp-2 text-[1rem] font-semibold leading-tight text-white">{item.title}</h3>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -235,21 +285,24 @@ export default function HomePageClient({
             subtitle="Find everyday wear, festive looks, and local store picks in a few quick taps."
           />
           <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
-          {displayCategories.map((category, index) => (
-            <Link
-              key={category.slug}
-              href={collectionHrefForCategory(category.name)}
-              className="min-w-[92px] text-center"
-            >
-              <div
-                className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/80 text-[14px] font-semibold text-text-primary shadow-[var(--shadow-sm)]"
-                style={{ backgroundColor: ["#f8dcd7", "#f7e7d5", "#e3efe9", "#e9edf7"][index % 4] }}
-              >
-                {category.name.charAt(0)}
-              </div>
-              <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-text-secondary">{category.name}</div>
-            </Link>
-          ))}
+            {displayCategories.map((category, index) => {
+              const Icon = getCategoryIcon(category.name);
+              return (
+                <Link
+                  key={category.slug}
+                  href={collectionHrefForCategory(category.name)}
+                  className="min-w-[92px] text-center"
+                >
+                  <div
+                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/80 text-text-primary shadow-[var(--shadow-sm)]"
+                    style={{ backgroundColor: ["#f8dcd7", "#f7e7d5", "#e3efe9", "#e9edf7"][index % 4] }}
+                  >
+                    <Icon className="h-7 w-7" strokeWidth={1.8} />
+                  </div>
+                  <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-text-secondary">{category.name}</div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

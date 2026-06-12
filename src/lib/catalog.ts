@@ -49,6 +49,7 @@ export function mapProductToCard(product: ProductWithVendor): ProductCardProps {
     reviewCount: product._count?.reviews ?? product.reviews?.length,
     soldCount: product.totalSold,
     sizes: product.sizes,
+    colors: product.colors,
     isFestival: product.isFestivalSale,
     isSale: product.isYearRoundSale || product.discountPct > 0,
   };

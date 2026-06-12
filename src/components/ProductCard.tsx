@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Heart, Star } from "lucide-react";
+import { Heart, ShoppingBag, Star, Zap } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { useWishlist } from "@/lib/wishlist";
+import { useCart } from "@/lib/cart";
 import { useToast } from "@/lib/ToastContext";
 import { useLanguage } from "@/lib/LanguageContext";
 import { getSafeImageUrl, getShowcaseImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
@@ -25,6 +26,7 @@ export interface ProductCardProps {
   reviewCount?: number;
   soldCount?: number;
   sizes?: string[];
+  colors?: string[];
   isFestival?: boolean;
   isSale?: boolean;
 }
@@ -62,15 +64,18 @@ function ProductCard({
   rating,
   soldCount,
   sizes,
+  colors,
   isFestival,
   isSale,
 }: ProductCardProps) {
   const { t } = useLanguage();
-  const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addWishlistItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addCartItem } = useCart();
   const { addToast } = useToast();
   const { data: session } = useSession();
   const router = useRouter();
   const [animateHeart, setAnimateHeart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
   const href = `/products/${slug || id}`;
   const image = getShowcaseImageUrl(getSafeImageUrl(images[0], FALLBACK_PRODUCT_IMAGE));
   const vendorPath = `/shop/${vendorSlug || slugify(vendorName)}`;
@@ -101,7 +106,7 @@ function ProductCard({
       return;
     }
 
-    addItem({
+    addWishlistItem({
       productId: id,
       slug,
       name,
@@ -112,6 +117,46 @@ function ProductCard({
       vendorSlug,
     });
     addToast(t("added_to_wishlist"), "success");
+  };
+
+  const addProductToCart = () => {
+    if (!canShop) {
+      addToast(t("vendor_account_shopping_blocked"), "error");
+      return false;
+    }
+
+    addCartItem({
+      productId: id,
+      slug,
+      name,
+      price,
+      originalPrice,
+      image,
+      vendorName,
+      vendorSlug,
+      quantity: 1,
+      size: sizes?.[0],
+      color: colors?.[0],
+    });
+
+    setAddedToCart(true);
+    window.setTimeout(() => setAddedToCart(false), 1500);
+    addToast(t("added_to_bag"), "success");
+    return true;
+  };
+
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addProductToCart();
+  };
+
+  const handleBuyNow = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (addProductToCart()) {
+      router.push("/checkout");
+    }
   };
 
   return (
@@ -193,6 +238,29 @@ function ProductCard({
 
         {sizes?.length ? (
           <div className="mt-3 truncate text-[12px] text-text-muted">{sizes.slice(0, 4).join("  ")}</div>
+        ) : null}
+
+        {canShop ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-border-default bg-[rgba(255,255,255,0.84)] px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-primary"
+              aria-label={t("add_to_cart")}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span>{addedToCart ? t("added_check") : t("cart")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-text-primary px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-[var(--shadow-sm)]"
+              aria-label={t("buy_now")}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span>{t("buy_now")}</span>
+            </button>
+          </div>
         ) : null}
       </div>
     </Link>
