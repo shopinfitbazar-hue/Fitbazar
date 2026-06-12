@@ -10,13 +10,23 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_SEARCH_REVALIDATE_SECONDS;
 
+const SEARCH_LOG_SAMPLE_RATE = (() => {
+  const parsed = Number(process.env.SEARCH_LOG_SAMPLE_RATE ?? "0.05");
+  if (!Number.isFinite(parsed)) return 0.05;
+  return Math.min(1, Math.max(0, parsed));
+})();
+
+function shouldWriteSearchLog() {
+  return SEARCH_LOG_SAMPLE_RATE >= 1 || Math.random() < SEARCH_LOG_SAMPLE_RATE;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const input = parsePublicSearchQuery(searchParams);
     const data = await getCachedPublicSearch(input);
 
-    if (input.q) {
+    if (input.q && shouldWriteSearchLog()) {
       void prisma.searchLog
         .create({
           data: {

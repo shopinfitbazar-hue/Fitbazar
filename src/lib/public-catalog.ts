@@ -6,6 +6,7 @@ import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/l
 
 export const PUBLIC_CATALOG_REVALIDATE_SECONDS = 300;
 export const PUBLIC_SEARCH_REVALIDATE_SECONDS = 120;
+export const PUBLIC_VENDOR_REVALIDATE_SECONDS = 300;
 
 export type PublicProductQueryInput = {
   sort: string;
@@ -35,6 +36,11 @@ export type PublicSearchQueryInput = {
   sort: string;
   page: number;
   limit: number;
+};
+
+export type PublicVendorQueryInput = {
+  limit: number;
+  page: number;
 };
 
 function clampNumber(value: unknown, fallback: number, min: number, max: number) {
@@ -74,6 +80,10 @@ export function productQueryKey(input: PublicProductQueryInput) {
 }
 
 export function searchQueryKey(input: PublicSearchQueryInput) {
+  return stableKey(input);
+}
+
+export function vendorQueryKey(input: PublicVendorQueryInput) {
   return stableKey(input);
 }
 
@@ -117,6 +127,15 @@ export function parsePublicSearchQuery(
     sort: readParam(params, "sort") || "newest",
     page: clampNumber(readParam(params, "page"), 1, 1, 500),
     limit: clampNumber(readParam(params, "limit"), 12, 1, 48),
+  };
+}
+
+export function parsePublicVendorQuery(
+  params: URLSearchParams | Record<string, string | string[] | undefined>,
+): PublicVendorQueryInput {
+  return {
+    limit: clampNumber(readParam(params, "limit"), 10, 1, 48),
+    page: clampNumber(readParam(params, "page"), 1, 1, 500),
   };
 }
 
@@ -335,6 +354,65 @@ async function queryPublicSearch(input: PublicSearchQueryInput) {
   };
 }
 
+async function queryPublicVendors(input: PublicVendorQueryInput) {
+  const where: Prisma.VendorWhereInput = {
+    ...publicVendorVisibilityFilter,
+  };
+
+  const [vendors, total] = await Promise.all([
+    prisma.vendor.findMany({
+      where,
+      select: {
+        id: true,
+        shopName: true,
+        slug: true,
+        logo: true,
+        banner: true,
+        description: true,
+        category: true,
+        zone: true,
+        district: true,
+        isPartnered: true,
+        isTopShop: true,
+        createdAt: true,
+        user: {
+          select: {
+            name: true,
+            image: true,
+          },
+        },
+        reviews: {
+          where: { isVisible: true },
+          select: { rating: true },
+        },
+        _count: {
+          select: {
+            products: true,
+            orders: true,
+            reviews: true,
+          },
+        },
+      },
+      orderBy: {
+        products: {
+          _count: "desc",
+        },
+      },
+      skip: (input.page - 1) * input.limit,
+      take: input.limit,
+    }),
+    prisma.vendor.count({ where }),
+  ]);
+
+  return {
+    vendors,
+    total,
+    page: input.page,
+    totalPages: Math.ceil(total / input.limit),
+    queryKey: vendorQueryKey(input),
+  };
+}
+
 export async function getCachedPublicProducts(input: PublicProductQueryInput) {
   return unstable_cache(() => queryPublicProducts(input), ["public-products", productQueryKey(input)], {
     revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
@@ -346,6 +424,13 @@ export async function getCachedPublicSearch(input: PublicSearchQueryInput) {
   return unstable_cache(() => queryPublicSearch(input), ["public-search", searchQueryKey(input)], {
     revalidate: PUBLIC_SEARCH_REVALIDATE_SECONDS,
     tags: ["public-search"],
+  })();
+}
+
+export async function getCachedPublicVendors(input: PublicVendorQueryInput) {
+  return unstable_cache(() => queryPublicVendors(input), ["public-vendors", vendorQueryKey(input)], {
+    revalidate: PUBLIC_VENDOR_REVALIDATE_SECONDS,
+    tags: ["public-vendors"],
   })();
 }
 

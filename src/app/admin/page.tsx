@@ -806,6 +806,15 @@ export default function AdminDashboard() {
     await loadAdmin();
   };
 
+  const updateOrderStatus = async (id: string, status: string) => {
+    await fetch(`/api/admin/orders/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    await loadAdmin();
+  };
+
   const saveSettings = async () => {
     const response = await fetch("/api/admin/settings", {
       method: "PUT",
@@ -1527,40 +1536,118 @@ export default function AdminDashboard() {
           <div id="orders" className="mt-4 rounded-[8px] bg-card p-5 scroll-mt-24">
             <h2 className="text-[16px] font-semibold text-text-primary">{t("recent_orders")}</h2>
             {renderAdminListControls("orders", "Search order number, customer, vendor, status, or payment")}
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[720px]">
-                <thead>
-                  <tr className="border-b border-border-light text-left text-[12px] uppercase tracking-[1px] text-text-muted">
-                    <th className="py-3">{t("orderId")}</th>
-                    <th className="py-3">{t("vendors")}</th>
-                    <th className="py-3">{t("customer")}</th>
-                    <th className="py-3">{t("amount")}</th>
-                    <th className="py-3">{t("orderStatus")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order) => (
-                    <tr key={order.id} className="border-b border-border-light text-[13px] text-text-secondary last:border-b-0">
-                      <td className="py-4 font-medium text-text-primary">{order.orderNumber}</td>
-                      <td>{order.vendor.shopName}</td>
-                      <td>{order.customer.name || order.customer.email}</td>
-                      <td className="font-medium text-text-primary">{formatPriceNpr(order.totalAmount)}</td>
-                      <td>
-                        <span className={`badge ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : "badge-pink"}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {!orders.length ? (
-                    <tr>
-                      <td colSpan={5} className="py-4 text-[13px] text-text-muted">
-                        No orders found for this search.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+            <div className="mt-4 space-y-4">
+              {orders.map((order) => {
+                const orderAddress = [
+                  order.deliveryAddress?.line1,
+                  order.deliveryAddress?.district,
+                  order.deliveryAddress?.zone,
+                  order.deliveryAddress?.pincode,
+                ].filter(Boolean).join(", ");
+
+                return (
+                  <div key={order.id} className="overflow-hidden rounded-[8px] border border-border-light bg-[var(--bg-surface)]">
+                    <div className="p-5">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fb-pink-bg">
+                            <ShoppingCart className="h-6 w-6 text-fb-pink" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-[18px] font-semibold text-text-primary">{order.orderNumber}</h3>
+                            <p className="text-sm text-text-muted">
+                              {new Date(order.createdAt).toLocaleDateString("en-NP")} • {order.paymentMethod} • {order.paymentStatus}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid flex-1 gap-3 md:grid-cols-3 xl:px-6">
+                          <div>
+                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("customer")}</p>
+                            <p className="font-medium text-text-primary">{order.customer.name || order.customer.email}</p>
+                            <p className="text-sm text-text-muted">{order.customer.phone || order.customer.email}</p>
+                          </div>
+                          <div>
+                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("vendors")}</p>
+                            <p className="font-medium text-text-primary">{order.vendor.shopName}</p>
+                            <p className="text-sm text-text-muted">{order.items[0]?.product?.name || "Product"} x {order.items[0]?.quantity || 0}</p>
+                          </div>
+                          <div>
+                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("address")}</p>
+                            <p className="text-sm text-text-secondary">{orderAddress || "Not available"}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4">
+                          <span className={`badge ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : order.status === "CANCELLED" || order.status === "DISPUTED" ? "badge-amber" : "badge-pink"}`}>
+                            {order.status}
+                          </span>
+                          <span className="text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border-light bg-card p-5">
+                      <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
+                        <div>
+                          <h4 className="mb-3 font-semibold text-text-primary">Customer Information</h4>
+                          <div className="space-y-1 text-sm text-text-secondary">
+                            <p><span className="text-text-muted">{t("name")}:</span> {order.deliveryAddress?.name || order.customer.name || "Customer"}</p>
+                            <p><span className="text-text-muted">{t("phone_number")}:</span> {order.deliveryAddress?.phone || order.customer.phone || "N/A"}</p>
+                            <p><span className="text-text-muted">{t("email")}:</span> {order.deliveryAddress?.email || order.customer.email}</p>
+                            <p><span className="text-text-muted">{t("address")}:</span> {orderAddress || "Not available"}</p>
+                            <p><span className="text-text-muted">Delivery:</span> {order.deliveryAddress?.deliveryMethod || "standard"}</p>
+                          </div>
+
+                          <div className="mt-5">
+                            <h4 className="mb-3 font-semibold text-text-primary">Items</h4>
+                            <div className="space-y-3">
+                              {order.items.map((item) => (
+                                <div key={item.id} className="flex items-center justify-between gap-4 rounded-[8px] border border-border-light p-3">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-text-primary">{item.product?.name || "Product"}</p>
+                                    <p className="text-sm text-text-muted">
+                                      Qty {item.quantity} • {item.size || "Free"} • {item.color || "Default"}
+                                    </p>
+                                  </div>
+                                  <p className="shrink-0 font-medium text-text-primary">{formatPriceNpr(item.price * item.quantity)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 font-semibold text-text-primary">Admin Status Control</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {adminOrderStatusOptions.map((statusOption) => (
+                              <button
+                                key={statusOption}
+                                type="button"
+                                onClick={() => void updateOrderStatus(order.id, statusOption)}
+                                className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
+                                  order.status === statusOption
+                                    ? "bg-fb-pink text-white"
+                                    : "border border-border-default bg-card hover:border-fb-pink"
+                                }`}
+                              >
+                                {statusOption}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-sm text-text-muted">Admin can manage final, cancelled, disputed, and delivered states. Vendor sees only limited operational next steps.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {!orders.length ? (
+                <div className="rounded-[8px] border border-border-light bg-[var(--bg-surface)] px-4 py-8 text-[13px] text-text-muted">
+                  No orders found for this search.
+                </div>
+              ) : null}
             </div>
           </div>
 
