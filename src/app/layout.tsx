@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import JsonLd from "@/components/JsonLd";
 import { buildMetadata } from "@/config/site";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+import { Analytics } from "@vercel/analytics/next";
 
 const fitBazarSans = localFont({
   src: [
@@ -43,6 +44,7 @@ export default function RootLayout({
           <BackToTop />
           <BottomNav />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
