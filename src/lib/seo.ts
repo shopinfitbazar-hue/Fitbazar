@@ -286,7 +286,10 @@ export function getCollectionDefinition(slug: string) {
   const normalized = slug.toLowerCase();
   if (normalized === "sports") return collectionDefinitions.sportswear;
   if (normalized === "ethnic-wear") return collectionDefinitions.ethnic;
-  return collectionDefinitions[normalized as CollectionSlug];
+  return (
+    collectionDefinitions[normalized as CollectionSlug] ??
+    Object.values(collectionDefinitions).find((definition) => definition.slug === normalized)
+  );
 }
 
 export function buildCollectionMetadata(definition: {
