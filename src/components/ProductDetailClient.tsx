@@ -4,11 +4,28 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronDown, Minus, Plus, ShoppingBag, Star, Zap } from "lucide-react";
+import {
+  BadgeCheck,
+  ChevronDown,
+  Heart,
+  Maximize2,
+  Minus,
+  PackageCheck,
+  Plus,
+  Ruler,
+  ShieldCheck,
+  ShoppingBag,
+  Star,
+  Truck,
+  X,
+  Zap,
+} from "lucide-react";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import ImageGallery from "@/components/ImageGallery";
+import SmartImage from "@/components/ui/SmartImage";
 import { formatPriceNpr } from "@/lib/catalog";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { useToast } from "@/lib/ToastContext";
 import { getDeliveryMessage } from "@/lib/pincode";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -60,6 +77,51 @@ interface ProductDetailClientProps {
   alsoBoughtProducts: ProductCardProps[];
 }
 
+const colorSwatches: Record<string, string> = {
+  black: "#050505",
+  blue: "#1d4ed8",
+  navy: "#0f2f68",
+  crimson: "#b91c1c",
+  maroon: "#7f1023",
+  red: "#dc2626",
+  ruby: "#b91c1c",
+  wine: "#7f1d1d",
+  rose: "#e11d48",
+  pink: "#ec4899",
+  ivory: "#fffaf0",
+  cream: "#f5ead4",
+  white: "#ffffff",
+  beige: "#d6c3a1",
+  sand: "#c2a878",
+  stone: "#9ca3af",
+  grey: "#6b7280",
+  gray: "#6b7280",
+  charcoal: "#36454f",
+  brown: "#7c4a2d",
+  forest: "#166534",
+  green: "#15803d",
+  emerald: "#047857",
+  olive: "#6b7d2c",
+  gold: "#d4a017",
+  mustard: "#d79a1e",
+  yellow: "#facc15",
+  orange: "#f97316",
+  teal: "#0f766e",
+  berry: "#9f1239",
+  indigo: "#3730a3",
+  brick: "#9a3412",
+  ochre: "#cc7722",
+  peach: "#f4a88f",
+  mauve: "#a78bfa",
+  mocha: "#7b5141",
+  rust: "#b45309",
+  slate: "#475569",
+};
+
+function swatchColor(color: string) {
+  return colorSwatches[color.trim().toLowerCase()] ?? "#d4d5d9";
+}
+
 export default function ProductDetailClient({
   product,
   similarProducts,
@@ -69,6 +131,7 @@ export default function ProductDetailClient({
   const { t } = useLanguage();
   const { data: session, status: authStatus } = useSession();
   const { addItem } = useCart();
+  const { addItem: addWishlistItem, removeItem: removeWishlistItem, isInWishlist } = useWishlist();
   const { addToast } = useToast();
   const safeImages = useMemo(
     () =>
@@ -93,8 +156,12 @@ export default function ProductDetailClient({
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewMessage, setReviewMessage] = useState("");
+  const [mobileImageIndex, setMobileImageIndex] = useState(0);
+  const [mobileZoomOpen, setMobileZoomOpen] = useState(false);
+  const [mobileZoomScale, setMobileZoomScale] = useState(1);
   const accountRole = session?.user?.role;
   const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
+  const wishlisted = isInWishlist(product.id);
   const productSummary =
     product.description ||
     `${product.name} from ${product.vendor.shopName}, available for online fashion shopping in Nepal.`;
@@ -104,6 +171,19 @@ export default function ProductDetailClient({
       setDeliveryMessage(t("enter_pincode_hint"));
     }
   }, [pincode, t]);
+
+  useEffect(() => {
+    if (!mobileZoomOpen) {
+      setMobileZoomScale(1);
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileZoomOpen]);
 
   useEffect(() => {
     const storedPincode = window.localStorage.getItem("fitbazar_pincode");
@@ -202,6 +282,31 @@ export default function ProductDetailClient({
     }
   };
 
+  const handleToggleWishlist = () => {
+    if (blocksShopping) {
+      addToast(t("vendor_account_shopping_blocked"), "error");
+      return;
+    }
+
+    if (wishlisted) {
+      removeWishlistItem(product.id);
+      addToast(t("removed_from_wishlist"), "info");
+      return;
+    }
+
+    addWishlistItem({
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.compareAtPrice ?? undefined,
+      image: safeImages[0] || "",
+      vendorName: product.vendor.shopName,
+      vendorSlug: product.vendor.slug,
+    });
+    addToast(t("added_to_wishlist"), "success");
+  };
+
   const handleCheckDelivery = () => {
     const result = getDeliveryMessage(pincode);
     setDeliveryMessage(result.message);
@@ -276,9 +381,198 @@ export default function ProductDetailClient({
     }
   };
 
+  const activeMobileImage = safeImages[mobileImageIndex] || safeImages[0] || FALLBACK_PRODUCT_IMAGE;
+  const roundedRating = Math.max(0, Math.min(5, Math.round(ratingData.average)));
+  const reviewLabel = ratingData.count === 1 ? "1 Review" : `${ratingData.count} Reviews`;
+  const mobileServices = [
+    { icon: Truck, title: "Free Delivery", subtitle: "On all orders" },
+    { icon: PackageCheck, title: "Easy Return", subtitle: "7 days return" },
+    { icon: ShieldCheck, title: "Secure Payment", subtitle: "100% secure" },
+    { icon: BadgeCheck, title: "Authentic", subtitle: "Original product" },
+  ];
+
   return (
     <div className="container pb-28 pt-4 md:py-6 lg:pb-6">
-      <div className="grid gap-4 lg:grid-cols-[52%_48%] lg:gap-6">
+      <section className="lg:hidden">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setMobileZoomOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setMobileZoomOpen(true);
+            }
+          }}
+          className="relative aspect-[16/10] overflow-hidden rounded-[20px] bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]"
+          aria-label={`Zoom ${product.name} image`}
+        >
+          <SmartImage
+            src={activeMobileImage}
+            alt={product.name}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleToggleWishlist();
+            }}
+            className="absolute right-4 top-4 z-[2] flex h-12 w-12 items-center justify-center rounded-full bg-white text-text-primary shadow-[0_10px_24px_rgba(32,26,23,0.14)]"
+            aria-label={t("toggle_wishlist")}
+          >
+            <Heart className={`h-5 w-5 ${wishlisted ? "fill-fb-pink text-fb-pink" : ""}`} />
+          </button>
+          <div className="absolute bottom-3 right-3 z-[2] flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-text-secondary shadow-[var(--shadow-sm)] backdrop-blur-md">
+            <Maximize2 className="h-3.5 w-3.5" />
+            Zoom
+          </div>
+        </div>
+
+        {safeImages.length > 1 ? (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            {safeImages.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setMobileImageIndex(index)}
+                className={`h-2 rounded-full transition-all ${index === mobileImageIndex ? "w-6 bg-fb-pink" : "w-2 bg-border-default"}`}
+                aria-label={`Show image ${index + 1}`}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-5">
+          <Link href={`/shop/${product.vendor.slug}`} className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+            {product.vendor.shopName}
+          </Link>
+          <h1 className="mt-1 text-[1.85rem] font-bold leading-tight tracking-[-0.03em] text-text-primary">{product.name}</h1>
+
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex items-center gap-0.5 text-[#FFC94A]">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <Star
+                  key={value}
+                  className={`h-4 w-4 ${value <= roundedRating ? "fill-[#FFC94A]" : "fill-transparent"}`}
+                />
+              ))}
+            </div>
+            <span className="text-[13px] font-semibold text-text-primary">{ratingData.average.toFixed(1)}</span>
+            <span className="text-[13px] text-text-muted">({reviewLabel})</span>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <span className="text-[1.85rem] font-bold leading-none tracking-[-0.04em] text-text-primary">{formatPriceNpr(product.price)}</span>
+            {product.compareAtPrice && product.compareAtPrice > product.price ? (
+              <>
+                <span className="text-[14px] text-text-muted line-through">{formatPriceNpr(product.compareAtPrice)}</span>
+                <span className="rounded-[8px] bg-fb-pink-bg px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] text-fb-pink">
+                  {product.discountPct}% OFF
+                </span>
+              </>
+            ) : null}
+          </div>
+          <p className="mt-2 text-[13px] text-text-muted">{t("inclusive_taxes")}</p>
+        </div>
+
+        <hr className="my-5" />
+
+        {product.sizes.length ? (
+          <div>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-[15px] font-bold text-text-primary">{t("select_size")}</span>
+              <button type="button" className="flex items-center gap-1.5 text-[13px] font-bold text-fb-pink">
+                {t("size_chart")}
+                <Ruler className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {product.sizes.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => setSelectedSize(size)}
+                  className={`flex h-14 min-w-14 items-center justify-center rounded-full border px-5 text-[15px] font-semibold ${
+                    selectedSize === size
+                      ? "border-fb-pink bg-fb-pink text-white shadow-[0_12px_22px_rgba(255,63,108,0.22)]"
+                      : "border-border-light bg-white text-text-primary"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {product.colors.length ? (
+          <div className="mt-5">
+            <div className="mb-3 text-[15px] font-bold text-text-primary">
+              {t("color")}: <span className="font-medium text-text-secondary">{selectedColor}</span>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              {product.colors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectedColor(color)}
+                  className={`flex h-11 w-11 items-center justify-center rounded-full border ${
+                    selectedColor === color ? "border-fb-pink" : "border-transparent"
+                  }`}
+                  aria-label={`Select ${color}`}
+                >
+                  <span
+                    className="h-8 w-8 rounded-full border border-black/10"
+                    style={{ backgroundColor: swatchColor(color) }}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-6 grid grid-cols-4 gap-2 rounded-[18px] bg-[var(--bg-surface)] p-3">
+          {mobileServices.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="min-w-0 text-center">
+                <Icon className="mx-auto h-5 w-5 text-text-primary" />
+                <div className="mt-1 text-[10px] font-bold leading-tight text-text-primary">{item.title}</div>
+                <div className="mt-0.5 text-[9px] leading-tight text-text-muted">{item.subtitle}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {blocksShopping ? (
+          <div className="mt-5 rounded-[14px] border border-border-light bg-[var(--bg-surface)] p-4">
+            <p className="text-[14px] font-semibold text-text-primary">{t("customer_account_required")}</p>
+            <p className="mt-1 text-[13px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
+          </div>
+        ) : null}
+
+        <div className="mt-5 rounded-[18px] border border-border-light bg-white p-4">
+          <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("product_details")}</div>
+          <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{productSummary}</p>
+        </div>
+
+        <div className="mt-4 rounded-[18px] border border-border-light bg-white p-4">
+          <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("delivery")}</div>
+          <div className="flex gap-2">
+            <input value={pincode} onChange={(event) => setPincode(event.target.value)} placeholder={t("enter_pincode")} />
+            <button type="button" onClick={handleCheckDelivery} className="btn-ghost shrink-0 px-4 py-2">
+              {t("check")}
+            </button>
+          </div>
+          <p className="mt-2 text-[12px] text-text-secondary">{deliveryMessage}</p>
+        </div>
+      </section>
+
+      <div className="hidden gap-4 lg:grid lg:grid-cols-[52%_48%] lg:gap-6">
         <section className="section-shell !p-3 md:!p-5 lg:!p-6">
           <ImageGallery images={safeImages} productName={product.name} />
         </section>
@@ -452,16 +746,66 @@ export default function ProductDetailClient({
       </div>
 
       {!blocksShopping ? (
-        <div className="fixed inset-x-0 bottom-12 z-[999] border-t border-border-light bg-card/95 px-3 py-2 shadow-[0_-16px_35px_rgba(32,26,23,0.12)] backdrop-blur-md lg:hidden">
-          <div className="mx-auto grid max-w-site grid-cols-2 gap-2">
-            <button type="button" onClick={handleAddToCart} className="btn-ghost flex h-11 items-center justify-center gap-2 px-3">
+        <div className="fixed inset-x-0 bottom-12 z-[999] border-t border-border-light bg-white/95 px-4 py-3 shadow-[0_-16px_35px_rgba(32,26,23,0.12)] backdrop-blur-md lg:hidden">
+          <div className="mx-auto grid max-w-site grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-14 items-center justify-center gap-2 rounded-[18px] border border-fb-pink bg-white px-3 text-[14px] font-bold text-fb-pink"
+            >
               <ShoppingBag className="h-4 w-4" />
-              {added ? t("added_check") : t("cart")}
+              {added ? t("added_check") : t("add_to_cart")}
             </button>
-            <button type="button" onClick={handleBuyNow} className="btn-primary flex h-11 items-center justify-center gap-2 px-3">
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="flex h-14 items-center justify-center gap-2 rounded-[18px] bg-fb-pink px-3 text-[14px] font-bold text-white shadow-[0_14px_26px_rgba(255,63,108,0.28)]"
+            >
               <Zap className="h-4 w-4" />
               {t("buy_now")}
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {mobileZoomOpen ? (
+        <div className="fixed inset-0 z-[1200] bg-black text-white lg:hidden">
+          <div className="absolute inset-x-0 top-0 z-[2] flex items-center justify-between p-4">
+            <button
+              type="button"
+              onClick={() => setMobileZoomOpen(false)}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/14 backdrop-blur-md"
+              aria-label="Close zoom"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileZoomScale((value) => (value === 1 ? 1.8 : 1))}
+              className="rounded-full bg-white/14 px-4 py-2 text-[13px] font-semibold backdrop-blur-md"
+            >
+              {mobileZoomScale === 1 ? "Tap to zoom" : "Zoom out"}
+            </button>
+          </div>
+          <div
+            className="h-full w-full overflow-auto"
+            onClick={() => setMobileZoomScale((value) => (value === 1 ? 1.8 : 1))}
+          >
+            <div
+              className="relative min-h-full min-w-full"
+              style={{
+                width: `${mobileZoomScale * 100}%`,
+                height: `${mobileZoomScale * 100}%`,
+              }}
+            >
+              <SmartImage
+                src={activeMobileImage}
+                alt={product.name}
+                fill
+                sizes="100vw"
+                className="object-contain"
+              />
+            </div>
           </div>
         </div>
       ) : null}
