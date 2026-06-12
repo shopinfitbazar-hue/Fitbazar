@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { buildAppUrl, createOpaqueToken, hashOpaqueToken } from "@/lib/tokens";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
-import { renderEmailVerificationEmail } from "@/lib/email-templates";
+import { renderCustomerWelcomeEmail, renderEmailVerificationEmail } from "@/lib/email-templates";
 
 export async function POST(req: Request) {
   try {
@@ -84,6 +84,15 @@ export async function POST(req: Request) {
         subject: "Verify your Fit Bazar account",
         text: `Verify your Fit Bazar account using this link: ${verificationUrl}`,
         html: renderEmailVerificationEmail(name, verificationUrl),
+      }).catch(() => undefined);
+    }
+
+    if (hasConfiguredMailTransport()) {
+      await sendMail({
+        to: email,
+        subject: "Welcome to Fit Bazar",
+        text: `Hello ${name}, thank you for creating your Fit Bazar account. You can explore products, track orders, save wishlists, and manage your bills from your account: ${buildAppUrl("/products")}`,
+        html: renderCustomerWelcomeEmail(name, buildAppUrl("/products")),
       }).catch(() => undefined);
     }
 

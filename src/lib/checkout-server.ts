@@ -6,7 +6,7 @@ import { getShippingAmount, isDeliveryMethod, type DeliveryMethod } from "@/lib/
 import { publicProductVendorFilter } from "@/lib/public-storefront";
 import { ProductStatus } from "@prisma/client";
 import { buildAbsoluteAppUrl } from "@/lib/app-url";
-import { renderOrderPlacedEmail, renderVendorOrderEmail } from "@/lib/email-templates";
+import { renderOrderBillEmail, renderVendorOrderEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { resolvePincode } from "@/lib/pincode";
 
@@ -45,6 +45,7 @@ type CouponRecord = {
 
 type ProductRecord = {
   id: string;
+  name: string;
   vendorId: string;
   price: number;
   stock: number;
@@ -60,6 +61,7 @@ type ProductRecord = {
 
 export type PreparedCheckoutContext = {
   customerId: string;
+  customerEmail: string;
   items: Array<CanonicalOrderItem & { vendorUserId: string }>;
   address: CheckoutAddressInput;
   paymentMethod: SupportedPaymentMethod;
@@ -71,6 +73,22 @@ export type PreparedCheckoutContext = {
   grandTotal: number;
   products: ProductRecord[];
   productMap: Map<string, ProductRecord>;
+};
+
+type OrderForEmail = {
+  orderNumber: string;
+  vendorId: string;
+  createdAt: Date;
+  paymentMethod: string;
+  totalAmount: number;
+  deliveryAddress: unknown;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    size?: string | null;
+    color?: string | null;
+    price: number;
+  }>;
 };
 
 export function buildOrderNumber() {
@@ -114,6 +132,7 @@ export async function prepareCheckoutContext(customerId: string, payload: Checko
   const customer = await prisma.user.findUnique({
     where: { id: customerId },
     select: {
+      email: true,
       role: true,
       isBanned: true,
     },
@@ -241,6 +260,7 @@ export async function prepareCheckoutContext(customerId: string, payload: Checko
 
   return {
     customerId,
+    customerEmail: customer.email,
     items: normalizedItems,
     address: payload.address,
     paymentMethod: payload.paymentMethod,
@@ -351,6 +371,7 @@ export async function createOrdersFromCheckoutPayload(input: {
           paymentReference: paymentReference ?? undefined,
           deliveryAddress: {
             ...context.address,
+            email: context.address.email || context.customerEmail,
             deliveryMethod: context.deliveryMethod,
             shippingAmount: shippingShare,
             couponDiscount: couponShare,
@@ -425,15 +446,84 @@ export async function createOrdersFromCheckoutPayload(input: {
   return orders;
 }
 
-async function sendOrderEmails(context: PreparedCheckoutContext, orders: Array<{ orderNumber: string; vendorId: string }>) {
+function getOrderJsonObject(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function getOrderJsonNumber(value: unknown) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatPlainCurrency(value: number) {
+  return `NPR ${Math.round(value || 0).toLocaleString("en-NP")}`;
+}
+
+function buildDeliveryAddressText(address: CheckoutAddressInput) {
+  return [address.line1, address.district, address.zone, address.pincode].filter(Boolean).join(", ");
+}
+
+async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderForEmail[]) {
   const orderNumbers = orders.map((order) => order.orderNumber).join(", ");
 
-  if (context.address.email) {
+  const customerEmail = context.address.email || context.customerEmail;
+
+  if (customerEmail) {
+    const billUrl = buildAbsoluteAppUrl(`/account/orders?bill=${encodeURIComponent(orders[0]?.orderNumber || "")}`);
+    const invoiceOrders = orders.map((order) => {
+      const orderDeliveryAddress = getOrderJsonObject(order.deliveryAddress);
+      const subtotal = roundCurrency(order.items.reduce((sum, item) => sum + item.price * item.quantity, 0));
+      const shipping = getOrderJsonNumber(orderDeliveryAddress.shippingAmount);
+      const discount = getOrderJsonNumber(orderDeliveryAddress.couponDiscount);
+      const tax = 0;
+      const productForVendor = context.products.find((product) => product.vendorId === order.vendorId);
+
+      return {
+        orderNumber: order.orderNumber,
+        vendorName: productForVendor?.vendor.shopName || "Fit Bazar Vendor",
+        createdAt: order.createdAt,
+        paymentMethod: order.paymentMethod,
+        subtotal,
+        shipping,
+        discount,
+        tax,
+        total: order.totalAmount,
+        items: order.items.map((item) => {
+          const product = context.productMap.get(item.productId);
+
+          return {
+            name: product?.name || "Product",
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            price: item.price,
+            total: roundCurrency(item.price * item.quantity),
+          };
+        }),
+      };
+    });
+    const subtotal = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.subtotal, 0));
+    const shipping = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.shipping, 0));
+    const discount = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.discount, 0));
+    const tax = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.tax, 0));
+    const total = roundCurrency(invoiceOrders.reduce((sum, order) => sum + order.total, 0));
+
     await sendMail({
-      to: context.address.email,
-      subject: `Fit Bazar order confirmed: ${orderNumbers}`,
-      text: `Your Fit Bazar order has been placed: ${orderNumbers}`,
-      html: renderOrderPlacedEmail(context.address.name || "there", orderNumbers, buildAbsoluteAppUrl("/account/orders")),
+      to: customerEmail,
+      subject: `Fit Bazar bill: ${orderNumbers}`,
+      text: `Your Fit Bazar bill for ${orderNumbers} is ready. Total: ${formatPlainCurrency(total)}. Open or print it here: ${billUrl}`,
+      html: renderOrderBillEmail({
+        customerName: context.address.name || "Customer",
+        customerEmail,
+        deliveryAddress: buildDeliveryAddressText(context.address),
+        billUrl,
+        orders: invoiceOrders,
+        subtotal,
+        shipping,
+        discount,
+        tax,
+        total,
+      }),
     });
   }
 

@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useToast } from "@/lib/ToastContext";
 import { formatPriceNpr } from "@/lib/catalog";
-import { ArrowRight, CheckCircle, Copy, Home, Package, Truck } from "lucide-react";
+import { ArrowRight, CheckCircle, Copy, FileText, Home, Package, Truck } from "lucide-react";
 
 type CustomerOrder = {
   id: string;
@@ -211,6 +211,10 @@ function OrderConfirmationContent() {
           </div>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link href={`/account/orders?bill=${encodeURIComponent(orderNumber)}`} className="btn-primary flex items-center justify-center gap-2">
+              <FileText className="h-4 w-4 text-white" />
+              View / Print Bill
+            </Link>
             <Link href="/account/orders" className="btn-primary flex items-center justify-center gap-2">
               {t("track_order")}
               <ArrowRight className="h-4 w-4 text-white" />

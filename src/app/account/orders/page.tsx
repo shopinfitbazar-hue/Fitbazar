@@ -107,6 +107,18 @@ function OrderInvoice({ order }: { order: OrderListItem }) {
 
   return (
     <section className="account-invoice-print rounded-[8px] border border-border-light bg-card p-4 shadow-[var(--shadow-sm)] sm:p-6 lg:p-8">
+      <div className="mb-6 flex flex-col gap-3 border-b border-border-light pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-fb-pink">Fit Bazar Official Bill</p>
+          <h2 className="mt-1 text-[26px] font-bold text-text-primary">Invoice</h2>
+          <p className="mt-1 text-[13px] text-text-muted">Bill #{order.orderNumber}</p>
+        </div>
+        <div className="rounded-[8px] bg-[var(--bg-surface)] px-4 py-3 text-left sm:text-right">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-text-muted">Amount Due</p>
+          <p className="mt-1 text-[24px] font-bold text-text-primary">{formatPriceNpr(total)}</p>
+        </div>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr_1fr] lg:items-start">
         <div className="rounded-[8px] bg-[var(--bg-surface)] p-4">
           <div className="mb-4 flex items-center gap-3">
@@ -153,38 +165,46 @@ function OrderInvoice({ order }: { order: OrderListItem }) {
         </div>
       </div>
 
-      <div className="mt-6 hidden overflow-hidden rounded-[8px] border border-border-light md:block">
-        <div className="grid grid-cols-[1.5fr_0.45fr_0.65fr_0.75fr] bg-[var(--bg-surface)] px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] text-text-muted">
-          <span>Item Description</span>
-          <span className="text-center">Qty</span>
-          <span className="text-right">Price</span>
-          <span className="text-right">Item Total</span>
+      <div className="mt-6 hidden overflow-x-auto rounded-[8px] border border-border-light md:block">
+        <table className="w-full min-w-[760px] border-collapse text-left">
+          <thead className="bg-[var(--bg-surface)] text-[12px] font-bold uppercase tracking-[0.08em] text-text-muted">
+            <tr>
+              <th className="px-4 py-3">Item Description</th>
+              <th className="px-4 py-3">Variant</th>
+              <th className="px-4 py-3 text-center">Qty</th>
+              <th className="px-4 py-3 text-right">Rate</th>
+              <th className="px-4 py-3 text-right">Tax</th>
+              <th className="px-4 py-3 text-right">Item Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-light bg-card">
+            {order.items.map((item) => (
+              <tr key={item.id}>
+                <td className="px-4 py-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[6px] bg-[var(--bg-surface)]">
+                      {item.product?.images?.[0] ? (
+                        <SmartImage src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[11px] text-text-muted">{t("no_image")}</div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[14px] font-bold text-text-primary">{item.product?.name || t("products")}</p>
+                      <p className="text-[12px] text-text-muted">SKU: {item.product?.id.slice(0, 8).toUpperCase() || item.id.slice(0, 8).toUpperCase()}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-[13px] text-text-secondary">{item.size || t("free")} / {item.color || t("default_label")}</td>
+                <td className="px-4 py-4 text-center text-[14px] font-semibold text-text-primary">{item.quantity}</td>
+                <td className="px-4 py-4 text-right text-[14px] text-text-primary">{formatPriceNpr(item.price)}</td>
+                <td className="px-4 py-4 text-right text-[14px] text-text-primary">{formatPriceNpr(0)}</td>
+                <td className="px-4 py-4 text-right text-[14px] font-bold text-text-primary">{formatPriceNpr(item.price * item.quantity)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </div>
-        <div className="divide-y divide-border-light">
-          {order.items.map((item) => (
-            <div key={item.id} className="grid grid-cols-[1.5fr_0.45fr_0.65fr_0.75fr] items-center gap-4 px-4 py-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[6px] bg-[var(--bg-surface)]">
-                  {item.product?.images?.[0] ? (
-                    <SmartImage src={item.product.images[0]} alt={item.product.name} fill className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[11px] text-text-muted">{t("no_image")}</div>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-[14px] font-bold text-text-primary">{item.product?.name || t("products")}</p>
-                  <p className="text-[12px] text-text-muted">
-                    {item.size || t("free")} / {item.color || t("default_label")}
-                  </p>
-                </div>
-              </div>
-              <span className="text-center text-[14px] font-semibold text-text-primary">{item.quantity}</span>
-              <span className="text-right text-[14px] text-text-primary">{formatPriceNpr(item.price)}</span>
-              <span className="text-right text-[14px] font-bold text-text-primary">{formatPriceNpr(item.price * item.quantity)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="mt-6 space-y-3 md:hidden">
         {order.items.map((item) => (
@@ -260,6 +280,43 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const updateBillUrl = (orderNumber?: string) => {
+    const nextUrl = new URL(window.location.href);
+    if (orderNumber) {
+      nextUrl.searchParams.set("bill", orderNumber);
+    } else {
+      nextUrl.searchParams.delete("bill");
+    }
+    window.history.replaceState(null, "", `${nextUrl.pathname}${nextUrl.search}`);
+  };
+
+  const openBill = (order: OrderListItem) => {
+    setSelectedOrder(order.id);
+    updateBillUrl(order.orderNumber);
+    window.setTimeout(() => {
+      document.getElementById(`bill-${order.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
+
+  const closeBill = () => {
+    setSelectedOrder(null);
+    updateBillUrl();
+  };
+
+  const toggleBill = (order: OrderListItem) => {
+    if (selectedOrder === order.id) {
+      closeBill();
+      return;
+    }
+
+    openBill(order);
+  };
+
+  const printBill = (order: OrderListItem) => {
+    openBill(order);
+    window.setTimeout(() => window.print(), 180);
+  };
+
   useEffect(() => {
     async function loadOrders() {
       setLoading(true);
@@ -278,6 +335,21 @@ export default function OrdersPage() {
 
     void loadOrders();
   }, []);
+
+  useEffect(() => {
+    if (loading || !orders.length) return;
+
+    const billNumber = new URLSearchParams(window.location.search).get("bill");
+    if (!billNumber) return;
+
+    const order = orders.find((item) => item.orderNumber === billNumber || item.id === billNumber);
+    if (!order || selectedOrder === order.id) return;
+
+    setSelectedOrder(order.id);
+    window.setTimeout(() => {
+      document.getElementById(`bill-${order.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }, [loading, orders, selectedOrder]);
 
   return (
     <main className="bg-page">
@@ -348,18 +420,26 @@ export default function OrdersPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3 md:justify-end">
                         <p className="text-[20px] font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</p>
                         <button
-                          onClick={() => setSelectedOrder(isSelected ? null : order.id)}
+                          onClick={() => toggleBill(order)}
                           className="inline-flex h-10 items-center gap-2 rounded-full border border-fb-pink px-4 text-[13px] font-semibold text-fb-pink transition-colors hover:bg-fb-pink hover:text-white"
                         >
                           <FileText className="h-4 w-4" />
                           {isSelected ? t("hide_details") : "View Bill"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => printBill(order)}
+                          className="inline-flex h-10 items-center gap-2 rounded-full bg-text-primary px-4 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                        >
+                          <Printer className="h-4 w-4" />
+                          Print
                         </button>
                       </div>
                     </div>
                   </div>
 
                   {isSelected ? (
-                    <div className="space-y-4 bg-[var(--bg-surface)] p-4 sm:p-6">
+                    <div id={`bill-${order.id}`} className="space-y-4 scroll-mt-24 bg-[var(--bg-surface)] p-4 sm:p-6">
                       <div className="account-no-print flex flex-col gap-3 rounded-[8px] border border-border-light bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <div className="mb-1 flex items-center gap-2">
@@ -370,7 +450,7 @@ export default function OrdersPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => window.print()}
+                          onClick={() => printBill(order)}
                           className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-text-primary px-4 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
                         >
                           <Printer className="h-4 w-4" />
