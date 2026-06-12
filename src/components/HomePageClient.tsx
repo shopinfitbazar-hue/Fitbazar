@@ -315,7 +315,7 @@ export default function HomePageClient({
             subtitle="सबैभन्दा लोकप्रिय"
             actionHref="/products?sort=popularity"
           />
-          <div className="grid auto-cols-[180px] grid-flow-col gap-4 overflow-x-auto pb-2 lg:auto-cols-[240px] [&::-webkit-scrollbar]:hidden">
+          <div className="grid auto-cols-[180px] snap-x snap-mandatory grid-flow-col gap-4 overflow-x-auto overscroll-x-contain pb-2 lg:auto-cols-[240px] [&::-webkit-scrollbar]:hidden">
           {mostPopular.map((product) => (
             <ProductCard key={product.id} {...product} />
           ))}

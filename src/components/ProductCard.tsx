@@ -162,9 +162,9 @@ function ProductCard({
   return (
     <Link
       href={href}
-      className="product-card group block overflow-hidden rounded-[24px] border border-white/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
+      className="product-card group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[24px] border border-white/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-[var(--bg-surface)]">
+      <div className="relative aspect-[3/4] shrink-0 overflow-hidden bg-[var(--bg-surface)]">
         <SmartImage
           src={image}
           alt={name}
@@ -212,7 +212,7 @@ function ProductCard({
         </div>
       </div>
 
-      <div className="px-3 pb-4 pt-3">
+      <div className="flex flex-1 flex-col px-3 pb-4 pt-3">
         <button
           type="button"
           onClick={(event) => {
@@ -224,9 +224,9 @@ function ProductCard({
         >
           {vendorName}
         </button>
-        <h3 className="mt-2 line-clamp-2 text-[15px] font-medium leading-[1.35] tracking-[-0.02em] text-text-primary">{name}</h3>
+        <h3 className="mt-2 min-h-[41px] line-clamp-2 text-[15px] font-medium leading-[1.35] text-text-primary">{name}</h3>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex min-h-[44px] flex-wrap items-start gap-2">
           <span className="text-[16px] font-semibold tracking-[-0.03em] text-text-primary">{formatPrice(price)}</span>
           {originalPrice && originalPrice > price ? (
             <>
@@ -236,12 +236,12 @@ function ProductCard({
           ) : null}
         </div>
 
-        {sizes?.length ? (
-          <div className="mt-3 truncate text-[12px] text-text-muted">{sizes.slice(0, 4).join("  ")}</div>
-        ) : null}
+        <div className="mt-3 min-h-[18px] truncate text-[12px] text-text-muted">
+          {sizes?.length ? sizes.slice(0, 4).join("  ") : ""}
+        </div>
 
         {canShop ? (
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={handleAddToCart}

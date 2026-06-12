@@ -38,7 +38,7 @@ export default function VendorCard({
   return (
     <Link
       href={`/shop/${vendorSlug}`}
-      className="block rounded-[24px] border border-white/70 bg-card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
+      className="flex h-full flex-col rounded-[24px] border border-white/70 bg-card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
     >
       <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]">
         {logo ? (
@@ -53,9 +53,9 @@ export default function VendorCard({
           <span className="text-[22px] font-bold text-fb-pink">{shopName.charAt(0)}</span>
         )}
       </div>
-      <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.03em] text-text-primary">{shopName}</h3>
-      <p className="mt-2 text-[13px] text-text-muted">{location || description || t("fashion_lifestyle")}</p>
-      <div className="mt-4 flex items-center justify-center gap-1 text-[13px] text-text-secondary">
+      <h3 className="mt-4 min-h-[45px] line-clamp-2 text-[17px] font-semibold leading-[1.3] text-text-primary">{shopName}</h3>
+      <p className="mt-2 min-h-[40px] line-clamp-2 text-[13px] leading-5 text-text-muted">{location || description || t("fashion_lifestyle")}</p>
+      <div className="mt-auto flex items-center justify-center gap-1 pt-4 text-[13px] text-text-secondary">
         {[0, 1, 2, 3, 4].map((index) => (
           <Star key={index} className="h-3.5 w-3.5 fill-[#FFC94A] text-[#FFC94A]" />
         ))}

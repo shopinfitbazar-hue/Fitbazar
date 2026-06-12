@@ -13,9 +13,9 @@ function formatDate(value: string) {
 
 export default function BlogCard({ post, priority = false }: { post: BlogPost; priority?: boolean }) {
   return (
-    <article className="group overflow-hidden rounded-[8px] border border-white/70 bg-card shadow-[var(--shadow-sm)] transition-transform hover:-translate-y-1 hover:shadow-[var(--shadow-card)]">
-      <Link href={post.path} className="block">
-        <div className="relative aspect-[16/10] bg-[var(--bg-surface)]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[8px] border border-white/70 bg-card shadow-[var(--shadow-sm)] transition-transform hover:-translate-y-1 hover:shadow-[var(--shadow-card)]">
+      <Link href={post.path} className="flex h-full flex-col">
+        <div className="relative aspect-[16/10] shrink-0 bg-[var(--bg-surface)]">
           <SmartImage
             src={post.image}
             alt={`${post.title} cover image`}
@@ -25,7 +25,7 @@ export default function BlogCard({ post, priority = false }: { post: BlogPost; p
             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         </div>
-        <div className="p-4 md:p-5">
+        <div className="flex flex-1 flex-col p-4 md:p-5">
           <div className="flex flex-wrap items-center gap-2 text-[12px] font-medium text-text-muted">
             <span>{getCategoryTitle(post.category)}</span>
             <span aria-hidden="true">/</span>
@@ -33,11 +33,11 @@ export default function BlogCard({ post, priority = false }: { post: BlogPost; p
             <span aria-hidden="true">/</span>
             <span>{post.readingTime} min read</span>
           </div>
-          <h2 className="mt-3 line-clamp-2 text-[20px] font-semibold leading-tight tracking-[-0.03em] text-text-primary">
+          <h2 className="mt-3 min-h-[48px] line-clamp-2 text-[20px] font-semibold leading-tight text-text-primary">
             {post.title}
           </h2>
-          <p className="mt-3 line-clamp-2 text-[14px] leading-6 text-text-secondary">{post.excerpt}</p>
-          <div className="mt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-pink">Read guide</div>
+          <p className="mt-3 min-h-[48px] line-clamp-2 text-[14px] leading-6 text-text-secondary">{post.excerpt}</p>
+          <div className="mt-auto pt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-fb-pink">Read guide</div>
         </div>
       </Link>
     </article>

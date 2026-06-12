@@ -38,6 +38,12 @@ export async function GET() {
           select: {
             shopName: true,
             slug: true,
+            logo: true,
+            address: true,
+            zone: true,
+            district: true,
+            phone: true,
+            panNumber: true,
           },
         },
       },
