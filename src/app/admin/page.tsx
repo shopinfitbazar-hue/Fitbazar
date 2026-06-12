@@ -341,6 +341,7 @@ const initialAdminPagination: AdminPaginationState = ADMIN_LIST_KEYS.reduce(
   {} as AdminPaginationState,
 );
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const adminOrderStatusOptions = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED", "DISPUTED"];
 
 export default function AdminDashboard() {
