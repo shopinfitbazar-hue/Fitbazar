@@ -1,87 +1,76 @@
 import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
-import { publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
+import { pickBestProductLookupCandidate, publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
-async function queryPublicProductDetail(identifier: string) {
-  const product = await prisma.product.findFirst({
-    where: publicProductIdentityWhere(identifier),
+const publicProductDetailInclude = {
+  vendor: {
+    select: {
+      id: true,
+      shopName: true,
+      slug: true,
+      logo: true,
+      description: true,
+      category: true,
+    },
+  },
+  reviews: {
     include: {
-      vendor: {
+      user: {
         select: {
           id: true,
-          shopName: true,
-          slug: true,
-          logo: true,
-          description: true,
-          category: true,
-        },
-      },
-      reviews: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      _count: {
-        select: {
-          reviews: true,
+          name: true,
+          image: true,
         },
       },
     },
-  }) ?? (await (async () => {
-    const aliasWhere = publicProductAliasWhere(identifier);
-    if (!aliasWhere) return null;
+    orderBy: {
+      createdAt: "desc",
+    },
+  },
+  _count: {
+    select: {
+      reviews: true,
+    },
+  },
+} satisfies Prisma.ProductInclude;
 
-    return prisma.product.findFirst({
-      where: aliasWhere,
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-            description: true,
-            category: true,
-          },
-        },
-        reviews: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
+function findPublicProductDetail(
+  where: Prisma.ProductWhereInput,
+  orderBy?: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[],
+) {
+  return prisma.product.findFirst({
+    where,
+    include: publicProductDetailInclude,
+    ...(orderBy ? { orderBy } : {}),
+  });
+}
+
+async function queryPublicProductDetail(identifier: string) {
+  let product = await findPublicProductDetail(publicProductIdentityWhere(identifier));
+
+  if (!product) {
+    const aliasWhere = publicProductAliasWhere(identifier);
+    product = aliasWhere
+      ? await findPublicProductDetail(aliasWhere, [{ totalSold: "desc" }, { createdAt: "desc" }])
+      : null;
+  }
+
+  if (!product) {
+    const candidates = await prisma.product.findMany({
+      where: publicProductVisibilityFilter,
+      include: publicProductDetailInclude,
       orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+      take: 80,
     });
-  })());
+    product = pickBestProductLookupCandidate(identifier, candidates);
+  }
 
   if (!product) return null;
 

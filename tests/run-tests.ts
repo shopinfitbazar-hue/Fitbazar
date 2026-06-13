@@ -15,7 +15,14 @@ import { getSafeImageUrl } from "../src/lib/media";
 import { hasConfiguredConnectIps, hasConfiguredEsewa, hasConfiguredFonepay, hasConfiguredKhalti, hasConfiguredLocalCards } from "../src/lib/payment-config";
 import { allocateAmountAcrossSubtotals, calculateOrderAmounts, groupItemsByVendor } from "../src/lib/order-routing";
 import { isSupportedPaymentMethod, mapProviderMethod } from "../src/lib/payment-types";
-import { productAliasTerms, publicProductAliasWhere, publicProductIdentityWhere } from "../src/lib/product-lookup";
+import {
+  normalizeProductLookupTerm,
+  pickBestProductLookupCandidate,
+  productAliasTerms,
+  publicProductAliasWhere,
+  publicProductIdentityWhere,
+  scoreProductLookupCandidate,
+} from "../src/lib/product-lookup";
 import { deriveProductStatus } from "../src/lib/product-status";
 import { getDeliveryMessage, isValidNepalPincode, resolvePincode } from "../src/lib/pincode";
 import { searchSuggestions, suggestionHref } from "../src/lib/search-suggestions";
@@ -249,6 +256,7 @@ run("product detail links tolerate ids, copied names, and old short aliases", ()
   assert.deepEqual(productAliasTerms("silk-kurta"), ["silk", "kurta"]);
   assert.deepEqual(productAliasTerms("Silk Embroidered Kurta"), ["Silk", "Embroidered", "Kurta"]);
   assert.deepEqual(productAliasTerms("x-y"), []);
+  assert.equal(normalizeProductLookupTerm("kurtaaaa"), "kurta");
 
   const identityWhere = publicProductIdentityWhere("Silk Embroidered Kurta");
   assert.deepEqual(identityWhere.OR, [
@@ -263,6 +271,31 @@ run("product detail links tolerate ids, copied names, and old short aliases", ()
     { name: { contains: "silk", mode: "insensitive" } },
     { name: { contains: "kurta", mode: "insensitive" } },
   ]);
+
+  const silkKurta = {
+    id: "p1",
+    slug: "silk-embroidered-kurta",
+    name: "Silk Embroidered Kurta",
+    category: "Men",
+    tags: ["kurta", "silk"],
+    totalSold: 80,
+  };
+
+  assert.ok(scoreProductLookupCandidate("silk-ebroderry-kurtaaaa", silkKurta) >= 3.2);
+  assert.equal(
+    pickBestProductLookupCandidate("silk-ebroderry-kurtaaaa", [
+      {
+        id: "p2",
+        slug: "woolen-jacket-nepal",
+        name: "Woolen Jacket Nepal",
+        category: "Men",
+        tags: ["jacket"],
+        totalSold: 200,
+      },
+      silkKurta,
+    ])?.slug,
+    "silk-embroidered-kurta",
+  );
 });
 
 run("search product suggestions cannot create fake product detail links", () => {

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductDetailClient from "@/components/ProductDetailClient";
@@ -7,7 +8,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
-import { publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
+import { pickBestProductLookupCandidate, publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
 import { buildMetadata } from "@/config/site";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonLd, productSeoDescription } from "@/lib/seo";
@@ -15,78 +16,67 @@ import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonL
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 export const dynamic = "force-static";
 
-async function queryProductDetail(identifier: string) {
-  const product = await prisma.product.findFirst({
-    where: publicProductIdentityWhere(identifier),
+const productDetailInclude = {
+  vendor: {
+    select: {
+      id: true,
+      shopName: true,
+      slug: true,
+      logo: true,
+      category: true,
+    },
+  },
+  reviews: {
     include: {
-      vendor: {
+      user: {
         select: {
           id: true,
-          shopName: true,
-          slug: true,
-          logo: true,
-          category: true,
-        },
-      },
-      reviews: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-      _count: {
-        select: {
-          reviews: true,
+          name: true,
+          image: true,
         },
       },
     },
-  }) ?? (await (async () => {
-    const aliasWhere = publicProductAliasWhere(identifier);
-    if (!aliasWhere) return null;
+    orderBy: {
+      createdAt: "desc",
+    },
+  },
+  _count: {
+    select: {
+      reviews: true,
+    },
+  },
+} satisfies Prisma.ProductInclude;
 
-    return prisma.product.findFirst({
-      where: aliasWhere,
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-            category: true,
-          },
-        },
-        reviews: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
+function findProductForDetail(
+  where: Prisma.ProductWhereInput,
+  orderBy?: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[],
+) {
+  return prisma.product.findFirst({
+    where,
+    include: productDetailInclude,
+    ...(orderBy ? { orderBy } : {}),
+  });
+}
+
+async function queryProductDetail(identifier: string) {
+  let product = await findProductForDetail(publicProductIdentityWhere(identifier));
+
+  if (!product) {
+    const aliasWhere = publicProductAliasWhere(identifier);
+    product = aliasWhere
+      ? await findProductForDetail(aliasWhere, [{ totalSold: "desc" }, { createdAt: "desc" }])
+      : null;
+  }
+
+  if (!product) {
+    const candidates = await prisma.product.findMany({
+      where: publicProductVisibilityFilter,
+      include: productDetailInclude,
       orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+      take: 80,
     });
-  })());
+    product = pickBestProductLookupCandidate(identifier, candidates);
+  }
 
   if (!product) return null;
 
