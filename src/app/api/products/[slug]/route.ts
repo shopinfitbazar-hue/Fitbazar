@@ -2,17 +2,15 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
+import { publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
-async function queryPublicProductDetail(slug: string) {
+async function queryPublicProductDetail(identifier: string) {
   const product = await prisma.product.findFirst({
-    where: {
-      slug,
-      ...publicProductVisibilityFilter,
-    },
+    where: publicProductIdentityWhere(identifier),
     include: {
       vendor: {
         select: {
@@ -44,7 +42,46 @@ async function queryPublicProductDetail(slug: string) {
         },
       },
     },
-  });
+  }) ?? (await (async () => {
+    const aliasWhere = publicProductAliasWhere(identifier);
+    if (!aliasWhere) return null;
+
+    return prisma.product.findFirst({
+      where: aliasWhere,
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+            description: true,
+            category: true,
+          },
+        },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+    });
+  })());
 
   if (!product) return null;
 

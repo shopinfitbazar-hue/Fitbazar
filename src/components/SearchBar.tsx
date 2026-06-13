@@ -4,41 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X, TrendingUp } from "lucide-react";
-import { categorySlug } from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
-
-interface SearchResult {
-  type: "product" | "category" | "brand";
-  name: string;
-  slug?: string;
-}
-
-const mockSuggestions: SearchResult[] = [
-  { type: "category", name: "Men", slug: "men" },
-  { type: "category", name: "Women", slug: "women" },
-  { type: "category", name: "Traditional Wear", slug: "ethnic" },
-  { type: "brand", name: "Himalayan Loom" },
-  { type: "brand", name: "Kathmandu Threads" },
-  { type: "product", name: "Silk Kurta", slug: "silk-kurta" },
-  { type: "product", name: "Wool Sweater", slug: "wool-sweater" },
-];
-
-const trendingSearches = [
-  "Silk Kurta",
-  "Wool Sweater",
-  "Pashmina",
-  "Daura Suruwal",
-  "Dhoti",
-];
-
-function collectionHrefForCategory(name: string) {
-  const slug = categorySlug(name);
-  if (slug === "men") return "/collections/mens-fashion-nepal";
-  if (slug === "women") return "/collections/womens-fashion-nepal";
-  if (slug === "ethnic-wear") return "/collections/ethnic";
-  if (slug === "sports") return "/collections/streetwear-nepal";
-  return `/collections/${slug}`;
-}
+import { searchSuggestions, suggestionHref, trendingSearches } from "@/lib/search-suggestions";
 
 export default function SearchBar({ compact = false }: { compact?: boolean }) {
   const { t } = useLanguage();
@@ -60,10 +27,10 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
 
   const filtered =
     query.length > 0
-      ? mockSuggestions.filter((s) =>
+      ? searchSuggestions.filter((s) =>
           s.name.toLowerCase().includes(query.toLowerCase())
         )
-      : mockSuggestions.slice(0, 5);
+      : searchSuggestions.slice(0, 5);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +98,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
                 {trendingSearches.map((term) => (
                   <Link
                     key={term}
-                    href={`/search?q=${encodeURIComponent(term)}`}
+                    href={`/products?q=${encodeURIComponent(term)}`}
                     onClick={() => setOpen(false)}
                     className="rounded-full bg-[var(--bg-surface)] px-2.5 py-1 text-xs text-text-secondary transition-colors hover:bg-fb-pink hover:text-white"
                   >
@@ -147,13 +114,7 @@ export default function SearchBar({ compact = false }: { compact?: boolean }) {
             {filtered.map((item, idx) => (
               <Link
                 key={idx}
-                href={
-                  item.type === "product" && item.slug
-                    ? `/products/${item.slug}`
-                    : item.type === "category"
-                      ? collectionHrefForCategory(item.name)
-                      : `/search?q=${encodeURIComponent(item.name)}`
-                }
+                href={suggestionHref(item)}
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--bg-hover)]"
               >

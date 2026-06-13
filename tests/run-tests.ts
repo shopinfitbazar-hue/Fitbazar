@@ -15,8 +15,10 @@ import { getSafeImageUrl } from "../src/lib/media";
 import { hasConfiguredConnectIps, hasConfiguredEsewa, hasConfiguredFonepay, hasConfiguredKhalti, hasConfiguredLocalCards } from "../src/lib/payment-config";
 import { allocateAmountAcrossSubtotals, calculateOrderAmounts, groupItemsByVendor } from "../src/lib/order-routing";
 import { isSupportedPaymentMethod, mapProviderMethod } from "../src/lib/payment-types";
+import { productAliasTerms, publicProductAliasWhere, publicProductIdentityWhere } from "../src/lib/product-lookup";
 import { deriveProductStatus } from "../src/lib/product-status";
 import { getDeliveryMessage, isValidNepalPincode, resolvePincode } from "../src/lib/pincode";
+import { searchSuggestions, suggestionHref } from "../src/lib/search-suggestions";
 import { getShippingAmount } from "../src/lib/shipping";
 import { buildAppUrl, hashOpaqueToken } from "../src/lib/tokens";
 import { t } from "../src/lib/translations";
@@ -241,6 +243,37 @@ run("product status derivation keeps hidden, draft, and stock rules deterministi
   assert.equal(deriveProductStatus({ requestedStatus: "HIDDEN", stock: 12 }), "HIDDEN");
   assert.equal(deriveProductStatus({ requestedStatus: "DRAFT", stock: 12 }), "DRAFT");
   assert.equal(deriveProductStatus({ stock: 0, isActive: true }), "OUT_OF_STOCK");
+});
+
+run("product detail links tolerate ids, copied names, and old short aliases", () => {
+  assert.deepEqual(productAliasTerms("silk-kurta"), ["silk", "kurta"]);
+  assert.deepEqual(productAliasTerms("Silk Embroidered Kurta"), ["Silk", "Embroidered", "Kurta"]);
+  assert.deepEqual(productAliasTerms("x-y"), []);
+
+  const identityWhere = publicProductIdentityWhere("Silk Embroidered Kurta");
+  assert.deepEqual(identityWhere.OR, [
+    { slug: "Silk Embroidered Kurta" },
+    { slug: "silk-embroidered-kurta" },
+    { id: "Silk Embroidered Kurta" },
+  ]);
+
+  const aliasWhere = publicProductAliasWhere("silk-kurta");
+  assert.ok(aliasWhere);
+  assert.deepEqual(aliasWhere.AND, [
+    { name: { contains: "silk", mode: "insensitive" } },
+    { name: { contains: "kurta", mode: "insensitive" } },
+  ]);
+});
+
+run("search product suggestions cannot create fake product detail links", () => {
+  const productSuggestions = searchSuggestions.filter((item) => item.type === "product");
+  assert.ok(productSuggestions.length > 0);
+
+  for (const suggestion of productSuggestions) {
+    const href = suggestionHref(suggestion);
+    assert.match(href, /^\/products\?q=/);
+    assert.doesNotMatch(href, /^\/products\/[^?]+$/);
+  }
 });
 
 run("payment methods hide cleanly when env vars are missing", () => {

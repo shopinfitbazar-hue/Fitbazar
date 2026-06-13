@@ -7,6 +7,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
+import { publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
 import { buildMetadata } from "@/config/site";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonLd, productSeoDescription } from "@/lib/seo";
@@ -14,12 +15,9 @@ import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonL
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 export const dynamic = "force-static";
 
-async function queryProductDetail(slug: string) {
+async function queryProductDetail(identifier: string) {
   const product = await prisma.product.findFirst({
-    where: {
-      slug,
-      ...publicProductVisibilityFilter,
-    },
+    where: publicProductIdentityWhere(identifier),
     include: {
       vendor: {
         select: {
@@ -50,7 +48,45 @@ async function queryProductDetail(slug: string) {
         },
       },
     },
-  });
+  }) ?? (await (async () => {
+    const aliasWhere = publicProductAliasWhere(identifier);
+    if (!aliasWhere) return null;
+
+    return prisma.product.findFirst({
+      where: aliasWhere,
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+            category: true,
+          },
+        },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+    });
+  })());
 
   if (!product) return null;
 
