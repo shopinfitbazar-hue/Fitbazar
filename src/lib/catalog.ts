@@ -1,8 +1,9 @@
 import type { Product, Review, Vendor } from "@prisma/client";
 import type { ProductCardProps } from "@/components/ProductCard";
+import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 
 type ProductWithVendor = Product & {
-  vendor: Pick<Vendor, "id" | "shopName" | "slug" | "logo">;
+  vendor: Pick<Vendor, "id" | "shopName" | "slug" | "logo"> & Pick<Partial<Vendor>, "isPartnered">;
   reviews?: Array<Pick<Review, "rating">>;
   _count?: {
     reviews?: number;
@@ -43,8 +44,8 @@ export function mapProductToCard(product: ProductWithVendor): ProductCardProps {
     originalPrice: product.compareAtPrice ?? undefined,
     discountPercent: product.discountPct || undefined,
     images: product.images,
-    vendorName: product.vendor.shopName,
-    vendorSlug: product.vendor.slug,
+    vendorName: getPublicVendorName(product.vendor),
+    vendorSlug: getPublicVendorSlug(product.vendor),
     rating,
     reviewCount: product._count?.reviews ?? product.reviews?.length,
     soldCount: product.totalSold,

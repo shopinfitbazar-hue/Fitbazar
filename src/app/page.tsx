@@ -90,6 +90,7 @@ async function queryHomepageData() {
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {
@@ -125,6 +126,7 @@ async function queryHomepageData() {
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {
@@ -158,6 +160,7 @@ async function queryHomepageData() {
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {
@@ -239,6 +242,7 @@ async function queryHomepageData() {
               shopName: true,
               slug: true,
               logo: true,
+              isPartnered: true,
             },
           },
           reviews: {

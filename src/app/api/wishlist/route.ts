@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireCustomerSession } from "@/lib/server-auth";
+import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function GET() {
                 id: true,
                 shopName: true,
                 slug: true,
+                isPartnered: true,
               },
             },
             reviews: {
@@ -45,7 +47,19 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ wishlist });
+    return NextResponse.json({
+      wishlist: wishlist.map((item) => ({
+        ...item,
+        product: {
+          ...item.product,
+          vendor: {
+            ...item.product.vendor,
+            shopName: getPublicVendorName(item.product.vendor),
+            slug: getPublicVendorSlug(item.product.vendor) ?? null,
+          },
+        },
+      })),
+    });
   } catch (error) {
     console.error("Error fetching wishlist:", error);
     return NextResponse.json({ error: "Failed to fetch wishlist" }, { status: 500 });

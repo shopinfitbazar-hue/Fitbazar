@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         orderBy: { updatedAt: "desc" },
       }),
       prisma.vendor.findMany({
-        where: publicVendorVisibilityFilter,
+        where: { ...publicVendorVisibilityFilter, isPartnered: true },
         select: { slug: true, createdAt: true },
         take: 500,
         orderBy: { createdAt: "desc" },

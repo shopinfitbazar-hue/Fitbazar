@@ -13,14 +13,14 @@ function authStatus(error: string) {
 async function resolveVendor(vendorId?: string | null, slug?: string | null) {
   if (vendorId) {
     return prisma.vendor.findFirst({
-      where: { id: vendorId, isApproved: true, isSuspended: false },
+      where: { id: vendorId, isApproved: true, isSuspended: false, isPartnered: true },
       select: { id: true, shopName: true, slug: true },
     });
   }
 
   if (slug) {
     return prisma.vendor.findFirst({
-      where: { slug, isApproved: true, isSuspended: false },
+      where: { slug, isApproved: true, isSuspended: false, isPartnered: true },
       select: { id: true, shopName: true, slug: true },
     });
   }
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     const vendor = await prisma.vendor.findFirst({
-      where: { id: body.vendorId, isApproved: true, isSuspended: false },
+      where: { id: body.vendorId, isApproved: true, isSuspended: false, isPartnered: true },
       select: { id: true, userId: true, shopName: true },
     });
 

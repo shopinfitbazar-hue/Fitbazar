@@ -25,7 +25,7 @@ interface SearchProduct {
   vendor?: {
     id: string;
     shopName: string;
-    slug: string;
+    slug?: string | null;
   };
 }
 
@@ -139,7 +139,7 @@ function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageCli
         discountPercent: product.discountPct || undefined,
         images: product.images,
         vendorName: product.vendor?.shopName || "Fit Bazar",
-        vendorSlug: product.vendor?.slug,
+        vendorSlug: product.vendor?.slug || undefined,
         sizes: product.sizes,
         isFestival: product.isFestivalSale,
         isSale: product.isYearRoundSale || product.discountPct > 0,

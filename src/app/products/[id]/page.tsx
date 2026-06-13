@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { pickBestProductLookupCandidate, publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
+import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 import { buildMetadata } from "@/config/site";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonLd, productSeoDescription } from "@/lib/seo";
@@ -24,6 +25,7 @@ const productDetailInclude = {
       slug: true,
       logo: true,
       category: true,
+      isPartnered: true,
     },
   },
   reviews: {
@@ -94,6 +96,7 @@ async function queryProductDetail(identifier: string) {
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {
@@ -123,6 +126,7 @@ async function queryProductDetail(identifier: string) {
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {
@@ -166,7 +170,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     });
   }
 
-  const description = productSeoDescription(product);
+  const vendorName = getPublicVendorName(product.vendor);
+  const description = productSeoDescription({ ...product, vendor: { shopName: vendorName } });
   const title = `${product.name} in Nepal`;
   const url = canonicalUrl(`/products/${product.slug}`);
   const image = product.images[0];
@@ -189,7 +194,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       url,
       title,
       description,
-      images: image ? [{ url: image, alt: `${product.name} from ${product.vendor?.shopName || "FitBazar"}` }] : undefined,
+      images: image ? [{ url: image, alt: `${product.name} from ${vendorName}` }] : undefined,
     },
     twitter: {
       title,
@@ -208,6 +213,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
   const { similarProducts, alsoBoughtProducts } = data;
+  const publicVendor = product.vendor
+    ? {
+        ...product.vendor,
+        shopName: getPublicVendorName(product.vendor),
+        slug: getPublicVendorSlug(product.vendor) ?? null,
+      }
+    : product.vendor;
 
   return (
     <main className="bg-page">
@@ -231,7 +243,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             category: product.category,
             stock: product.stock,
             updatedAt: product.updatedAt,
-            vendor: product.vendor,
+            vendor: publicVendor,
             reviews: product.reviews,
             reviewCount: product._count.reviews,
           }),
@@ -252,7 +264,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           colors: product.colors,
           stock: product.stock,
           totalSold: product.totalSold,
-          vendor: product.vendor,
+          vendor: publicVendor,
           reviews: product.reviews.map((review) => ({
             ...review,
             createdAt: review.createdAt.toISOString(),

@@ -4,6 +4,7 @@ import { createOrdersFromCheckoutPayload, mapCheckoutErrorToResponse, prepareChe
 import { isSupportedPaymentMethod } from "@/lib/payment-types";
 import { isDeliveryMethod } from "@/lib/shipping";
 import { requireCustomerSession } from "@/lib/server-auth";
+import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -44,13 +45,35 @@ export async function GET() {
             district: true,
             phone: true,
             panNumber: true,
+            isPartnered: true,
           },
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ orders });
+    return NextResponse.json({
+      orders: orders.map((order) => {
+        const canShowVendor = Boolean(order.vendor.isPartnered);
+
+        return {
+          ...order,
+          vendor: canShowVendor
+            ? order.vendor
+            : {
+                ...order.vendor,
+                shopName: getPublicVendorName(order.vendor),
+                slug: getPublicVendorSlug(order.vendor) ?? null,
+                logo: null,
+                address: null,
+                zone: null,
+                district: null,
+                phone: null,
+                panNumber: null,
+              },
+        };
+      }),
+    });
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });

@@ -67,7 +67,7 @@ interface ProductDetailClientProps {
     vendor: {
       id: string;
       shopName: string;
-      slug: string;
+      slug?: string | null;
       logo?: string | null;
       category?: string | null;
     };
@@ -162,6 +162,7 @@ export default function ProductDetailClient({
   const accountRole = session?.user?.role;
   const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
   const wishlisted = isInWishlist(product.id);
+  const vendorHref = product.vendor.slug ? `/shop/${product.vendor.slug}` : null;
   const productSummary =
     product.description ||
     `${product.name} from ${product.vendor.shopName}, available for online fashion shopping in Nepal.`;
@@ -274,7 +275,7 @@ export default function ProductDetailClient({
       image: safeImages[0] || "",
       vendorId: product.vendor.id,
       vendorName: product.vendor.shopName,
-      vendorSlug: product.vendor.slug,
+      vendorSlug: product.vendor.slug || undefined,
       quantity,
       size: selectedSize || undefined,
       color: selectedColor || undefined,
@@ -312,7 +313,7 @@ export default function ProductDetailClient({
       originalPrice: product.compareAtPrice ?? undefined,
       image: safeImages[0] || "",
       vendorName: product.vendor.shopName,
-      vendorSlug: product.vendor.slug,
+      vendorSlug: product.vendor.slug || undefined,
     });
     addToast(t("added_to_wishlist"), "success");
   };
@@ -457,9 +458,15 @@ export default function ProductDetailClient({
         ) : null}
 
         <div className="mt-5">
-          <Link href={`/shop/${product.vendor.slug}`} className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-muted">
-            {product.vendor.shopName}
-          </Link>
+          {vendorHref ? (
+            <Link href={vendorHref} className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              {product.vendor.shopName}
+            </Link>
+          ) : (
+            <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+              {product.vendor.shopName}
+            </span>
+          )}
           <h1 className="mt-1 text-[1.85rem] font-bold leading-tight tracking-[-0.03em] text-text-primary">{product.name}</h1>
 
           <div className="mt-3 flex items-center gap-2">
@@ -588,9 +595,15 @@ export default function ProductDetailClient({
         </section>
 
         <section className="section-shell !p-4 md:!p-5 lg:sticky lg:top-[76px] lg:h-fit lg:!p-6">
-          <Link href={`/shop/${product.vendor.slug}`} className="text-[13px] font-bold uppercase text-text-primary md:text-[16px]">
-            {product.vendor.shopName}
-          </Link>
+          {vendorHref ? (
+            <Link href={vendorHref} className="text-[13px] font-bold uppercase text-text-primary md:text-[16px]">
+              {product.vendor.shopName}
+            </Link>
+          ) : (
+            <span className="text-[13px] font-bold uppercase text-text-primary md:text-[16px]">
+              {product.vendor.shopName}
+            </span>
+          )}
           <h1 className="mt-1 text-[1.45rem] font-semibold leading-tight tracking-[-0.03em] text-text-primary md:mt-2 md:text-[2rem] md:tracking-[-0.05em]">{product.name}</h1>
 
           <div className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-text-secondary md:mt-3">
@@ -599,10 +612,14 @@ export default function ProductDetailClient({
               <span>{ratingData.average}</span>
             </div>
             <span>{ratingData.count} {t("ratings_reviews_title")}</span>
-            <span>|</span>
-            <Link href={`/shop/${product.vendor.slug}`} className="text-fb-pink">
-              {t("more_by_vendor")} {product.vendor.shopName}
-            </Link>
+            {vendorHref ? (
+              <>
+                <span>|</span>
+                <Link href={vendorHref} className="text-fb-pink">
+                  {t("more_by_vendor")} {product.vendor.shopName}
+                </Link>
+              </>
+            ) : null}
           </div>
 
           <hr className="my-3 md:my-4" />
@@ -748,9 +765,15 @@ export default function ProductDetailClient({
               <div className="text-[14px] font-semibold text-text-primary">{product.vendor.shopName}</div>
               <div className="text-[12px] text-text-muted">{product.vendor.category || t("verified_fitbazar_store")}</div>
             </div>
-            <Link href={`/shop/${product.vendor.slug}`} className="btn-ghost px-3 py-2 text-[12px]">
-              {t("visit_shop")}
-            </Link>
+            {vendorHref ? (
+              <Link href={vendorHref} className="btn-ghost px-3 py-2 text-[12px]">
+                {t("visit_shop")}
+              </Link>
+            ) : (
+              <span className="rounded-[20px] border border-border-default px-3 py-2 text-[12px] font-semibold text-text-muted">
+                {t("verified_fitbazar_store")}
+              </span>
+            )}
           </div>
         </section>
       </div>

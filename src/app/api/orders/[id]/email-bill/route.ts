@@ -5,6 +5,7 @@ import { renderOrderBillEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 import { roundCurrency } from "@/lib/order-routing";
+import { getPublicVendorName } from "@/lib/public-vendor-identity";
 import { requireCustomerSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
         vendor: {
           select: {
             shopName: true,
+            isPartnered: true,
           },
         },
         items: {
@@ -113,7 +115,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
         orders: [
           {
             orderNumber: order.orderNumber,
-            vendorName: order.vendor.shopName,
+            vendorName: getPublicVendorName(order.vendor),
             createdAt: order.createdAt,
             paymentMethod: order.paymentMethod,
             subtotal,

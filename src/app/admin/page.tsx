@@ -307,10 +307,17 @@ type AdminPageState = Record<AdminListKey, number>;
 type AdminPaginationState = Record<AdminListKey, PaginationMeta>;
 
 const ADMIN_LIST_KEYS: AdminListKey[] = ["vendors", "products", "orders", "customers", "support"];
-const ADMIN_PAGE_SIZE = 25;
+const ADMIN_DEFAULT_PAGE_SIZE = 25;
+const ADMIN_PAGE_SIZE_BY_KEY: Record<AdminListKey, number> = {
+  vendors: 25,
+  products: 25,
+  orders: 10,
+  customers: 25,
+  support: 25,
+};
 const emptyPagination: PaginationMeta = {
   page: 1,
-  pageSize: ADMIN_PAGE_SIZE,
+  pageSize: ADMIN_DEFAULT_PAGE_SIZE,
   total: 0,
   totalPages: 1,
   hasNext: false,
@@ -336,7 +343,7 @@ const initialAdminPages: AdminPageState = {
 const initialAdminPagination: AdminPaginationState = ADMIN_LIST_KEYS.reduce(
   (meta, key) => ({
     ...meta,
-    [key]: emptyPagination,
+    [key]: { ...emptyPagination, pageSize: ADMIN_PAGE_SIZE_BY_KEY[key] },
   }),
   {} as AdminPaginationState,
 );
@@ -435,7 +442,7 @@ export default function AdminDashboard() {
   function buildAdminListUrl(path: string, key: AdminListKey, searchState: AdminSearchState, pageState: AdminPageState) {
     const params = new URLSearchParams({
       page: String(pageState[key]),
-      pageSize: String(ADMIN_PAGE_SIZE),
+      pageSize: String(ADMIN_PAGE_SIZE_BY_KEY[key]),
     });
     const query = searchState[key].trim();
     if (query) params.set("q", query);
@@ -606,9 +613,9 @@ export default function AdminDashboard() {
     const to = meta.total ? Math.min(meta.page * meta.pageSize, meta.total) : 0;
 
     return (
-      <div className="mt-4 flex flex-col gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="mt-4 grid gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
         <form
-          className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row"
+          className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
           onSubmit={(event) => {
             event.preventDefault();
             runAdminSearch(key);
@@ -634,8 +641,8 @@ export default function AdminDashboard() {
             ) : null}
           </div>
         </form>
-        <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-muted">
-          <span>
+        <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-muted 2xl:justify-end">
+          <span className="whitespace-nowrap">
             {from}-{to} of {meta.total}
           </span>
           <button
@@ -647,7 +654,7 @@ export default function AdminDashboard() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="min-w-[72px] text-center">
+          <span className="min-w-[72px] whitespace-nowrap text-center">
             Page {meta.page} / {meta.totalPages}
           </span>
           <button
@@ -1544,45 +1551,53 @@ export default function AdminDashboard() {
                   order.deliveryAddress?.zone,
                   order.deliveryAddress?.pincode,
                 ].filter(Boolean).join(", ");
+                const primaryItem = order.items[0];
+                const itemSummary = primaryItem
+                  ? `${primaryItem.product?.name || "Product"} x ${primaryItem.quantity}`
+                  : "No items";
+                const extraItemCount = Math.max(0, order.items.length - 1);
+                const statusLabel = order.status.replaceAll("_", " ");
 
                 return (
                   <div key={order.id} className="overflow-hidden rounded-[8px] border border-border-light bg-[var(--bg-surface)]">
                     <div className="p-5">
-                      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="grid gap-4 xl:grid-cols-[minmax(280px,1.1fr)_minmax(420px,1.5fr)_minmax(260px,0.8fr)] xl:items-center">
                         <div className="flex min-w-0 items-center gap-4">
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fb-pink-bg">
                             <ShoppingCart className="h-6 w-6 text-fb-pink" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="truncate text-[18px] font-semibold text-text-primary">{order.orderNumber}</h3>
+                            <h3 className="break-all text-[18px] font-semibold leading-tight text-text-primary">{order.orderNumber}</h3>
                             <p className="text-sm text-text-muted">
                               {new Date(order.createdAt).toLocaleDateString("en-NP")} • {order.paymentMethod} • {order.paymentStatus}
                             </p>
                           </div>
                         </div>
 
-                        <div className="grid flex-1 gap-3 md:grid-cols-3 xl:px-6">
-                          <div>
+                        <div className="grid min-w-0 gap-4 sm:grid-cols-3">
+                          <div className="min-w-0">
                             <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("customer")}</p>
-                            <p className="font-medium text-text-primary">{order.customer.name || order.customer.email}</p>
-                            <p className="text-sm text-text-muted">{order.customer.phone || order.customer.email}</p>
+                            <p className="break-words font-medium leading-snug text-text-primary">{order.customer.name || order.customer.email}</p>
+                            <p className="break-all text-sm leading-snug text-text-muted">{order.customer.phone || order.customer.email}</p>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("vendors")}</p>
-                            <p className="font-medium text-text-primary">{order.vendor.shopName}</p>
-                            <p className="text-sm text-text-muted">{order.items[0]?.product?.name || "Product"} x {order.items[0]?.quantity || 0}</p>
+                            <p className="break-words font-medium leading-snug text-text-primary">{order.vendor.shopName}</p>
+                            <p className="line-clamp-2 text-sm leading-snug text-text-muted">
+                              {itemSummary}{extraItemCount ? ` + ${extraItemCount} more` : ""}
+                            </p>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("address")}</p>
-                            <p className="text-sm text-text-secondary">{orderAddress || "Not available"}</p>
+                            <p className="break-words text-sm leading-snug text-text-secondary">{orderAddress || "Not available"}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-4">
-                          <span className={`badge ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : order.status === "CANCELLED" || order.status === "DISPUTED" ? "badge-amber" : "badge-pink"}`}>
-                            {order.status}
+                        <div className="flex min-w-0 flex-wrap items-center gap-3 xl:justify-end">
+                          <span className={`badge max-w-full whitespace-nowrap ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : order.status === "CANCELLED" || order.status === "DISPUTED" ? "badge-amber" : "badge-pink"}`}>
+                            {statusLabel}
                           </span>
-                          <span className="text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
+                          <span className="whitespace-nowrap text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
                         </div>
                       </div>
                     </div>
@@ -1603,14 +1618,14 @@ export default function AdminDashboard() {
                             <h4 className="mb-3 font-semibold text-text-primary">Items</h4>
                             <div className="space-y-3">
                               {order.items.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between gap-4 rounded-[8px] border border-border-light p-3">
+                                <div key={item.id} className="flex min-w-0 items-center justify-between gap-4 rounded-[8px] border border-border-light p-3">
                                   <div className="min-w-0">
-                                    <p className="font-medium text-text-primary">{item.product?.name || "Product"}</p>
+                                    <p className="break-words font-medium leading-snug text-text-primary">{item.product?.name || "Product"}</p>
                                     <p className="text-sm text-text-muted">
                                       Qty {item.quantity} • {item.size || "Free"} • {item.color || "Default"}
                                     </p>
                                   </div>
-                                  <p className="shrink-0 font-medium text-text-primary">{formatPriceNpr(item.price * item.quantity)}</p>
+                                  <p className="shrink-0 whitespace-nowrap font-medium text-text-primary">{formatPriceNpr(item.price * item.quantity)}</p>
                                 </div>
                               ))}
                             </div>

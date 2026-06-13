@@ -84,6 +84,7 @@ function getProductInclude() {
         shopName: true,
         slug: true,
         logo: true,
+        isPartnered: true,
       },
     },
     reviews: {

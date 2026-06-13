@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { pickBestProductLookupCandidate, publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
+import { getPublicVendorName, getPublicVendorSlug, type PublicVendorIdentityInput } from "@/lib/public-vendor-identity";
 
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
@@ -18,6 +19,7 @@ const publicProductDetailInclude = {
       logo: true,
       description: true,
       category: true,
+      isPartnered: true,
     },
   },
   reviews: {
@@ -87,6 +89,7 @@ async function queryPublicProductDetail(identifier: string) {
           shopName: true,
           slug: true,
           logo: true,
+          isPartnered: true,
         },
       },
       reviews: {
@@ -117,6 +120,7 @@ async function queryPublicProductDetail(identifier: string) {
           shopName: true,
           slug: true,
           logo: true,
+          isPartnered: true,
         },
       },
       reviews: {
@@ -135,9 +139,22 @@ async function queryPublicProductDetail(identifier: string) {
   });
 
   return {
-    product,
-    similarProducts,
-    alsoBoughtProducts,
+    product: withPublicProductVendor(product),
+    similarProducts: similarProducts.map(withPublicProductVendor),
+    alsoBoughtProducts: alsoBoughtProducts.map(withPublicProductVendor),
+  };
+}
+
+function withPublicProductVendor<T extends { vendor?: PublicVendorIdentityInput | null }>(product: T) {
+  if (!product.vendor) return product;
+
+  return {
+    ...product,
+    vendor: {
+      ...product.vendor,
+      shopName: getPublicVendorName(product.vendor),
+      slug: getPublicVendorSlug(product.vendor) ?? null,
+    },
   };
 }
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireCustomerSession } from "@/lib/server-auth";
 import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
 import { isPublicProductStatus } from "@/lib/product-status";
+import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ function serializeCartItem(item: {
     compareAtPrice: number | null;
     images: string[];
     vendorId: string;
-    vendor: { shopName: string; slug: string };
+    vendor: { shopName: string; slug: string; isPartnered?: boolean | null };
   };
 }) {
   return {
@@ -38,8 +39,8 @@ function serializeCartItem(item: {
       FALLBACK_PRODUCT_IMAGE,
     ),
     vendorId: item.product.vendorId,
-    vendorName: item.product.vendor.shopName,
-    vendorSlug: item.product.vendor.slug,
+    vendorName: getPublicVendorName(item.product.vendor),
+    vendorSlug: getPublicVendorSlug(item.product.vendor),
     quantity: item.quantity,
     size: item.size || undefined,
     color: item.color || undefined,
@@ -60,6 +61,7 @@ async function fetchProductsForCart(productIds: string[]) {
         select: {
           shopName: true,
           slug: true,
+          isPartnered: true,
           isApproved: true,
           isSuspended: true,
         },
@@ -193,6 +195,7 @@ export async function POST(request: Request) {
           select: {
             shopName: true,
             slug: true,
+            isPartnered: true,
           },
         },
       },

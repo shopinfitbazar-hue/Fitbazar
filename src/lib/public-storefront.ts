@@ -4,6 +4,7 @@ import { ProductStatus } from "@prisma/client";
 export const publicVendorVisibilityFilter: Prisma.VendorWhereInput = {
   isApproved: true,
   isSuspended: false,
+  isPartnered: true,
 };
 
 export const publicProductVendorFilter: Prisma.VendorWhereInput = {

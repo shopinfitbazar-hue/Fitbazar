@@ -27,7 +27,7 @@ type ProductSchemaInput = {
   updatedAt?: Date | string;
   vendor?: {
     shopName: string;
-    slug: string;
+    slug?: string | null;
   } | null;
   reviews?: Array<Pick<Review, "rating" | "comment" | "createdAt"> & {
     user?: {

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { normalizeCategory } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/lib/public-storefront";
+import { getPublicVendorName, getPublicVendorSlug, type PublicVendorIdentityInput } from "@/lib/public-vendor-identity";
 
 export const PUBLIC_CATALOG_REVALIDATE_SECONDS = 300;
 export const PUBLIC_SEARCH_REVALIDATE_SECONDS = 120;
@@ -161,6 +162,7 @@ function productSelect() {
         shopName: true,
         slug: true,
         logo: true,
+        isPartnered: true,
       },
     },
     reviews: {
@@ -174,6 +176,19 @@ function productSelect() {
       },
     },
   } satisfies Prisma.ProductSelect;
+}
+
+function withPublicProductVendor<T extends { vendor?: PublicVendorIdentityInput | null }>(product: T) {
+  if (!product.vendor) return product;
+
+  return {
+    ...product,
+    vendor: {
+      ...product.vendor,
+      shopName: getPublicVendorName(product.vendor),
+      slug: getPublicVendorSlug(product.vendor) ?? null,
+    },
+  };
 }
 
 function buildProductWhere(input: PublicProductQueryInput): Prisma.ProductWhereInput {
@@ -239,7 +254,7 @@ async function queryPublicProducts(input: PublicProductQueryInput) {
   ]);
 
   return {
-    products,
+    products: products.map(withPublicProductVendor),
     total,
     page: input.page,
     totalPages: Math.ceil(total / input.limit),
@@ -317,6 +332,7 @@ async function queryPublicSearch(input: PublicSearchQueryInput) {
     prisma.vendor.findMany({
       where: {
         ...publicVendorVisibilityFilter,
+        isPartnered: true,
         OR: [
           { shopName: { contains: input.q, mode: "insensitive" } },
           { category: { contains: input.q, mode: "insensitive" } },
@@ -344,7 +360,7 @@ async function queryPublicSearch(input: PublicSearchQueryInput) {
   ]);
 
   return {
-    products,
+    products: products.map(withPublicProductVendor),
     vendors,
     categories,
     total,
@@ -357,6 +373,7 @@ async function queryPublicSearch(input: PublicSearchQueryInput) {
 async function queryPublicVendors(input: PublicVendorQueryInput) {
   const where: Prisma.VendorWhereInput = {
     ...publicVendorVisibilityFilter,
+    isPartnered: true,
   };
 
   const [vendors, total] = await Promise.all([

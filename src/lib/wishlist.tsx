@@ -78,7 +78,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
               price: number;
               compareAtPrice: number | null;
               images: string[];
-              vendor: { shopName: string; slug: string };
+              vendor: { shopName: string; slug?: string | null };
             };
           }>;
         };
@@ -93,7 +93,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             originalPrice: item.product.compareAtPrice ?? undefined,
             image: item.product.images[0] || FALLBACK_PRODUCT_IMAGE,
             vendorName: item.product.vendor.shopName,
-            vendorSlug: item.product.vendor.slug,
+            vendorSlug: item.product.vendor.slug || undefined,
           })),
         );
         return;
@@ -149,7 +149,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
               price: number;
               compareAtPrice: number | null;
               images: string[];
-              vendor: { shopName: string; slug: string };
+              vendor: { shopName: string; slug?: string | null };
             };
           }>;
         };
@@ -164,7 +164,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             originalPrice: entry.product.compareAtPrice ?? undefined,
             image: entry.product.images[0] || FALLBACK_PRODUCT_IMAGE,
             vendorName: entry.product.vendor.shopName,
-            vendorSlug: entry.product.vendor.slug,
+            vendorSlug: entry.product.vendor.slug || undefined,
           })),
         );
       })

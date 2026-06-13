@@ -26,7 +26,7 @@ interface ProductApiItem {
   vendor?: {
     id: string;
     shopName: string;
-    slug: string;
+    slug?: string | null;
   };
   reviews?: Array<{ rating: number }>;
   _count?: {
@@ -55,7 +55,7 @@ const mapProductsToCards = (items: ProductApiItem[]): ProductCardProps[] =>
     discountPercent: product.discountPct || undefined,
     images: product.images,
     vendorName: product.vendor?.shopName || "Fit Bazar",
-    vendorSlug: product.vendor?.slug,
+    vendorSlug: product.vendor?.slug || undefined,
     rating: product.reviews?.length
       ? Number((product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length).toFixed(1))
       : undefined,

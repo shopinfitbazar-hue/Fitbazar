@@ -9,6 +9,7 @@ import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { renderOrderBillEmail, renderVendorOrderEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { resolvePincode } from "@/lib/pincode";
+import { getPublicVendorName } from "@/lib/public-vendor-identity";
 
 export type CheckoutItemInput = {
   productId: string;
@@ -56,6 +57,7 @@ type ProductRecord = {
     };
     shopName: string;
     commissionPct: number;
+    isPartnered: boolean;
   };
 };
 
@@ -409,7 +411,7 @@ export async function createOrdersFromCheckoutPayload(input: {
           {
             userId: context.customerId,
             title: "Order placed successfully",
-            message: `Your order ${orderNumber} has been placed with ${vendor.shopName}.`,
+            message: `Your order ${orderNumber} has been placed with ${getPublicVendorName(vendor)}.`,
             type: "ORDER",
             link: "/account/orders",
           },
@@ -480,7 +482,7 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
 
       return {
         orderNumber: order.orderNumber,
-        vendorName: productForVendor?.vendor.shopName || "Fit Bazar Vendor",
+        vendorName: productForVendor ? getPublicVendorName(productForVendor.vendor) : "Fit Bazar Curated Seller",
         createdAt: order.createdAt,
         paymentMethod: order.paymentMethod,
         subtotal,

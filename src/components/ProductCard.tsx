@@ -31,10 +31,6 @@ export interface ProductCardProps {
   isSale?: boolean;
 }
 
-function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
-
 function formatPrice(price: number) {
   return new Intl.NumberFormat("en-NP", {
     style: "currency",
@@ -78,7 +74,7 @@ function ProductCard({
   const [addedToCart, setAddedToCart] = useState(false);
   const href = `/products/${slug || id}`;
   const image = getShowcaseImageUrl(getSafeImageUrl(images[0], FALLBACK_PRODUCT_IMAGE));
-  const vendorPath = `/shop/${vendorSlug || slugify(vendorName)}`;
+  const vendorPath = vendorSlug ? `/shop/${vendorSlug}` : null;
   const wishlisted = isInWishlist(id);
   const canShop = !session?.user || session.user.role === "CUSTOMER";
 
@@ -218,9 +214,10 @@ function ProductCard({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            router.push(vendorPath);
+            if (vendorPath) router.push(vendorPath);
           }}
-          className="block truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-muted"
+          className={`block truncate text-[11px] font-medium uppercase tracking-[0.18em] text-text-muted ${vendorPath ? "" : "cursor-default"}`}
+          aria-label={vendorPath ? `Open ${vendorName}` : vendorName}
         >
           {vendorName}
         </button>

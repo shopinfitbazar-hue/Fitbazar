@@ -29,6 +29,7 @@ async function queryVendorStore(vendorSlug: string, category: string | undefined
     where: {
       slug: vendorSlug,
       ...publicVendorVisibilityFilter,
+      isPartnered: true,
     },
     select: {
       id: true,
@@ -87,6 +88,7 @@ async function queryVendorStore(vendorSlug: string, category: string | undefined
             shopName: true,
             slug: true,
             logo: true,
+            isPartnered: true,
           },
         },
         reviews: {

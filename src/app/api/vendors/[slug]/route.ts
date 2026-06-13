@@ -19,6 +19,7 @@ async function queryPublicVendorDetail(slug: string, category: string | null, so
     where: {
       slug,
       ...publicVendorVisibilityFilter,
+      isPartnered: true,
     },
     select: {
       id: true,
@@ -75,6 +76,7 @@ async function queryPublicVendorDetail(slug: string, category: string | null, so
           shopName: true,
           slug: true,
           logo: true,
+          isPartnered: true,
         },
       },
       reviews: {
