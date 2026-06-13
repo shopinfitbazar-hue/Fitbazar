@@ -68,7 +68,7 @@ export default function Header() {
   useEffect(() => {
     async function loadAnnouncement() {
       try {
-        const response = await fetch("/api/site-settings", { cache: "no-store" });
+        const response = await fetch("/api/site-settings");
         const data = await response.json();
         if (response.ok && data.announcementActive && data.announcementBar) {
           setAnnouncementText(data.announcementBar);

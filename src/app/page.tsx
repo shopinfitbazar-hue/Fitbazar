@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomePageClient from "@/components/HomePageClient";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard, mapVendorToCard } from "@/lib/catalog";
 import { getSafeImageUrl, FALLBACK_BANNER_IMAGE } from "@/lib/media";
@@ -10,6 +11,7 @@ import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
+export const dynamic = "force-static";
 export const metadata = buildMetadata({
   title: "FitBazar | Online Fashion Shopping in Nepal",
   description:
@@ -54,7 +56,7 @@ async function getHomepageSiteSettings() {
   }
 }
 
-export default async function HomePage() {
+async function queryHomepageData() {
   const [banners, categories, mostPopular, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
     prisma.banner.findMany({
       where: {
@@ -257,6 +259,41 @@ export default async function HomePage() {
 
   const vendors = (topShopVendors.length ? topShopVendors : partneredVendors).slice(0, 4);
 
+  return {
+    banners,
+    categories,
+    mostPopular,
+    festivalConfig,
+    siteSettings,
+    yearRoundProducts,
+    specialDiscounts,
+    festivalProducts,
+    vendors,
+  };
+}
+
+const getCachedHomepageData = unstable_cache(queryHomepageData, ["public-homepage"], {
+  revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+  tags: ["public-homepage"],
+});
+
+function formatCachedDate(value: Date | string) {
+  return typeof value === "string" ? value : value.toISOString();
+}
+
+export default async function HomePage() {
+  const {
+    banners,
+    categories,
+    mostPopular,
+    festivalConfig,
+    siteSettings,
+    yearRoundProducts,
+    specialDiscounts,
+    festivalProducts,
+    vendors,
+  } = await getCachedHomepageData();
+
   return (
     <main className="bg-page">
       <Header />
@@ -287,7 +324,7 @@ export default async function HomePage() {
             ? {
                 name: festivalConfig.name,
                 nameNp: festivalConfig.nameNp,
-                endDate: festivalConfig.endDate.toISOString(),
+                endDate: formatCachedDate(festivalConfig.endDate),
                 isActive: festivalConfig.isActive,
               }
             : null

@@ -3,85 +3,21 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import JsonLd from "@/components/JsonLd";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { buildMetadata } from "@/config/site";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { breadcrumbJsonLd, canonicalUrl, collectionPathForCategory, productJsonLd, productSeoDescription } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
+export const dynamic = "force-static";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+async function queryProductDetail(slug: string) {
   const product = await prisma.product.findFirst({
     where: {
-      slug: id,
-      ...publicProductVisibilityFilter,
-    },
-    select: {
-      name: true,
-      description: true,
-      images: true,
-      slug: true,
-      category: true,
-      price: true,
-      compareAtPrice: true,
-      discountPct: true,
-      stock: true,
-      vendor: {
-        select: {
-          shopName: true,
-          slug: true,
-        },
-      },
-    },
-  });
-
-  if (!product) {
-    return buildMetadata({
-      title: "Product not found",
-    });
-  }
-
-  const description = productSeoDescription(product);
-  const title = `${product.name} in Nepal`;
-  const url = canonicalUrl(`/products/${product.slug}`);
-  const image = product.images[0];
-
-  return buildMetadata({
-    title,
-    description,
-    keywords: [
-      product.name,
-      `${product.name} Nepal`,
-      `${product.category} Nepal`,
-      "online fashion shopping Nepal",
-      "FitBazar",
-    ],
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      type: "website",
-      url,
-      title,
-      description,
-      images: image ? [{ url: image, alt: `${product.name} from ${product.vendor?.shopName || "FitBazar"}` }] : undefined,
-    },
-    twitter: {
-      title,
-      description,
-      images: image ? [image] : undefined,
-    },
-  });
-}
-
-export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  const product = await prisma.product.findFirst({
-    where: {
-      slug: id,
+      slug,
       ...publicProductVisibilityFilter,
     },
     include: {
@@ -116,9 +52,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     },
   });
 
-  if (!product) {
-    notFound();
-  }
+  if (!product) return null;
 
   const [similarProducts, alsoBoughtProducts] = await Promise.all([
     prisma.product.findMany({
@@ -180,6 +114,74 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       take: 8,
     }),
   ]);
+
+  return {
+    product,
+    similarProducts,
+    alsoBoughtProducts,
+  };
+}
+
+function getCachedProductDetail(slug: string) {
+  return unstable_cache(() => queryProductDetail(slug), ["public-product-detail", slug], {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: ["public-product-detail"],
+  })();
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getCachedProductDetail(id);
+  const product = data?.product;
+
+  if (!product) {
+    return buildMetadata({
+      title: "Product not found",
+    });
+  }
+
+  const description = productSeoDescription(product);
+  const title = `${product.name} in Nepal`;
+  const url = canonicalUrl(`/products/${product.slug}`);
+  const image = product.images[0];
+
+  return buildMetadata({
+    title,
+    description,
+    keywords: [
+      product.name,
+      `${product.name} Nepal`,
+      `${product.category} Nepal`,
+      "online fashion shopping Nepal",
+      "FitBazar",
+    ],
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description,
+      images: image ? [{ url: image, alt: `${product.name} from ${product.vendor?.shopName || "FitBazar"}` }] : undefined,
+    },
+    twitter: {
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  });
+}
+
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getCachedProductDetail(id);
+  const product = data?.product;
+
+  if (!product || !data) {
+    notFound();
+  }
+  const { similarProducts, alsoBoughtProducts } = data;
 
   return (
     <main className="bg-page">

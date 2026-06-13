@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import JsonLd from "@/components/JsonLd";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
@@ -23,6 +24,7 @@ import {
 } from "@/lib/seo";
 
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
+export const dynamic = "force-static";
 
 type CollectionDefinition = {
   slug: string;
@@ -146,13 +148,41 @@ async function resolveCollection(slug: string): Promise<CollectionDefinition | n
   };
 }
 
+function getCachedCollectionDefinition(slug: string) {
+  return unstable_cache(() => resolveCollection(slug), ["public-collection-definition", slug], {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: ["public-collections"],
+  })();
+}
+
+async function queryCollectionPage(slug: string) {
+  const definition = await resolveCollection(slug);
+  if (!definition) return null;
+
+  const products = await getCollectionProducts(definition);
+  const relatedProducts = await getRelatedProducts(definition, products);
+
+  return {
+    definition,
+    products,
+    relatedProducts,
+  };
+}
+
+function getCachedCollectionPage(slug: string) {
+  return unstable_cache(() => queryCollectionPage(slug), ["public-collection-page", slug], {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: ["public-collections"],
+  })();
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }> | { slug: string };
 }): Promise<Metadata> {
   const { slug } = await params;
-  const definition = await resolveCollection(slug);
+  const definition = await getCachedCollectionDefinition(slug);
 
   if (!definition) {
     return buildMetadata({
@@ -173,14 +203,14 @@ export default async function CollectionPage({
   params: Promise<{ slug: string }> | { slug: string };
 }) {
   const { slug } = await params;
-  const definition = await resolveCollection(slug);
+  const data = await getCachedCollectionPage(slug);
+  const definition = data?.definition;
 
-  if (!definition) {
+  if (!definition || !data) {
     notFound();
   }
 
-  const products = await getCollectionProducts(definition);
-  const relatedProducts = await getRelatedProducts(definition, products);
+  const { products, relatedProducts } = data;
   const productCards = products.map(mapProductToCard);
   const relatedProductCards = relatedProducts.map(mapProductToCard);
   const canonicalPath = `/collections/${definition.slug}`;

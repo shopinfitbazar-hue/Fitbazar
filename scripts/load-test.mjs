@@ -13,6 +13,8 @@ Environment:
   LOAD_TEST_DURATION_SECONDS  Test duration. Default: 30
   LOAD_TEST_TIMEOUT_MS        Per-request timeout. Default: 10000
   LOAD_TEST_COOKIE            Optional Cookie header for admin/authenticated paths.
+  LOAD_TEST_METHOD            HTTP method. Default: GET
+  LOAD_TEST_READ_BODY         Set false to skip response body downloads. Default: true
   LOAD_TEST_MAX_P95_MS        Fail if p95 latency exceeds this. Default: 1500
   LOAD_TEST_ALLOWED_FAILURE_RATE  Fail if failures exceed this ratio. Default: 0.01
 
@@ -41,6 +43,8 @@ const durationMs = parseInt(process.env.LOAD_TEST_DURATION_SECONDS || "30", 10) 
 const timeoutMs = parseInt(process.env.LOAD_TEST_TIMEOUT_MS || "10000", 10);
 const maxP95Ms = parseInt(process.env.LOAD_TEST_MAX_P95_MS || "1500", 10);
 const allowedFailureRate = Number(process.env.LOAD_TEST_ALLOWED_FAILURE_RATE || "0.01");
+const method = (process.env.LOAD_TEST_METHOD || "GET").toUpperCase();
+const readBody = process.env.LOAD_TEST_READ_BODY !== "false" && method !== "HEAD";
 
 if (!paths.length) {
   throw new Error("LOAD_TEST_PATHS must contain at least one path.");
@@ -71,6 +75,7 @@ async function request(path) {
 
   try {
     const response = await fetch(buildUrl(path), {
+      method,
       headers: {
         "User-Agent": "fit-bazar-load-smoke/1.0",
         ...(process.env.LOAD_TEST_COOKIE ? { Cookie: process.env.LOAD_TEST_COOKIE } : {}),
@@ -78,8 +83,12 @@ async function request(path) {
       redirect: "manual",
       signal: controller.signal,
     });
-    const buffer = await response.arrayBuffer();
-    bytes += buffer.byteLength;
+    if (readBody) {
+      const buffer = await response.arrayBuffer();
+      bytes += buffer.byteLength;
+    } else {
+      await response.body?.cancel().catch(() => undefined);
+    }
     const elapsed = performance.now() - start;
     latencies.push(elapsed);
     statusCounts.set(response.status, (statusCounts.get(response.status) || 0) + 1);
@@ -109,6 +118,7 @@ async function worker(workerId) {
 console.log(`Load smoke starting: ${baseUrl}`);
 console.log(`Paths: ${paths.join(", ")}`);
 console.log(`Concurrency: ${concurrency}, duration: ${Math.round(durationMs / 1000)}s`);
+console.log(`Method: ${method}, read body: ${readBody ? "yes" : "no"}`);
 
 await Promise.all(Array.from({ length: concurrency }, (_, index) => worker(index)));
 

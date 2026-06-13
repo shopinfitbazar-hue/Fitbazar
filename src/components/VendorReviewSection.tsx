@@ -19,14 +19,22 @@ type VendorReview = {
 
 type VendorReviewSectionProps = {
   vendorId: string;
+  initialReviews?: VendorReview[];
+  initialAverageRating?: number;
+  initialReviewCount?: number;
 };
 
-export default function VendorReviewSection({ vendorId }: VendorReviewSectionProps) {
+export default function VendorReviewSection({
+  vendorId,
+  initialReviews = [],
+  initialAverageRating = 0,
+  initialReviewCount = 0,
+}: VendorReviewSectionProps) {
   const { t } = useLanguage();
   const { status } = useSession();
-  const [reviews, setReviews] = useState<VendorReview[]>([]);
-  const [averageRating, setAverageRating] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
+  const [reviews, setReviews] = useState<VendorReview[]>(initialReviews);
+  const [averageRating, setAverageRating] = useState(initialAverageRating);
+  const [reviewCount, setReviewCount] = useState(initialReviewCount);
   const [canReview, setCanReview] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -45,8 +53,17 @@ export default function VendorReviewSection({ vendorId }: VendorReviewSectionPro
   }, [vendorId]);
 
   useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      setReviews(initialReviews);
+      setAverageRating(initialAverageRating);
+      setReviewCount(initialReviewCount);
+      setCanReview(false);
+      return;
+    }
+
     void loadReviews();
-  }, [loadReviews, status]);
+  }, [initialAverageRating, initialReviewCount, initialReviews, loadReviews, status]);
 
   const submitReview = async () => {
     setSaving(true);

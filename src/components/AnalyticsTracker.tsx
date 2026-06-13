@@ -5,6 +5,15 @@ import { useReportWebVitals } from "next/web-vitals";
 import { useEffect, useRef } from "react";
 
 const ANONYMOUS_ID_KEY = "fitbazar.analytics.anonymousId";
+const ANALYTICS_SAMPLE_RATE = (() => {
+  const parsed = Number(process.env.NEXT_PUBLIC_ANALYTICS_SAMPLE_RATE ?? "0.1");
+  if (!Number.isFinite(parsed)) return 0.1;
+  return Math.min(1, Math.max(0, parsed));
+})();
+
+function shouldTrackAnalytics() {
+  return ANALYTICS_SAMPLE_RATE >= 1 || Math.random() < ANALYTICS_SAMPLE_RATE;
+}
 
 function createId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -33,6 +42,8 @@ function getChannel(path: string) {
 }
 
 function postAnalytics(payload: Record<string, unknown>) {
+  if (!shouldTrackAnalytics()) return;
+
   const body = JSON.stringify({
     anonymousId: getAnonymousId(),
     ...payload,

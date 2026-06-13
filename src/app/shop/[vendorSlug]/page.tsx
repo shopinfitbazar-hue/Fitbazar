@@ -5,17 +5,140 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import VendorReviewSection from "@/components/VendorReviewSection";
 import JsonLd from "@/components/JsonLd";
+import { unstable_cache } from "next/cache";
 import { Star } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { mapProductToCard } from "@/lib/catalog";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 import { t, type Language } from "@/lib/translations";
-import { publicVendorVisibilityFilter } from "@/lib/public-storefront";
-import { ProductStatus } from "@prisma/client";
+import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/lib/public-storefront";
 import { buildMetadata } from "@/config/site";
 import { breadcrumbJsonLd, canonicalUrl, itemListJsonLd, truncateSeo } from "@/lib/seo";
 
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
+
+function buildStoreProductOrderBy(sort: string) {
+  if (sort === "price_asc") return [{ price: "asc" as const }];
+  if (sort === "price_desc") return [{ price: "desc" as const }];
+  if (sort === "newest") return [{ createdAt: "desc" as const }];
+  return [{ totalSold: "desc" as const }, { createdAt: "desc" as const }];
+}
+
+async function queryVendorStore(vendorSlug: string, category: string | undefined, sort: string) {
+  const vendor = await prisma.vendor.findFirst({
+    where: {
+      slug: vendorSlug,
+      ...publicVendorVisibilityFilter,
+    },
+    select: {
+      id: true,
+      shopName: true,
+      slug: true,
+      logo: true,
+      description: true,
+      category: true,
+      user: {
+        select: {
+          name: true,
+          image: true,
+        },
+      },
+      reviews: {
+        where: { isVisible: true },
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 24,
+      },
+      _count: {
+        select: {
+          products: true,
+          orders: true,
+          reviews: true,
+        },
+      },
+    },
+  });
+
+  if (!vendor) return null;
+
+  const [products, categories] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        ...publicProductVisibilityFilter,
+        vendorId: vendor.id,
+        ...(category ? { category } : {}),
+      },
+      include: {
+        vendor: {
+          select: {
+            id: true,
+            shopName: true,
+            slug: true,
+            logo: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+      },
+      orderBy: buildStoreProductOrderBy(sort),
+      take: 48,
+    }),
+    prisma.product.findMany({
+      where: {
+        ...publicProductVisibilityFilter,
+        vendorId: vendor.id,
+      },
+      select: {
+        category: true,
+      },
+      distinct: ["category"],
+      orderBy: {
+        category: "asc",
+      },
+    }),
+  ]);
+
+  return {
+    vendor,
+    products,
+    categories,
+  };
+}
+
+function getCachedVendorStore(vendorSlug: string, category: string | undefined, sort: string) {
+  return unstable_cache(
+    () => queryVendorStore(vendorSlug, category, sort),
+    ["public-vendor-store", vendorSlug, category || "all", sort],
+    {
+      revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+      tags: ["public-vendor-store"],
+    },
+  )();
+}
+
+function formatCachedDate(value: Date | string) {
+  return typeof value === "string" ? value : value.toISOString();
+}
 
 export async function generateMetadata({
   params,
@@ -23,25 +146,8 @@ export async function generateMetadata({
   params: Promise<{ vendorSlug: string }> | { vendorSlug: string };
 }) {
   const { vendorSlug } = await params;
-  const vendor = await prisma.vendor.findFirst({
-    where: {
-      slug: vendorSlug,
-      ...publicVendorVisibilityFilter,
-    },
-    select: {
-      shopName: true,
-      slug: true,
-      description: true,
-      logo: true,
-      category: true,
-      _count: {
-        select: {
-          products: true,
-          reviews: true,
-        },
-      },
-    },
-  });
+  const data = await getCachedVendorStore(vendorSlug, undefined, "popular");
+  const vendor = data?.vendor;
 
   if (!vendor) {
     return buildMetadata({
@@ -97,92 +203,13 @@ export default async function VendorStorePage({
   const { vendorSlug } = await params;
   const { category, sort = "popular" } = await searchParams;
   const lang = "en" as Language;
+  const data = await getCachedVendorStore(vendorSlug, category, sort);
+  const vendor = data?.vendor;
 
-  const vendor = await prisma.vendor.findFirst({
-    where: {
-      slug: vendorSlug,
-      ...publicVendorVisibilityFilter,
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          image: true,
-        },
-      },
-      reviews: {
-        where: { isVisible: true },
-        select: {
-          rating: true,
-        },
-      },
-      _count: {
-        select: {
-          products: true,
-          orders: true,
-          reviews: true,
-        },
-      },
-    },
-  });
-
-  if (!vendor) {
+  if (!vendor || !data) {
     notFound();
   }
-
-  const orderBy =
-    sort === "price_asc"
-      ? [{ price: "asc" as const }]
-      : sort === "price_desc"
-        ? [{ price: "desc" as const }]
-        : sort === "newest"
-          ? [{ createdAt: "desc" as const }]
-          : [{ totalSold: "desc" as const }, { createdAt: "desc" as const }];
-
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        vendorId: vendor.id,
-        status: ProductStatus.ACTIVE,
-        ...(category ? { category } : {}),
-      },
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
-      orderBy,
-      take: 48,
-    }),
-    prisma.product.findMany({
-      where: {
-        vendorId: vendor.id,
-        status: ProductStatus.ACTIVE,
-      },
-      select: {
-        category: true,
-      },
-      distinct: ["category"],
-      orderBy: {
-        category: "asc",
-      },
-    }),
-  ]);
+  const { products, categories } = data;
 
   const averageVendorRating = vendor.reviews.length
     ? (vendor.reviews.reduce((sum, review) => sum + review.rating, 0) / vendor.reviews.length).toFixed(1)
@@ -272,7 +299,15 @@ export default async function VendorStorePage({
           )}
         </section>
 
-        <VendorReviewSection vendorId={vendor.id} />
+        <VendorReviewSection
+          vendorId={vendor.id}
+          initialReviews={vendor.reviews.map((review) => ({
+            ...review,
+            createdAt: formatCachedDate(review.createdAt),
+          }))}
+          initialAverageRating={Number(averageVendorRating)}
+          initialReviewCount={vendor._count.reviews}
+        />
       </div>
       <Footer />
     </main>

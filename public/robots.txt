@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Allow: /vendor/register
+Disallow: /api/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /vendor/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /dev-access
+Disallow: /logout
+Disallow: /order-confirmation
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /unauthorized
+
+Sitemap: https://www.fit-bazar.com/sitemap.xml
+Host: https://www.fit-bazar.com

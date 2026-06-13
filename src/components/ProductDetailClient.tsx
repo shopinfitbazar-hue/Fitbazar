@@ -197,6 +197,16 @@ export default function ProductDetailClient({
     let active = true;
 
     async function loadReviews() {
+      if (authStatus === "loading") return;
+      if (authStatus === "unauthenticated") {
+        setReviews(product.reviews);
+        setCanReview(false);
+        setHasDeliveredOrder(false);
+        setExistingReview(null);
+        setReviewsLoading(false);
+        return;
+      }
+
       setReviewsLoading(true);
       try {
         const response = await fetch(`/api/reviews?productId=${encodeURIComponent(product.id)}`, { cache: "no-store" });

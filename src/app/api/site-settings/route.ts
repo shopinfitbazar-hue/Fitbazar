@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
 
 export const dynamic = "force-dynamic";
+export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
 
-export async function GET() {
-  try {
-    const settings = (await prisma.siteSettings.findUnique({
+const getCachedPublicSiteSettings = unstable_cache(
+  async () =>
+    (await prisma.siteSettings.findUnique({
       where: { id: SITE_SETTINGS_ID },
       select: {
         announcementBar: true,
@@ -20,7 +23,8 @@ export async function GET() {
         supportPhone: true,
         supportHours: true,
       },
-    })) || (await prisma.siteSettings.findFirst({
+    })) ||
+    (await prisma.siteSettings.findFirst({
       select: {
         announcementBar: true,
         announcementActive: true,
@@ -31,13 +35,22 @@ export async function GET() {
         supportPhone: true,
         supportHours: true,
       },
-    }));
-    
-    if (!settings) {
-      return NextResponse.json(defaultSiteSettings);
-    }
-    
-    return NextResponse.json(settings);
+    })) ||
+    defaultSiteSettings,
+  ["public-site-settings"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: ["public-site-settings"],
+  },
+);
+
+export async function GET() {
+  try {
+    const settings = await getCachedPublicSiteSettings();
+
+    return NextResponse.json(settings, {
+      headers: publicCatalogCacheHeaders(PUBLIC_CATALOG_REVALIDATE_SECONDS),
+    });
   } catch (error) {
     console.error("Error fetching site settings:", error);
     return NextResponse.json({ error: "Failed to fetch site settings" }, { status: 500 });
@@ -61,6 +74,8 @@ export async function PATCH(req: Request) {
         ...body,
       },
     });
+
+    revalidateTag("public-site-settings");
     
     return NextResponse.json(settings);
   } catch (error) {

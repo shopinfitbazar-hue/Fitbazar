@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_SEARCH_REVALIDATE_SECONDS;
 
 const SEARCH_LOG_SAMPLE_RATE = (() => {
-  const parsed = Number(process.env.SEARCH_LOG_SAMPLE_RATE ?? "0.05");
-  if (!Number.isFinite(parsed)) return 0.05;
+  const parsed = Number(process.env.SEARCH_LOG_SAMPLE_RATE ?? "0.01");
+  if (!Number.isFinite(parsed)) return 0.01;
   return Math.min(1, Math.max(0, parsed));
 })();
 
