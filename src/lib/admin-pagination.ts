@@ -1,4 +1,4 @@
-export const ADMIN_DEFAULT_PAGE_SIZE = 25;
+export const ADMIN_DEFAULT_PAGE_SIZE = 10;
 export const ADMIN_MAX_PAGE_SIZE = 100;
 
 export type PaginationMeta = {

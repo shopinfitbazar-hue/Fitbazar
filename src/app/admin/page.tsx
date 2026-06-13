@@ -307,13 +307,13 @@ type AdminPageState = Record<AdminListKey, number>;
 type AdminPaginationState = Record<AdminListKey, PaginationMeta>;
 
 const ADMIN_LIST_KEYS: AdminListKey[] = ["vendors", "products", "orders", "customers", "support"];
-const ADMIN_DEFAULT_PAGE_SIZE = 25;
+const ADMIN_DEFAULT_PAGE_SIZE = 10;
 const ADMIN_PAGE_SIZE_BY_KEY: Record<AdminListKey, number> = {
-  vendors: 25,
-  products: 25,
+  vendors: 10,
+  products: 10,
   orders: 10,
-  customers: 25,
-  support: 25,
+  customers: 10,
+  support: 10,
 };
 const emptyPagination: PaginationMeta = {
   page: 1,
@@ -1561,43 +1561,45 @@ export default function AdminDashboard() {
                 return (
                   <div key={order.id} className="overflow-hidden rounded-[8px] border border-border-light bg-[var(--bg-surface)]">
                     <div className="p-5">
-                      <div className="grid gap-4 xl:grid-cols-[minmax(280px,1.1fr)_minmax(420px,1.5fr)_minmax(260px,0.8fr)] xl:items-center">
-                        <div className="flex min-w-0 items-center gap-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fb-pink-bg">
-                            <ShoppingCart className="h-6 w-6 text-fb-pink" />
+                      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,max-content)] 2xl:items-center">
+                        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(260px,0.85fr)_minmax(0,1.4fr)] xl:items-center">
+                          <div className="flex min-w-0 items-center gap-4">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fb-pink-bg">
+                              <ShoppingCart className="h-6 w-6 text-fb-pink" />
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="break-all text-[18px] font-semibold leading-tight text-text-primary">{order.orderNumber}</h3>
+                              <p className="text-sm text-text-muted">
+                                {new Date(order.createdAt).toLocaleDateString("en-NP")} • {order.paymentMethod} • {order.paymentStatus}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h3 className="break-all text-[18px] font-semibold leading-tight text-text-primary">{order.orderNumber}</h3>
-                            <p className="text-sm text-text-muted">
-                              {new Date(order.createdAt).toLocaleDateString("en-NP")} • {order.paymentMethod} • {order.paymentStatus}
-                            </p>
+
+                          <div className="grid min-w-0 gap-4 sm:grid-cols-3">
+                            <div className="min-w-0">
+                              <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("customer")}</p>
+                              <p className="break-words font-medium leading-snug text-text-primary">{order.customer.name || order.customer.email}</p>
+                              <p className="break-all text-sm leading-snug text-text-muted">{order.customer.phone || order.customer.email}</p>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("vendors")}</p>
+                              <p className="break-words font-medium leading-snug text-text-primary">{order.vendor.shopName}</p>
+                              <p className="line-clamp-2 text-sm leading-snug text-text-muted">
+                                {itemSummary}{extraItemCount ? ` + ${extraItemCount} more` : ""}
+                              </p>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("address")}</p>
+                              <p className="break-words text-sm leading-snug text-text-secondary">{orderAddress || "Not available"}</p>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="grid min-w-0 gap-4 sm:grid-cols-3">
-                          <div className="min-w-0">
-                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("customer")}</p>
-                            <p className="break-words font-medium leading-snug text-text-primary">{order.customer.name || order.customer.email}</p>
-                            <p className="break-all text-sm leading-snug text-text-muted">{order.customer.phone || order.customer.email}</p>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("vendors")}</p>
-                            <p className="break-words font-medium leading-snug text-text-primary">{order.vendor.shopName}</p>
-                            <p className="line-clamp-2 text-sm leading-snug text-text-muted">
-                              {itemSummary}{extraItemCount ? ` + ${extraItemCount} more` : ""}
-                            </p>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[12px] uppercase tracking-[1px] text-text-muted">{t("address")}</p>
-                            <p className="break-words text-sm leading-snug text-text-secondary">{orderAddress || "Not available"}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex min-w-0 flex-wrap items-center gap-3 xl:justify-end">
-                          <span className={`badge max-w-full whitespace-nowrap ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : order.status === "CANCELLED" || order.status === "DISPUTED" ? "badge-amber" : "badge-pink"}`}>
+                        <div className="flex min-w-0 flex-wrap items-center gap-3 2xl:justify-end">
+                          <span className={`badge max-w-full whitespace-normal text-center leading-tight sm:whitespace-nowrap ${order.status === "DELIVERED" ? "badge-green" : order.status === "PACKED" ? "badge-orange" : order.status === "CANCELLED" || order.status === "DISPUTED" ? "badge-amber" : "badge-pink"}`}>
                             {statusLabel}
                           </span>
-                          <span className="whitespace-nowrap text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
+                          <span className="shrink-0 whitespace-nowrap text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
                         </div>
                       </div>
                     </div>
