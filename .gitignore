@@ -19,6 +19,14 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
 
 # debug
 npm-debug.log*
@@ -27,7 +35,25 @@ yarn-error.log*
 
 # local env files
 .env
+.env.*
+!.env.example
 .env*.local
+
+# local secrets, database dumps, and private backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+*.bak
+/backups/
+/db-dumps/
+/database-dumps/
+service-account*.json
+*service-account*.json
+*credentials*.json
+*firebase-admin*.json
+*google-credentials*.json
 
 # vercel
 .vercel

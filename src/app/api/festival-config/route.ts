@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 const FESTIVAL_CONFIG_ID = "festival-config";
@@ -49,7 +50,9 @@ export async function PATCH(req: Request) {
         ...data,
       },
     });
-    
+
+    revalidateStorefrontCache();
+
     return NextResponse.json(festival);
   } catch (error) {
     console.error("Error updating festival config:", error);

@@ -7,6 +7,7 @@ import { requireAdminSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
 import { deriveProductStatus } from "@/lib/product-status";
 import { removeOrDiscontinueProduct } from "@/lib/product-deletion";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
 
+    revalidateStorefrontCache();
+
     return NextResponse.json({ product });
   } catch (error) {
     console.error("Error updating admin product:", error);
@@ -206,6 +209,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
     });
 
+    revalidateStorefrontCache();
+
     return NextResponse.json({ product });
   } catch (error) {
     console.error("Error updating admin product:", error);
@@ -226,6 +231,8 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     if (!result) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

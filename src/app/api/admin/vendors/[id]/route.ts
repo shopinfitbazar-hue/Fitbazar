@@ -4,6 +4,7 @@ import { renderVendorUpdateEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -24,13 +25,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       adminNotes?: string;
     };
 
+    const nextIsPartnered =
+      body.isPartnered !== undefined ? body.isPartnered : body.isTopShop === true ? true : undefined;
+    const nextIsTopShop = body.isPartnered === false ? false : body.isTopShop;
+    const touchesStorefront =
+      body.isApproved !== undefined ||
+      body.isSuspended !== undefined ||
+      body.isPartnered !== undefined ||
+      body.isTopShop !== undefined;
+
     const vendor = await prisma.vendor.update({
       where: { id },
       data: {
         ...(body.isApproved !== undefined ? { isApproved: body.isApproved } : {}),
         ...(body.isSuspended !== undefined ? { isSuspended: body.isSuspended } : {}),
-        ...(body.isPartnered !== undefined ? { isPartnered: body.isPartnered } : {}),
-        ...(body.isTopShop !== undefined ? { isTopShop: body.isTopShop } : {}),
+        ...(nextIsPartnered !== undefined ? { isPartnered: nextIsPartnered } : {}),
+        ...(nextIsTopShop !== undefined ? { isTopShop: nextIsTopShop } : {}),
         ...(body.verificationStatus !== undefined ? { verificationStatus: body.verificationStatus.trim().toUpperCase() } : {}),
         ...(body.adminNotes !== undefined ? { adminNotes: body.adminNotes.trim() || null } : {}),
       },
@@ -74,6 +84,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           buildAbsoluteAppUrl("/vendor/dashboard"),
         ),
       }).catch(() => undefined);
+    }
+
+    if (touchesStorefront) {
+      revalidateStorefrontCache();
     }
 
     return NextResponse.json({ vendor });

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { requireCustomerSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -181,6 +182,8 @@ export async function POST(request: NextRequest) {
         link: `/vendor/dashboard`,
       },
     }).catch(() => undefined);
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ review }, { status: 201 });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       },
     });
 
+    revalidateStorefrontCache();
+
     return NextResponse.json({ banner });
   } catch (error) {
     console.error("Error updating banner:", error);
@@ -47,6 +50,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params;
     await prisma.banner.delete({ where: { id } });
+    revalidateStorefrontCache();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting banner:", error);

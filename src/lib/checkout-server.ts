@@ -10,6 +10,7 @@ import { renderOrderBillEmail, renderVendorOrderEmail } from "@/lib/email-templa
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { resolvePincode } from "@/lib/pincode";
 import { getPublicVendorName } from "@/lib/public-vendor-identity";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export type CheckoutItemInput = {
   productId: string;
@@ -443,6 +444,10 @@ export async function createOrdersFromCheckoutPayload(input: {
     await sendOrderEmails(context, orders).catch((error) => {
       console.error("[orders] Failed to send order email:", error);
     });
+  }
+
+  if (didCreateOrders) {
+    revalidateStorefrontCache();
   }
 
   return orders;

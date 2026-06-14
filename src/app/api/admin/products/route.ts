@@ -4,6 +4,7 @@ import { buildPaginationMeta, getAdminPagination, getAdminSearch } from "@/lib/a
 import { requireAdminSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
 import { deriveProductStatus } from "@/lib/product-status";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +153,8 @@ export async function POST(request: Request) {
         status,
       },
     });
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { requireCustomerSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 const MAX_COMMENT_LENGTH = 1200;
 
@@ -188,6 +189,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidateStorefrontCache();
+
     return NextResponse.json({ review, message: "Review created successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating review:", error);
@@ -248,6 +251,8 @@ export async function PUT(request: NextRequest) {
         },
       },
     });
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ review, message: "Review updated successfully" });
   } catch (error) {

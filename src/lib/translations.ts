@@ -642,6 +642,7 @@ export const translations: Record<string, Record<Language, string>> = {
   partnered_shops: { en: "Partnered Shops", ne: "साझेदार पसलहरू" },
   partnered_vendor: { en: "Partnered", ne: "साझेदार" },
   not_partnered: { en: "Not partnered", ne: "साझेदार होइन" },
+  top_shops: { en: "Top Shops", ne: "शीर्ष पसलहरू" },
   top_shop: { en: "Top Shop", ne: "शीर्ष पसल" },
   make_partner: { en: "Make Partner", ne: "साझेदार बनाउनुहोस्" },
   remove_partner: { en: "Remove Partner", ne: "साझेदारी हटाउनुहोस्" },

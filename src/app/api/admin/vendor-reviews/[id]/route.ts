@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { id },
       data: { isVisible: body.isVisible },
     });
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ review });
   } catch (error) {

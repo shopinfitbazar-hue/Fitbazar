@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, BadgePercent, BellRing, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Gauge, LayoutDashboard, MousePointerClick, Package, Search, Send, ShoppingCart, Smartphone, Star, UserCheck, Users } from "lucide-react";
+import { Activity, BadgePercent, BellRing, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Gauge, LayoutDashboard, MousePointerClick, Package, RefreshCw, Search, Send, ShoppingCart, Smartphone, Star, UserCheck, Users } from "lucide-react";
 import Header from "@/components/Header";
 import AdminSidebar from "@/components/AdminSidebar";
 import CloudinaryImageUploader from "@/components/CloudinaryImageUploader";
@@ -305,6 +305,7 @@ type AdminListKey = "vendors" | "products" | "orders" | "customers" | "support";
 type AdminSearchState = Record<AdminListKey, string>;
 type AdminPageState = Record<AdminListKey, number>;
 type AdminPaginationState = Record<AdminListKey, PaginationMeta>;
+type AdminLoadOptions = { search?: AdminSearchState; pages?: AdminPageState };
 
 const ADMIN_LIST_KEYS: AdminListKey[] = ["vendors", "products", "orders", "customers", "support"];
 const ADMIN_DEFAULT_PAGE_SIZE = 10;
@@ -449,79 +450,140 @@ export default function AdminDashboard() {
     return `${path}?${params.toString()}`;
   }
 
-  async function loadAdmin(options?: { search?: AdminSearchState; pages?: AdminPageState }) {
-    const searchState = options?.search || adminSearch;
-    const pageState = options?.pages || adminPages;
-    const [statsResponse, vendorsResponse, productsResponse, ordersResponse, customersResponse, bannersResponse, settingsResponse, festivalResponse, couponsResponse, supportResponse, vendorReviewsResponse, analyticsResponse] = await Promise.all([
-      fetch("/api/admin/stats", { cache: "no-store" }),
-      fetch(buildAdminListUrl("/api/admin/vendors", "vendors", searchState, pageState), { cache: "no-store" }),
-      fetch(buildAdminListUrl("/api/admin/products", "products", searchState, pageState), { cache: "no-store" }),
-      fetch(buildAdminListUrl("/api/admin/orders", "orders", searchState, pageState), { cache: "no-store" }),
-      fetch(buildAdminListUrl("/api/admin/customers", "customers", searchState, pageState), { cache: "no-store" }),
-      fetch("/api/admin/banners", { cache: "no-store" }),
-      fetch("/api/admin/settings", { cache: "no-store" }),
-      fetch("/api/festival-config", { cache: "no-store" }),
-      fetch("/api/admin/coupons", { cache: "no-store" }),
-      fetch(buildAdminListUrl("/api/admin/support", "support", searchState, pageState), { cache: "no-store" }),
-      fetch("/api/admin/vendor-reviews", { cache: "no-store" }),
-      fetch("/api/admin/analytics?days=30", { cache: "no-store" }),
-    ]);
+  function getAdminListState(options?: AdminLoadOptions) {
+    return {
+      searchState: options?.search || adminSearch,
+      pageState: options?.pages || adminPages,
+    };
+  }
 
-    const [statsData, vendorsData, productsData, ordersData, customersData, bannersData, settingsData, festivalData, couponsData, supportData, vendorReviewsData, analyticsData] = await Promise.all([
-      statsResponse.json(),
-      vendorsResponse.json(),
-      productsResponse.json(),
-      ordersResponse.json(),
-      customersResponse.json(),
-      bannersResponse.json(),
-      settingsResponse.json(),
-      festivalResponse.json(),
-      couponsResponse.json(),
-      supportResponse.json(),
-      vendorReviewsResponse.json(),
-      analyticsResponse.json(),
-    ]);
+  async function refreshAdminStats() {
+    const response = await fetch("/api/admin/stats", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setStats(data.stats);
+  }
 
-    if (statsResponse.ok) setStats(statsData.stats);
-    if (vendorsResponse.ok) {
-      setVendors(vendorsData.vendors || []);
-      setTopShops(vendorsData.topShops || []);
-      if (vendorsData.pagination) setAdminPagination((current) => ({ ...current, vendors: vendorsData.pagination }));
-    }
-    if (productsResponse.ok) {
-      setProducts(productsData.products || []);
-      setDraftProducts(productsData.awaitingApproval || []);
-      setPendingProductCount(productsData.pendingCount || 0);
-      if (productsData.pagination) setAdminPagination((current) => ({ ...current, products: productsData.pagination }));
-    }
-    if (ordersResponse.ok) {
-      setOrders(ordersData.orders || []);
-      if (ordersData.pagination) setAdminPagination((current) => ({ ...current, orders: ordersData.pagination }));
-    }
-    if (customersResponse.ok) {
-      setCustomers(customersData.customers || []);
-      if (customersData.pagination) setAdminPagination((current) => ({ ...current, customers: customersData.pagination }));
-    }
-    if (bannersResponse.ok) setBanners(bannersData.banners || []);
-    if (couponsResponse.ok) setCoupons(couponsData.coupons || []);
-    if (supportResponse.ok) {
-      setSupportTickets(supportData.tickets || []);
-      setSupportArchiveCount(supportData.archivedCount || 0);
-      if (supportData.pagination) setAdminPagination((current) => ({ ...current, support: supportData.pagination }));
-    }
-    if (vendorReviewsResponse.ok) setVendorReviews(vendorReviewsData.reviews || []);
-    if (analyticsResponse.ok) setAnalytics({ ...emptyAnalytics, ...analyticsData });
-    if (settingsResponse.ok && settingsData.settings) {
-      setSettings((current) => ({ ...current, ...settingsData.settings }));
-    }
-    if (festivalResponse.ok && festivalData) {
-      setFestival({
-        name: festivalData.name || "Dashain",
-        nameNp: festivalData.nameNp || "दशैं",
-        endDate: festivalData.endDate ? String(festivalData.endDate).slice(0, 10) : "",
-        isActive: Boolean(festivalData.isActive),
-      });
-    }
+  async function refreshAdminVendors(options?: AdminLoadOptions) {
+    const { searchState, pageState } = getAdminListState(options);
+    const response = await fetch(buildAdminListUrl("/api/admin/vendors", "vendors", searchState, pageState), { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setVendors(data.vendors || []);
+    setTopShops(data.topShops || []);
+    if (data.pagination) setAdminPagination((current) => ({ ...current, vendors: data.pagination }));
+  }
+
+  async function refreshAdminProducts(options?: AdminLoadOptions) {
+    const { searchState, pageState } = getAdminListState(options);
+    const response = await fetch(buildAdminListUrl("/api/admin/products", "products", searchState, pageState), { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setProducts(data.products || []);
+    setDraftProducts(data.awaitingApproval || []);
+    setPendingProductCount(data.pendingCount || 0);
+    if (data.pagination) setAdminPagination((current) => ({ ...current, products: data.pagination }));
+  }
+
+  async function refreshAdminOrders(options?: AdminLoadOptions) {
+    const { searchState, pageState } = getAdminListState(options);
+    const response = await fetch(buildAdminListUrl("/api/admin/orders", "orders", searchState, pageState), { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setOrders(data.orders || []);
+    if (data.pagination) setAdminPagination((current) => ({ ...current, orders: data.pagination }));
+  }
+
+  async function refreshAdminCustomers(options?: AdminLoadOptions) {
+    const { searchState, pageState } = getAdminListState(options);
+    const response = await fetch(buildAdminListUrl("/api/admin/customers", "customers", searchState, pageState), { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setCustomers(data.customers || []);
+    if (data.pagination) setAdminPagination((current) => ({ ...current, customers: data.pagination }));
+  }
+
+  async function refreshAdminSupport(options?: AdminLoadOptions) {
+    const { searchState, pageState } = getAdminListState(options);
+    const response = await fetch(buildAdminListUrl("/api/admin/support", "support", searchState, pageState), { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setSupportTickets(data.tickets || []);
+    setSupportArchiveCount(data.archivedCount || 0);
+    if (data.pagination) setAdminPagination((current) => ({ ...current, support: data.pagination }));
+  }
+
+  async function refreshAdminBanners() {
+    const response = await fetch("/api/admin/banners", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setBanners(data.banners || []);
+  }
+
+  async function refreshAdminSettings() {
+    const response = await fetch("/api/admin/settings", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data.settings) setSettings((current) => ({ ...current, ...data.settings }));
+  }
+
+  async function refreshFestival() {
+    const response = await fetch("/api/festival-config", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data) return;
+    setFestival({
+      name: data.name || "Dashain",
+      nameNp: data.nameNp || "दशैं",
+      endDate: data.endDate ? String(data.endDate).slice(0, 10) : "",
+      isActive: Boolean(data.isActive),
+    });
+  }
+
+  async function refreshAdminCoupons() {
+    const response = await fetch("/api/admin/coupons", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setCoupons(data.coupons || []);
+  }
+
+  async function refreshAdminVendorReviews() {
+    const response = await fetch("/api/admin/vendor-reviews", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setVendorReviews(data.reviews || []);
+  }
+
+  async function refreshAdminAnalytics() {
+    const response = await fetch("/api/admin/analytics?days=30", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setAnalytics({ ...emptyAnalytics, ...data });
+  }
+
+  function refreshAdminList(key: AdminListKey, options?: AdminLoadOptions) {
+    if (key === "vendors") return refreshAdminVendors(options);
+    if (key === "products") return refreshAdminProducts(options);
+    if (key === "orders") return refreshAdminOrders(options);
+    if (key === "customers") return refreshAdminCustomers(options);
+    return refreshAdminSupport(options);
+  }
+
+  async function loadAdmin(options?: AdminLoadOptions) {
+    await Promise.all([
+      refreshAdminStats(),
+      refreshAdminVendors(options),
+      refreshAdminProducts(options),
+      refreshAdminOrders(options),
+      refreshAdminCustomers(options),
+      refreshAdminBanners(),
+      refreshAdminSettings(),
+      refreshFestival(),
+      refreshAdminCoupons(),
+      refreshAdminSupport(options),
+      refreshAdminVendorReviews(),
+      refreshAdminAnalytics(),
+    ]);
   }
 
   useEffect(() => {
@@ -588,7 +650,7 @@ export default function AdminDashboard() {
   const runAdminSearch = (key: AdminListKey) => {
     const nextPages = { ...adminPages, [key]: 1 };
     setAdminPages(nextPages);
-    void loadAdmin({ pages: nextPages });
+    void refreshAdminList(key, { pages: nextPages });
   };
 
   const clearAdminSearch = (key: AdminListKey) => {
@@ -596,7 +658,7 @@ export default function AdminDashboard() {
     const nextPages = { ...adminPages, [key]: 1 };
     setAdminSearch(nextSearch);
     setAdminPages(nextPages);
-    void loadAdmin({ search: nextSearch, pages: nextPages });
+    void refreshAdminList(key, { search: nextSearch, pages: nextPages });
   };
 
   const goToAdminPage = (key: AdminListKey, page: number) => {
@@ -604,7 +666,7 @@ export default function AdminDashboard() {
     const safePage = Math.min(Math.max(page, 1), meta.totalPages);
     const nextPages = { ...adminPages, [key]: safePage };
     setAdminPages(nextPages);
-    void loadAdmin({ pages: nextPages });
+    void refreshAdminList(key, { pages: nextPages });
   };
 
   const renderAdminListControls = (key: AdminListKey, placeholder: string) => {
@@ -680,7 +742,7 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    await loadAdmin();
+    await Promise.all([refreshAdminVendors(), refreshAdminStats()]);
   };
 
   const updateProduct = async (id: string, payload: { isFeatured?: boolean; isActive?: boolean; status?: string }) => {
@@ -689,7 +751,12 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    await loadAdmin();
+    await Promise.all([refreshAdminProducts(), refreshAdminStats()]);
+  };
+
+  const refreshStorefrontCache = async () => {
+    const response = await fetch("/api/admin/storefront-cache", { method: "POST" });
+    setMessage(response.ok ? "Storefront cache refreshed." : "Failed to refresh storefront cache.");
   };
 
   const sendBroadcast = async () => {
@@ -791,7 +858,7 @@ export default function AdminDashboard() {
 
     setMessage(result.deleted ? t("product_deleted") : t("product_discontinued"));
     if (productDraft.id === id) resetProductDraft();
-    await loadAdmin();
+    await Promise.all([refreshAdminProducts(), refreshAdminStats()]);
   };
 
   const updateCustomer = async (id: string, isBanned: boolean) => {
@@ -810,7 +877,7 @@ export default function AdminDashboard() {
 
     setCustomers((current) => current.map((customer) => (customer.id === id ? result.customer as AdminCustomer : customer)));
     setMessage(isBanned ? "Customer banned. Active checkout attempts are now blocked." : "Customer unbanned.");
-    await loadAdmin();
+    await refreshAdminCustomers();
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
@@ -819,7 +886,7 @@ export default function AdminDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    await loadAdmin();
+    await Promise.all([refreshAdminOrders(), refreshAdminStats()]);
   };
 
   const saveSettings = async () => {
@@ -830,7 +897,7 @@ export default function AdminDashboard() {
     });
     if (response.ok) {
       setMessage(t("settings_updated"));
-      await loadAdmin();
+      await refreshAdminSettings();
     }
   };
 
@@ -847,7 +914,7 @@ export default function AdminDashboard() {
     });
     if (response.ok) {
       setMessage(t("festival_updated"));
-      await loadAdmin();
+      await refreshFestival();
     }
   };
 
@@ -860,7 +927,7 @@ export default function AdminDashboard() {
     if (response.ok) {
       setBannerDraft({ imageUrl: "", title: "", linkUrl: "", displayOrder: 0, isActive: true });
       setMessage(t("banner_created"));
-      await loadAdmin();
+      await refreshAdminBanners();
     }
   };
 
@@ -871,7 +938,7 @@ export default function AdminDashboard() {
       body: JSON.stringify(payload),
     });
     if (response.ok) {
-      await loadAdmin();
+      await refreshAdminBanners();
     }
   };
 
@@ -879,7 +946,7 @@ export default function AdminDashboard() {
     const response = await fetch(`/api/admin/banners/${id}`, { method: "DELETE" });
     if (response.ok) {
       setMessage(t("banner_deleted"));
-      await loadAdmin();
+      await refreshAdminBanners();
     }
   };
 
@@ -916,7 +983,7 @@ export default function AdminDashboard() {
 
     setMessage(productDraft.id ? t("product_updated") : t("product_created"));
     resetProductDraft();
-    await loadAdmin();
+    await Promise.all([refreshAdminProducts(), refreshAdminStats()]);
   };
 
   const saveCoupon = async () => {
@@ -949,7 +1016,7 @@ export default function AdminDashboard() {
       isActive: true,
     });
     setMessage(couponDraft.id ? t("coupon_updated") : t("coupon_created"));
-    await loadAdmin();
+    await refreshAdminCoupons();
   };
 
   const editCoupon = (coupon: AdminCoupon) => {
@@ -968,7 +1035,7 @@ export default function AdminDashboard() {
     const response = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
     if (response.ok) {
       setMessage(t("coupon_deleted"));
-      await loadAdmin();
+      await refreshAdminCoupons();
     }
   };
 
@@ -979,7 +1046,7 @@ export default function AdminDashboard() {
       body: JSON.stringify(payload),
     });
     if (response.ok) {
-      await loadAdmin();
+      await refreshAdminSupport();
     }
   };
 
@@ -990,7 +1057,7 @@ export default function AdminDashboard() {
       body: JSON.stringify({ isVisible }),
     });
     if (response.ok) {
-      await loadAdmin();
+      await refreshAdminVendorReviews();
     }
   };
 
@@ -1002,11 +1069,19 @@ export default function AdminDashboard() {
 
         <section className="min-w-0 flex-1">
           <div className="mb-5 rounded-[8px] border border-border-light bg-card p-5 shadow-[var(--shadow-sm)]">
-            <div className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">Fit Bazar Operations</div>
-            <h1 className="mt-2 text-[28px] font-semibold text-text-primary">Admin Control Center</h1>
-            <p className="mt-2 max-w-[720px] text-[14px] text-text-secondary">
-              Manage vendors, product approvals, homepage content, customer access, orders, and support from one place.
-            </p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">Fit Bazar Operations</div>
+                <h1 className="mt-2 text-[28px] font-semibold text-text-primary">Admin Control Center</h1>
+                <p className="mt-2 max-w-[720px] text-[14px] text-text-secondary">
+                  Manage vendors, product approvals, homepage content, customer access, orders, and support from one place.
+                </p>
+              </div>
+              <button type="button" onClick={refreshStorefrontCache} className="btn-ghost inline-flex shrink-0 items-center gap-2 px-4 py-2">
+                <RefreshCw className="h-4 w-4" />
+                Refresh storefront
+              </button>
+            </div>
           </div>
 
           {message ? (
@@ -1247,9 +1322,11 @@ export default function AdminDashboard() {
                     <button type="button" onClick={() => updateVendor(vendor.id, { isPartnered: !vendor.isPartnered, isTopShop: vendor.isPartnered ? false : vendor.isTopShop })} className="btn-ghost px-4 py-2">
                       {vendor.isPartnered ? t("remove_partner") : t("make_partner")}
                     </button>
-                    <button type="button" onClick={() => updateVendor(vendor.id, { isTopShop: !vendor.isTopShop, isPartnered: true })} className="btn-ghost px-4 py-2">
-                      {vendor.isTopShop ? t("remove_top_shop") : t("mark_top_shop")}
-                    </button>
+                    {vendor.isPartnered ? (
+                      <button type="button" onClick={() => updateVendor(vendor.id, { isTopShop: !vendor.isTopShop })} className="btn-ghost px-4 py-2">
+                        {vendor.isTopShop ? t("remove_top_shop") : t("mark_top_shop")}
+                      </button>
+                    ) : null}
                     <button type="button" onClick={() => updateVendor(vendor.id, { adminNotes: vendor.adminNotes || "" })} className="btn-ghost px-4 py-2">
                       {t("save_notes")}
                     </button>
@@ -1811,7 +1888,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="mt-4 rounded-[8px] bg-card p-5">
-            <h2 className="text-[16px] font-semibold text-text-primary">{t("partnered_shops")}</h2>
+            <h2 className="text-[16px] font-semibold text-text-primary">{t("top_shops")}</h2>
             <p className="mt-2 text-[14px] text-text-secondary">{t("top_shops_intro")}</p>
             <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {topShops.map((vendor) => (

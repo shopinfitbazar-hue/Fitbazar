@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { removeOrDiscontinueProduct } from "@/lib/product-deletion";
 import { requireVendorSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const existing = await prisma.product.findFirst({
       where: { id, vendorId: vendor.id },
-      select: { id: true },
+      select: { id: true, status: true, isActive: true },
     });
 
     if (!existing) {
@@ -106,6 +107,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         isActive: false,
       },
     });
+
+    if (existing.status === "ACTIVE" || existing.isActive) {
+      revalidateStorefrontCache();
+    }
 
     const admins = await prisma.user.findMany({
       where: { role: "ADMIN" },
@@ -158,7 +163,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
     const existing = await prisma.product.findFirst({
       where: { id, vendorId: vendor.id },
-      select: { id: true },
+      select: { id: true, status: true, isActive: true },
     });
 
     if (!existing) {
@@ -169,6 +174,10 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
     if (!result) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (existing.status === "ACTIVE" || existing.isActive) {
+      revalidateStorefrontCache();
     }
 
     return NextResponse.json({ success: true, ...result });

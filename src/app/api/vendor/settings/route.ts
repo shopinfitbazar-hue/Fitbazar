@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,8 @@ export async function PUT(request: Request) {
         },
       }),
     ]);
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({
       vendor: updatedVendor,

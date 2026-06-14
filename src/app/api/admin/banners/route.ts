@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,8 @@ export async function POST(request: Request) {
         displayOrder: Number(body.displayOrder || 0),
       },
     });
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ banner }, { status: 201 });
   } catch (error) {

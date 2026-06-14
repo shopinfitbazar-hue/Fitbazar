@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/server-auth";
 import { SITE_SETTINGS_ID, cleanInternalHref, cleanSeoImageUrl, defaultSiteSettings } from "@/lib/site-settings";
+import { revalidateStorefrontCache } from "@/lib/storefront-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,8 @@ export async function PUT(request: Request) {
         ...data,
       },
     });
+
+    revalidateStorefrontCache();
 
     return NextResponse.json({ settings });
   } catch (error) {
