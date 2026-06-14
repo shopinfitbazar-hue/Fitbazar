@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildPaginationMeta, getAdminPagination, getAdminSearch } from "@/lib/admin-pagination";
+import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { requireAdminSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export async function GET(request: Request) {
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.error === "Unauthorized" ? 401 : 403 });
     }
+
+    await expireExpiredPartnerships();
 
     const { searchParams } = new URL(request.url);
     const q = getAdminSearch(searchParams);

@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { normalizeCategory } from "@/lib/categories";
+import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/lib/public-storefront";
 import { getPublicVendorName, getPublicVendorSlug, type PublicVendorIdentityInput } from "@/lib/public-vendor-identity";
@@ -371,6 +372,8 @@ async function queryPublicSearch(input: PublicSearchQueryInput) {
 }
 
 async function queryPublicVendors(input: PublicVendorQueryInput) {
+  await expireExpiredPartnerships();
+
   const where: Prisma.VendorWhereInput = {
     ...publicVendorVisibilityFilter,
     isPartnered: true,

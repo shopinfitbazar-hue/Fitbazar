@@ -29,6 +29,14 @@ interface AdminVendor {
   bankName?: string | null;
   accountNumber?: string | null;
   accountHolder?: string | null;
+  partnerStatus?: string | null;
+  partnerPlan?: string | null;
+  partnerRequestedAt?: string | null;
+  partnerStartedAt?: string | null;
+  partnerExpiresAt?: string | null;
+  partnerRenewedAt?: string | null;
+  partnerPaymentDue?: number | null;
+  partnerPaymentNote?: string | null;
   user: {
     name: string | null;
     email: string;
@@ -55,6 +63,8 @@ interface AdminProduct {
   isFeatured: boolean;
   isFestivalSale?: boolean;
   isYearRoundSale?: boolean;
+  homepageSlot?: string;
+  homepagePriority?: number;
   isActive: boolean;
   status: "ACTIVE" | "HIDDEN" | "DRAFT" | "OUT_OF_STOCK";
   vendor: {
@@ -180,6 +190,8 @@ type AdminProductDraft = {
   isFeatured: boolean;
   isFestivalSale: boolean;
   isYearRoundSale: boolean;
+  homepageSlot: string;
+  homepagePriority: number;
   isActive: boolean;
   status: AdminProduct["status"];
 };
@@ -351,6 +363,16 @@ const initialAdminPagination: AdminPaginationState = ADMIN_LIST_KEYS.reduce(
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const adminOrderStatusOptions = ["PENDING", "RECEIVED", "PACKED", "HANDED_TO_DELIVERY", "DELIVERED", "CANCELLED", "DISPUTED"];
+const homepageSlotOptions = [
+  { value: "AUTO", label: "Auto" },
+  { value: "TRENDING", label: "Trending" },
+  { value: "SHOWCASE", label: "Showcase" },
+  { value: "FRESH", label: "Fresh Finds" },
+  { value: "SALE", label: "Always On Sale" },
+  { value: "OFFERS", label: "Offers" },
+  { value: "FESTIVAL", label: "Festival" },
+  { value: "HIDDEN", label: "Hide from home" },
+];
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -427,6 +449,8 @@ export default function AdminDashboard() {
     isFeatured: false,
     isFestivalSale: false,
     isYearRoundSale: false,
+    homepageSlot: "AUTO",
+    homepagePriority: 0,
     isActive: true,
     status: "ACTIVE",
   });
@@ -626,6 +650,15 @@ export default function AdminDashboard() {
     return date.toLocaleTimeString("en-NP", { hour: "numeric" });
   };
 
+  const formatAdminDate = (value?: string | null) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleDateString("en-NP", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const formatAnalyticsLabel = (label: string | null) => {
     if (!label) return "Unknown";
     return label
@@ -735,7 +768,17 @@ export default function AdminDashboard() {
 
   const updateVendor = async (
     id: string,
-    payload: { isApproved?: boolean; isSuspended?: boolean; isPartnered?: boolean; isTopShop?: boolean; verificationStatus?: string; adminNotes?: string },
+    payload: {
+      isApproved?: boolean;
+      isSuspended?: boolean;
+      isPartnered?: boolean;
+      isTopShop?: boolean;
+      verificationStatus?: string;
+      adminNotes?: string;
+      partnerAction?: "APPROVE" | "RENEW" | "REMOVE" | "REJECT";
+      partnerPlan?: string;
+      partnerPaymentNote?: string;
+    },
   ) => {
     await fetch(`/api/admin/vendors/${id}`, {
       method: "PATCH",
@@ -745,7 +788,7 @@ export default function AdminDashboard() {
     await Promise.all([refreshAdminVendors(), refreshAdminStats()]);
   };
 
-  const updateProduct = async (id: string, payload: { isFeatured?: boolean; isActive?: boolean; status?: string }) => {
+  const updateProduct = async (id: string, payload: { isFeatured?: boolean; isActive?: boolean; status?: string; homepageSlot?: string; homepagePriority?: number }) => {
     await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -808,6 +851,8 @@ export default function AdminDashboard() {
       isFeatured: product.isFeatured,
       isFestivalSale: Boolean(product.isFestivalSale),
       isYearRoundSale: Boolean(product.isYearRoundSale),
+      homepageSlot: product.homepageSlot || "AUTO",
+      homepagePriority: product.homepagePriority || 0,
       isActive: product.isActive,
       status: product.status,
     });
@@ -830,6 +875,8 @@ export default function AdminDashboard() {
       isFeatured: false,
       isFestivalSale: false,
       isYearRoundSale: false,
+      homepageSlot: "AUTO",
+      homepagePriority: 0,
       isActive: true,
       status: "ACTIVE",
     });
@@ -965,6 +1012,8 @@ export default function AdminDashboard() {
       isFeatured: productDraft.isFeatured,
       isFestivalSale: productDraft.isFestivalSale,
       isYearRoundSale: productDraft.isYearRoundSale,
+      homepageSlot: productDraft.homepageSlot,
+      homepagePriority: Number(productDraft.homepagePriority || 0),
       isActive: productDraft.isActive,
       status: productDraft.status,
     };
@@ -1291,6 +1340,18 @@ export default function AdminDashboard() {
                       <span>{t("account_number")}: {vendor.accountNumber || "-"}</span>
                       <span>{t("account_holder")}: {vendor.accountHolder || "-"}</span>
                     </div>
+                    <div className="mt-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-3 text-[12px] text-text-muted">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`badge ${vendor.isPartnered ? "badge-green" : vendor.partnerStatus === "PENDING" ? "badge-amber" : "badge-orange"}`}>
+                          Partner: {vendor.partnerStatus || "NONE"}
+                        </span>
+                        <span>Plan: {vendor.partnerPlan || "-"}</span>
+                        <span>Due: {vendor.partnerPaymentDue ? formatPriceNpr(vendor.partnerPaymentDue) : "-"}</span>
+                        <span>Expires: {formatAdminDate(vendor.partnerExpiresAt)}</span>
+                      </div>
+                      {vendor.partnerPaymentNote ? <p className="mt-2 text-[12px] text-text-secondary">{vendor.partnerPaymentNote}</p> : null}
+                      {vendor.partnerRequestedAt ? <p className="mt-1">Requested: {formatAdminDate(vendor.partnerRequestedAt)}</p> : null}
+                    </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <span className="badge badge-amber">{vendor.verificationStatus || "PENDING"}</span>
                       <select
@@ -1319,9 +1380,33 @@ export default function AdminDashboard() {
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => updateVendor(vendor.id, { isApproved: true, isSuspended: false })} className="btn-primary px-4 py-2">{t("approve")}</button>
                     <button type="button" onClick={() => updateVendor(vendor.id, { isSuspended: !vendor.isSuspended })} className="btn-ghost px-4 py-2">{vendor.isSuspended ? t("unsuspend") : t("suspend")}</button>
-                    <button type="button" onClick={() => updateVendor(vendor.id, { isPartnered: !vendor.isPartnered, isTopShop: vendor.isPartnered ? false : vendor.isTopShop })} className="btn-ghost px-4 py-2">
-                      {vendor.isPartnered ? t("remove_partner") : t("make_partner")}
-                    </button>
+                    {!vendor.isPartnered ? (
+                      <>
+                        <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "APPROVE", partnerPlan: "MONTHLY" })} className="btn-ghost px-4 py-2">
+                          Partner 1 mo
+                        </button>
+                        <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "APPROVE", partnerPlan: "ANNUAL" })} className="btn-ghost px-4 py-2">
+                          Partner 1 yr
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "RENEW", partnerPlan: "MONTHLY" })} className="btn-ghost px-4 py-2">
+                          Renew 1 mo
+                        </button>
+                        <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "RENEW", partnerPlan: "ANNUAL" })} className="btn-ghost px-4 py-2">
+                          Renew 1 yr
+                        </button>
+                        <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "REMOVE" })} className="btn-ghost px-4 py-2">
+                          {t("remove_partner")}
+                        </button>
+                      </>
+                    )}
+                    {vendor.partnerStatus === "PENDING" ? (
+                      <button type="button" onClick={() => updateVendor(vendor.id, { partnerAction: "REJECT" })} className="btn-ghost px-4 py-2">
+                        Reject partner
+                      </button>
+                    ) : null}
                     {vendor.isPartnered ? (
                       <button type="button" onClick={() => updateVendor(vendor.id, { isTopShop: !vendor.isTopShop })} className="btn-ghost px-4 py-2">
                         {vendor.isTopShop ? t("remove_top_shop") : t("mark_top_shop")}
@@ -1521,6 +1606,31 @@ export default function AdminDashboard() {
                     })}
                   </div>
                 </div>
+                <div className="grid gap-4 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4 md:grid-cols-[minmax(0,1fr)_150px]">
+                  <div>
+                    <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Homepage slot</label>
+                    <select
+                      value={productDraft.homepageSlot}
+                      onChange={(event) => setProductDraft((current) => ({ ...current, homepageSlot: event.target.value }))}
+                      className="rounded-[8px] border border-border-default bg-white px-3 py-2 text-[13px] text-text-primary"
+                    >
+                      {homepageSlotOptions.map((slot) => (
+                        <option key={slot.value} value={slot.value}>{slot.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-[12px] uppercase tracking-[1px] text-text-muted">Priority</label>
+                    <input
+                      type="number"
+                      value={productDraft.homepagePriority || ""}
+                      onChange={(event) => setProductDraft((current) => ({ ...current, homepagePriority: Number(event.target.value) }))}
+                    />
+                  </div>
+                  <p className="text-[12px] text-text-muted md:col-span-2">
+                    Higher priority appears earlier inside the selected homepage section. Use Auto for normal product flow.
+                  </p>
+                </div>
                 <div className="flex flex-wrap items-center gap-3 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
                   <label className="flex items-center gap-2 text-[13px] text-text-secondary">
                     <span>{t("product_status")}</span>
@@ -1554,12 +1664,13 @@ export default function AdminDashboard() {
             </div>
             {renderAdminListControls("products", "Search products by name, slug, category, or vendor")}
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[720px]">
+              <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="border-b border-border-light text-left text-[12px] uppercase tracking-[1px] text-text-muted">
                     <th className="py-3">{t("name")}</th>
                     <th className="py-3">{t("vendors")}</th>
                     <th className="py-3">{t("price")}</th>
+                    <th className="py-3">Home</th>
                     <th className="py-3">{t("state")}</th>
                     <th className="py-3">{t("actions")}</th>
                   </tr>
@@ -1570,6 +1681,27 @@ export default function AdminDashboard() {
                       <td className="py-4 font-medium text-text-primary">{product.name}</td>
                       <td>{product.vendor.shopName}</td>
                       <td>{formatPriceNpr(product.price)}</td>
+                      <td>
+                        <div className="flex min-w-[150px] items-center gap-2">
+                          <select
+                            value={product.homepageSlot || "AUTO"}
+                            onChange={(event) => void updateProduct(product.id, { homepageSlot: event.target.value })}
+                            className="rounded-[8px] border border-border-default bg-white px-2 py-1 text-[12px] text-text-primary"
+                          >
+                            {homepageSlotOptions.map((slot) => (
+                              <option key={slot.value} value={slot.value}>{slot.label}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="number"
+                            value={product.homepagePriority || ""}
+                            onChange={(event) => void updateProduct(product.id, { homepagePriority: Number(event.target.value) })}
+                            className="w-16 rounded-[8px] border border-border-default bg-white px-2 py-1 text-[12px] text-text-primary"
+                            style={{ width: "4rem" }}
+                            aria-label="Homepage priority"
+                          />
+                        </div>
+                      </td>
                       <td>
                         <span className={`badge ${product.status === "ACTIVE" ? "badge-green" : product.status === "OUT_OF_STOCK" ? "badge-orange" : "badge-amber"}`}>
                           {product.status === "ACTIVE"

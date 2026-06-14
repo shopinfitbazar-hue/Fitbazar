@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Bell, Package, ShoppingBag, Heart, Clock } from "lucide-react";
+import { Bell, Crown, Package, ShoppingBag, Heart, Clock } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { getSafeHref } from "@/lib/media";
 
@@ -84,6 +84,8 @@ export default function NotificationBell() {
       case 'ORDER': return <Package className="w-5 h-5" />;
       case 'WISHLIST': return <Heart className="w-5 h-5" />;
       case 'PROMOTION':
+      case 'PARTNER':
+        return <Crown className="w-5 h-5" />;
       case 'ADMIN':
       case 'PRODUCT':
       case 'SUPPORT':
@@ -152,7 +154,7 @@ export default function NotificationBell() {
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       notification.type === "ORDER" ? "bg-fb-pink-bg text-fb-pink" :
                       notification.type === "WISHLIST" ? "bg-[var(--green-bg)] text-success" :
-                      notification.type === "PROMOTION" || notification.type === "ADMIN" || notification.type === "PRODUCT" || notification.type === "SUPPORT" ? "bg-[var(--amber-bg)] text-fb-orange" :
+                      notification.type === "PROMOTION" || notification.type === "PARTNER" || notification.type === "ADMIN" || notification.type === "PRODUCT" || notification.type === "SUPPORT" ? "bg-[var(--amber-bg)] text-fb-orange" :
                       "bg-[var(--bg-surface)] text-text-secondary"
                     }`}>
                       {getNotificationIcon(notification.type)}

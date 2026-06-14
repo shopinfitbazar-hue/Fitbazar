@@ -116,10 +116,9 @@ async function getRelatedProducts(definition: CollectionDefinition, products: Pr
     where: {
       ...publicProductVisibilityFilter,
       id: products.length ? { notIn: products.map((product) => product.id) } : undefined,
-      ...(definition.category ? { category: { not: definition.category } } : {}),
     },
     include: getProductInclude(),
-    orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ createdAt: "desc" }],
     take: 8,
   });
 }

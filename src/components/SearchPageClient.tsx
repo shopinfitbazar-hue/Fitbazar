@@ -8,7 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import VendorCard from "@/components/VendorCard";
 import { ProductGridSkeleton } from "@/components/ui/Skeleton";
 import { Search } from "lucide-react";
-import { categorySlug } from "@/lib/categories";
+import { collectionHrefForCategory } from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
 
 interface SearchProduct {
@@ -52,15 +52,6 @@ interface SearchApiResponse {
 interface SearchPageClientProps {
   initialData?: SearchApiResponse;
   initialQueryString?: string;
-}
-
-function collectionHrefForCategory(name: string) {
-  const slug = categorySlug(name);
-  if (slug === "men") return "/collections/mens-fashion-nepal";
-  if (slug === "women") return "/collections/womens-fashion-nepal";
-  if (slug === "ethnic-wear") return "/collections/ethnic";
-  if (slug === "sports") return "/collections/streetwear-nepal";
-  return `/collections/${slug}`;
 }
 
 function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageClientProps) {

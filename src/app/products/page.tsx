@@ -18,7 +18,7 @@ import {
 } from "@/lib/seo";
 
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 type ProductsSearchParams = {
   category?: string;

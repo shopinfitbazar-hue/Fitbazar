@@ -2,26 +2,75 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Heart, LayoutDashboard, Menu, Search, ShoppingBag, User, X, ChevronRight } from "lucide-react";
+import {
+  Baby,
+  ChevronDown,
+  ChevronRight,
+  Dumbbell,
+  Footprints,
+  Gem,
+  Heart,
+  LayoutDashboard,
+  Menu,
+  Search,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Tag,
+  User,
+  Watch,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
-import { normalizeCategory } from "@/lib/categories";
+import {
+  desktopFashionNavLinks,
+  fashionCategoryLinks,
+  normalizeCategory,
+  type FashionCategoryIconKey,
+  type FashionCategoryLink,
+} from "@/lib/categories";
 import { normalizeAuthCallbackPath } from "@/lib/auth-redirect";
 import NotificationBell from "@/components/NotificationBell";
 
-const desktopLinks = [
-  { label: "Men", href: "/collections/mens-fashion-nepal", category: "Men" },
-  { label: "Women", href: "/collections/womens-fashion-nepal", category: "Women" },
-  { label: "Kids", href: "/collections/kids", category: "Kids" },
-  { label: "Ethnic", href: "/collections/ethnic", category: "Ethnic Wear" },
-  { label: "Streetwear", href: "/collections/streetwear-nepal" },
-  { label: "Hoodies", href: "/collections/hoodies-nepal" },
-  { label: "Blog", href: "/blog" },
-  { label: "All Sale", href: "/collections/sale", sale: true },
+const desktopLinks: FashionCategoryLink[] = [
+  ...desktopFashionNavLinks,
+  {
+    label: "Launching Soon",
+    shortLabel: "Launch",
+    href: "/launching-soon",
+    slug: "launching-soon",
+    iconKey: "sale" as const,
+    description: "India to Nepal delivery updates",
+  },
+  {
+    label: "Blog",
+    shortLabel: "Blog",
+    href: "/blog",
+    slug: "blog",
+    iconKey: "sale" as const,
+    description: "Style guides and shopping ideas",
+  },
 ];
+
+const categoryIconMap: Record<FashionCategoryIconKey, LucideIcon> = {
+  men: Shirt,
+  women: Shirt,
+  kids: Baby,
+  ethnic: Sparkles,
+  sportswear: Dumbbell,
+  footwear: Footprints,
+  accessories: Gem,
+  bags: ShoppingBag,
+  watches: Watch,
+  streetwear: Sparkles,
+  hoodies: Shirt,
+  sale: Tag,
+};
 
 const searchSuggestions = [
   "Pashmina shawl",
@@ -29,7 +78,7 @@ const searchSuggestions = [
   "Sports jacket",
   "Wedding ethnic wear",
   "Sneakers",
-  "Kids party wear",
+  "India delivery launch",
 ];
 
 type HeaderSessionUser = {
@@ -50,6 +99,7 @@ export default function Header() {
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [announcementText, setAnnouncementText] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeCategory, setActiveCategory] = useState("");
@@ -156,6 +206,7 @@ export default function Header() {
         ),
         items: [
           { label: t("dashboard"), href: "/vendor/dashboard" },
+          { label: "Partner Center", href: "/vendor/partner" },
           { label: t("my_products"), href: "/vendor/products" },
           { label: t("my_orders"), href: "/vendor/orders" },
           { label: t("notifications"), href: "/account/notifications" },
@@ -237,18 +288,80 @@ export default function Header() {
       )}
 
       <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="hidden border-b border-white/10 bg-[#201a17] text-white xl:block">
+          <div className="container flex h-8 items-center justify-between gap-6 text-[12px]">
+            <span className="truncate text-white/86">Welcome to Fit Bazar</span>
+            <div className="flex min-w-0 items-center gap-5 text-white/86">
+              <span className="hidden 2xl:inline">Free shipping on selected orders</span>
+              <span className="hidden 2xl:inline">7 days easy returns</span>
+              <Link href="/launching-soon" className="whitespace-nowrap text-white/86 hover:text-white">
+                Launching Soon
+              </Link>
+              <Link href="/account/orders" className="whitespace-nowrap text-white/86 hover:text-white">
+                Track Order
+              </Link>
+              <Link href="/help" className="whitespace-nowrap text-white/86 hover:text-white">
+                Help Center
+              </Link>
+            </div>
+          </div>
+        </div>
         <div className="container hidden py-3 xl:block">
-          <div className="grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_minmax(220px,0.65fr)_auto] items-center gap-x-3 2xl:grid-cols-[auto_minmax(0,1.2fr)_minmax(260px,0.95fr)_auto] 2xl:gap-x-6">
+          <div className="grid min-h-[72px] grid-cols-[auto_auto_minmax(0,1fr)_minmax(220px,0.65fr)_auto] items-center gap-x-3 2xl:grid-cols-[auto_auto_minmax(0,1.1fr)_minmax(260px,0.95fr)_auto] 2xl:gap-x-5">
             <Link href="/" className="shrink-0 py-2">
-              <div className="text-[24px] font-bold leading-[0.9] tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
-              <div className="mt-1 text-[10px] leading-none text-text-muted">Nepal&apos;s Fashion Store</div>
+              <div className="text-[24px] font-bold leading-[0.9] tracking-[0.08em] text-[#111827]">FIT BAZAR</div>
+              <div className="mt-1 text-[10px] leading-none text-text-muted">Premium Style. Delivered to Nepal.</div>
             </Link>
+
+            <div
+              className="relative"
+              onMouseEnter={() => setShowCategoryMenu(true)}
+              onMouseLeave={() => setShowCategoryMenu(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setShowCategoryMenu((current) => !current)}
+                className="flex h-10 items-center gap-2 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-text-primary hover:border-fb-pink"
+              >
+                <Menu className="h-4 w-4" />
+                All Categories
+                <ChevronDown className="h-3.5 w-3.5 text-text-muted" />
+              </button>
+              {showCategoryMenu ? (
+                <div className="absolute left-0 top-[48px] z-[1001] w-[390px] overflow-hidden rounded-[12px] border border-border-light bg-card shadow-[var(--shadow-md)]">
+                  <div className="border-b border-border-light px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-fb-pink">Shop by category</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 p-2">
+                    {fashionCategoryLinks.map((item) => {
+                      const Icon = categoryIconMap[item.iconKey];
+                      return (
+                        <Link
+                          key={item.slug}
+                          href={item.href}
+                          onClick={() => setShowCategoryMenu(false)}
+                          className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-[8px] p-3 hover:bg-[var(--bg-surface)]"
+                        >
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-fb-pink-bg text-fb-pink">
+                            <Icon className="h-4 w-4" strokeWidth={1.8} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-[13px] font-semibold text-text-primary">{item.label}</span>
+                            <span className="mt-0.5 block line-clamp-2 text-[11px] leading-4 text-text-muted">{item.description}</span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
             <div className="min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden">
               <nav className="flex min-w-max items-center gap-3 2xl:gap-6">
                 {desktopLinks.map((link) => {
                   const linkCategory = normalizeCategory(link.category);
-                  const active = link.sale
+                  const active = link.slug === "sale"
                     ? pathname === "/collections/sale" || (pathname === "/products" && saleLinkActive)
                     : linkCategory
                       ? pathname === link.href || (pathname === "/products" && activeCategory === linkCategory)
@@ -259,7 +372,7 @@ export default function Header() {
                       href={link.href}
                       className={`whitespace-nowrap border-b-2 border-transparent py-1 text-[12px] font-medium uppercase tracking-[0.05em] text-text-primary hover:border-fb-pink hover:text-text-primary 2xl:text-[13px] 2xl:tracking-[0.08em] ${active ? "border-fb-pink" : ""}`}
                     >
-                      {link.label === "Streetwear" || link.label === "Hoodies" || link.label === "Blog" ? link.label : t(link.label.toLowerCase())}
+                      {link.shortLabel}
                     </Link>
                   );
                 })}
@@ -368,8 +481,8 @@ export default function Header() {
 
         <div className="xl:hidden">
           <div className="container flex h-[58px] items-center gap-2">
-            <Link href="/" className="shrink-0 py-2" aria-label="Fit Bazzar home">
-              <div className="text-[20px] font-bold leading-none tracking-[-0.04em] text-fb-pink">Fit Bazzar</div>
+            <Link href="/" className="shrink-0 py-2" aria-label="Fit Bazar home">
+              <div className="text-[18px] font-bold leading-none tracking-[0.08em] text-[#111827]">FIT BAZAR</div>
             </Link>
             <form
               onSubmit={submitSearch}
@@ -433,6 +546,29 @@ export default function Header() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
+          {canShop ? (
+            <div className="border-b border-border-light py-2">
+              <p className="px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">Shop Categories</p>
+              {fashionCategoryLinks.map((link) => {
+                const Icon = categoryIconMap[link.iconKey];
+                return (
+                  <Link
+                    key={link.slug}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-[14px] font-medium text-text-primary"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-fb-pink-bg text-fb-pink">
+                      <Icon className="h-4 w-4" strokeWidth={1.8} />
+                    </span>
+                    <span className="min-w-0 truncate">{link.label}</span>
+                    <ChevronRight className="h-4 w-4 text-text-muted" />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
+
           {sessionUser ? (
             <div className="border-b border-border-light pb-2">
               {profileLinks.items.map((item) =>
@@ -463,17 +599,22 @@ export default function Header() {
 
           {canShop ? (
             <>
-              {desktopLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
-                >
-                  <span>{link.label === "Streetwear" || link.label === "Hoodies" || link.label === "Blog" ? link.label : t(link.label.toLowerCase())}</span>
-                  <ChevronRight className="h-4 w-4 text-text-muted" />
-                </Link>
-              ))}
+              <Link
+                href="/launching-soon"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
+              >
+                <span>Launching Soon</span>
+                <ChevronRight className="h-4 w-4 text-text-muted" />
+              </Link>
+              <Link
+                href="/blog"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-between px-4 py-4 text-[14px] font-medium text-text-primary"
+              >
+                <span>Blog</span>
+                <ChevronRight className="h-4 w-4 text-text-muted" />
+              </Link>
               <Link
                 href="/account/wishlist"
                 onClick={() => setMobileOpen(false)}

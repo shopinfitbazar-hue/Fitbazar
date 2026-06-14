@@ -341,3 +341,33 @@ export function renderVendorUpdateEmail(name: string, title: string, message: st
     "This message was sent by Fit Bazar Vendor Support.",
   );
 }
+
+export function renderPartnerApplicationEmail(name: string, planLabel: string, amount: string, dashboardUrl: string) {
+  return renderShell(
+    "Partner application received",
+    `Hello ${name}, thank you for applying for the Fit Bazar Partner Shop program. Your selected plan is ${planLabel} with a payable amount of ${amount}. Our team will review the payment and activate your partner benefits after confirmation.`,
+    "Open Partner Center",
+    dashboardUrl,
+    "Partner requests are reviewed by Fit Bazar Admin. Please keep your shop details, products, and contact information updated so the approval process stays smooth.",
+  );
+}
+
+export function renderPartnerApprovedEmail(name: string, planLabel: string, expiryDate: string, dashboardUrl: string) {
+  return renderShell(
+    "Congratulations, you are now a Fit Bazar Partner Shop",
+    `Hello ${name}, congratulations. Your ${planLabel} is active until ${expiryDate}. Partner shops receive stronger marketplace visibility, eligibility for Top Shop placement, homepage/storefront highlights, priority campaign review, and faster support for product promotions. Keep your product photos, stock, prices, and delivery updates fresh so customers get the best experience from your shop.`,
+    "Open Vendor Dashboard",
+    dashboardUrl,
+    "We are excited to grow with you. Thank you for trusting Fit Bazar as your fashion marketplace partner.",
+  );
+}
+
+export function renderPartnerStatusEmail(name: string, title: string, message: string, dashboardUrl: string) {
+  return renderShell(
+    title,
+    `Hello ${name}, ${message}`,
+    "Open Partner Center",
+    dashboardUrl,
+    "This message was sent by Fit Bazar Partner Support.",
+  );
+}

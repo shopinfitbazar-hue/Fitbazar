@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 
@@ -11,11 +12,27 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: auth.error === "Unauthorized" ? 401 : 403 });
     }
 
+    await expireExpiredPartnerships();
+
     const { vendor } = auth;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [ordersToday, pendingOrders, todayRevenue, allReviews, recentOrders, recentVendorReviews] = await Promise.all([
+    const [fullVendor, ordersToday, pendingOrders, todayRevenue, allReviews, recentOrders, recentVendorReviews] = await Promise.all([
+      prisma.vendor.findUnique({
+        where: { id: vendor.id },
+        select: {
+          id: true,
+          shopName: true,
+          slug: true,
+          isApproved: true,
+          isSuspended: true,
+          isPartnered: true,
+          partnerStatus: true,
+          partnerPlan: true,
+          partnerExpiresAt: true,
+        },
+      }),
       prisma.order.count({
         where: {
           vendorId: vendor.id,
@@ -87,7 +104,7 @@ export async function GET() {
       : 0;
 
     return NextResponse.json({
-      vendor,
+      vendor: fullVendor || vendor,
       stats: {
         todaysRevenue: todayRevenue._sum.totalAmount || 0,
         ordersToday,

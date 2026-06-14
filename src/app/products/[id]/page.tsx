@@ -267,7 +267,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           vendor: publicVendor,
           reviews: product.reviews.map((review) => ({
             ...review,
-            createdAt: review.createdAt.toISOString(),
+            createdAt: new Date(review.createdAt).toISOString(),
           })),
         }}
         similarProducts={similarProducts.map(mapProductToCard)}

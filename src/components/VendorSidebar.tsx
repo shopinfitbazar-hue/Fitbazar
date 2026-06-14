@@ -8,6 +8,7 @@ const sidebarLinks = [
   { key: "dashboard", href: "/vendor/dashboard", labelKey: "dashboard" },
   { key: "orders", href: "/vendor/orders", labelKey: "orders" },
   { key: "products", href: "/vendor/products", labelKey: "products" },
+  { key: "partner", href: "/vendor/partner", labelKey: "partner_stores" },
   { key: "payouts", href: "/vendor/payouts", labelKey: "payouts" },
   { key: "store-preview", href: "/vendor/store-preview", labelKey: "store_preview" },
   { key: "settings", href: "/vendor/settings", labelKey: "settings" },

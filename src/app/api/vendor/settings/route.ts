@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 import { revalidateStorefrontCache } from "@/lib/storefront-cache";
@@ -11,6 +12,8 @@ export async function GET() {
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.error === "Unauthorized" ? 401 : 403 });
     }
+
+    await expireExpiredPartnerships();
 
     const { vendor, session } = auth;
     const user = await prisma.user.findUnique({
@@ -37,6 +40,10 @@ export async function GET() {
         bankAccount: true,
         isApproved: true,
         isSuspended: true,
+        isPartnered: true,
+        partnerStatus: true,
+        partnerPlan: true,
+        partnerExpiresAt: true,
         commissionPct: true,
       },
     });

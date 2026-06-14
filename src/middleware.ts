@@ -96,8 +96,17 @@ function getRateLimit(path: string) {
     return 120;
   }
 
+  if (
+    path.startsWith("/api/products") ||
+    path.startsWith("/api/search") ||
+    path.startsWith("/api/vendors") ||
+    path.startsWith("/api/categories")
+  ) {
+    return 900;
+  }
+
   if (path.startsWith("/api")) return 360;
-  return 900;
+  return 2400;
 }
 
 function pruneRateLimitBuckets(now: number) {

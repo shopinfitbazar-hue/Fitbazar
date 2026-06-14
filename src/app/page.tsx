@@ -7,6 +7,7 @@ import { mapProductToCard, mapVendorToCard } from "@/lib/catalog";
 import { getSafeImageUrl, FALLBACK_BANNER_IMAGE } from "@/lib/media";
 import { ProductStatus } from "@prisma/client";
 import { buildMetadata } from "@/config/site";
+import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { SITE_SETTINGS_ID, defaultSiteSettings } from "@/lib/site-settings";
 import { PUBLIC_CATALOG_REVALIDATE_SECONDS } from "@/lib/public-catalog";
 
@@ -84,6 +85,8 @@ const homepageProductInclude = {
 };
 
 async function queryHomepageData() {
+  await expireExpiredPartnerships();
+
   const [banners, categories, mostPopular, allShopProducts, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
     prisma.banner.findMany({
       where: {
@@ -105,20 +108,22 @@ async function queryHomepageData() {
       where: {
         status: ProductStatus.ACTIVE,
         isActive: true,
+        homepageSlot: { in: ["AUTO", "TRENDING", "SHOWCASE"] },
         vendor: homepageProductVendorFilter,
       },
       include: homepageProductInclude,
-      orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ homepagePriority: "desc" }, { totalSold: "desc" }, { createdAt: "desc" }],
       take: 12,
     }),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
         isActive: true,
+        homepageSlot: { in: ["AUTO", "FRESH", "SHOWCASE"] },
         vendor: homepageProductVendorFilter,
       },
       include: homepageProductInclude,
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: [{ homepagePriority: "desc" }, { createdAt: "desc" }],
       take: 12,
     }),
     getHomepageFestivalConfig(),
@@ -127,22 +132,22 @@ async function queryHomepageData() {
       where: {
         status: ProductStatus.ACTIVE,
         isActive: true,
-        isYearRoundSale: true,
+        OR: [{ isYearRoundSale: true }, { homepageSlot: "SALE" }],
         vendor: homepageProductVendorFilter,
       },
       include: homepageProductInclude,
-      orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
+      orderBy: [{ homepagePriority: "desc" }, { discountPct: "desc" }, { totalSold: "desc" }],
       take: 8,
     }),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
         isActive: true,
-        discountPct: { gte: 20 },
+        OR: [{ discountPct: { gte: 20 } }, { homepageSlot: "OFFERS" }],
         vendor: homepageProductVendorFilter,
       },
       include: homepageProductInclude,
-      orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
+      orderBy: [{ homepagePriority: "desc" }, { discountPct: "desc" }, { totalSold: "desc" }],
       take: 8,
     }),
     prisma.vendor.findMany({
@@ -197,11 +202,11 @@ async function queryHomepageData() {
         where: {
           status: ProductStatus.ACTIVE,
           isActive: true,
-          isFestivalSale: true,
+          OR: [{ isFestivalSale: true }, { homepageSlot: "FESTIVAL" }],
           vendor: homepageProductVendorFilter,
         },
         include: homepageProductInclude,
-        orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
+        orderBy: [{ homepagePriority: "desc" }, { totalSold: "desc" }, { createdAt: "desc" }],
         take: 8,
       })
     : [];

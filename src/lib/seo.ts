@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { Review } from "@prisma/client";
 import { siteConfig } from "@/config/site";
-import { categorySlug, normalizeCategory } from "@/lib/categories";
+import { collectionHrefForCategory, normalizeCategory } from "@/lib/categories";
 
 export type BreadcrumbItem = {
   name: string;
@@ -274,12 +274,7 @@ export function truncateSeo(value: string, maxLength = 155) {
 }
 
 export function collectionPathForCategory(category: string) {
-  const slug = categorySlug(category);
-  if (slug === "men") return "/collections/mens-fashion-nepal";
-  if (slug === "women") return "/collections/womens-fashion-nepal";
-  if (slug === "sports") return "/collections/sportswear";
-  if (slug === "ethnic-wear") return "/collections/ethnic";
-  return `/collections/${slug}`;
+  return collectionHrefForCategory(category);
 }
 
 export function getCollectionDefinition(slug: string) {

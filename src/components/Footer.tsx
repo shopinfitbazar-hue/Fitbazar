@@ -15,6 +15,7 @@ const groups = [
       { label: "ethnic", href: "/collections/ethnic" },
       { label: "streetwear", href: "/collections/streetwear-nepal" },
       { label: "hoodies", href: "/collections/hoodies-nepal" },
+      { label: "launching_soon", href: "/launching-soon" },
     ],
   },
   {
@@ -74,7 +75,15 @@ export default function Footer() {
               <div className="mt-4 space-y-3">
                 {group.links.map((link) => (
                   <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
-                    {link.label === "hoodies" ? "Hoodies" : link.label === "streetwear" ? "Streetwear" : link.label === "blog" ? "Blog" : t(link.label)}
+                    {link.label === "hoodies"
+                      ? "Hoodies"
+                      : link.label === "streetwear"
+                        ? "Streetwear"
+                        : link.label === "blog"
+                          ? "Blog"
+                          : link.label === "launching_soon"
+                            ? "Launching Soon"
+                            : t(link.label)}
                   </Link>
                 ))}
               </div>
@@ -105,7 +114,15 @@ export default function Footer() {
                   <div className="mt-3 space-y-3">
                     {group.links.map((link) => (
                       <Link key={link.label} href={link.href} className="block text-[13px] text-[#D7D9E0]">
-                        {link.label === "hoodies" ? "Hoodies" : link.label === "streetwear" ? "Streetwear" : link.label === "blog" ? "Blog" : t(link.label)}
+                        {link.label === "hoodies"
+                          ? "Hoodies"
+                          : link.label === "streetwear"
+                            ? "Streetwear"
+                            : link.label === "blog"
+                              ? "Blog"
+                              : link.label === "launching_soon"
+                                ? "Launching Soon"
+                                : t(link.label)}
                       </Link>
                     ))}
                   </div>

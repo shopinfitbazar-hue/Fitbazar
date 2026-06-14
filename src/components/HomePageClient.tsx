@@ -4,22 +4,36 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Baby,
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
   Dumbbell,
   Footprints,
   Gem,
+  RotateCcw,
+  ShieldCheck,
   Shirt,
   ShoppingBag,
   Sparkles,
   Tag,
+  Truck,
+  Watch,
   type LucideIcon,
 } from "lucide-react";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import VendorCard from "@/components/VendorCard";
+import LaunchingSoonPromo from "@/components/LaunchingSoonPromo";
 import SectionHeading from "@/components/ui/SectionHeading";
 import SmartImage from "@/components/ui/SmartImage";
-import { categorySlug } from "@/lib/categories";
+import {
+  categorySlug,
+  collectionHrefForCategory,
+  fashionCategoryLinks,
+  isFashionCategoryName,
+  normalizeCategory,
+  type FashionCategoryIconKey,
+  type FashionCategoryLink,
+} from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
 import { getSafeHref } from "@/lib/media";
 
@@ -78,31 +92,37 @@ function formatCountdown(endDate: string) {
   return `Ends in ${days} days ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-function collectionHrefForCategory(name: string) {
-  const slug = categorySlug(name);
-  if (slug === "men") return "/collections/mens-fashion-nepal";
-  if (slug === "women") return "/collections/womens-fashion-nepal";
-  if (slug === "ethnic-wear") return "/collections/ethnic";
-  if (slug === "sports" || slug === "sportswear") return "/collections/streetwear-nepal";
-  return `/collections/${slug}`;
-}
-
-const categoryIcons: Record<string, LucideIcon> = {
+const categoryIcons: Record<FashionCategoryIconKey, LucideIcon> = {
   men: Shirt,
   women: Shirt,
   kids: Baby,
   ethnic: Sparkles,
-  "ethnic-wear": Sparkles,
-  sports: Dumbbell,
   sportswear: Dumbbell,
-  accessories: Gem,
   footwear: Footprints,
+  accessories: Gem,
+  bags: ShoppingBag,
+  watches: Watch,
+  streetwear: Sparkles,
+  hoodies: Shirt,
   sale: Tag,
-  "all-sale": Tag,
 };
 
-function getCategoryIcon(name: string) {
-  return categoryIcons[categorySlug(name)] ?? ShoppingBag;
+function getCategoryIcon(iconKey: FashionCategoryIconKey) {
+  return categoryIcons[iconKey] ?? ShoppingBag;
+}
+
+function getCategoryIconKey(name: string): FashionCategoryIconKey {
+  const slug = categorySlug(name);
+  if (slug === "men") return "men";
+  if (slug === "women") return "women";
+  if (slug === "kids") return "kids";
+  if (slug === "ethnic" || slug === "ethnic-wear") return "ethnic";
+  if (slug === "sports" || slug === "sportswear") return "sportswear";
+  if (slug === "footwear" || slug === "shoes") return "footwear";
+  if (slug === "streetwear") return "streetwear";
+  if (slug === "hoodies") return "hoodies";
+  if (slug === "sale" || slug === "all-sale") return "sale";
+  return "accessories";
 }
 
 export default function HomePageClient({
@@ -142,25 +162,47 @@ export default function HomePageClient({
     return () => window.clearInterval(timer);
   }, [festival]);
 
-  const displayCategories = useMemo(
-    () =>
-      categories.length
-        ? categories.slice(0, 8)
-        : [
-            { name: "Men", slug: "men" },
-            { name: "Women", slug: "women" },
-            { name: "Kids", slug: "kids" },
-            { name: "Ethnic", slug: "ethnic" },
-            { name: "Sports", slug: "sports" },
-            { name: "Accessories", slug: "accessories" },
-            { name: "Footwear", slug: "footwear" },
-            { name: "All Sale", slug: "sale" },
-          ],
-    [categories],
-  );
+  const displayCategories = useMemo(() => {
+    const seen = new Set<string>();
+    const items: FashionCategoryLink[] = [];
+    const add = (item: FashionCategoryLink) => {
+      if (seen.has(item.href)) return;
+      seen.add(item.href);
+      items.push(item);
+    };
+
+    fashionCategoryLinks.slice(0, 10).forEach(add);
+    categories
+      .filter((category) => isFashionCategoryName(category.name))
+      .forEach((category) => {
+        const href = collectionHrefForCategory(category.name);
+        const existing = fashionCategoryLinks.find(
+          (item) => item.href === href || normalizeCategory(item.category) === normalizeCategory(category.name),
+        );
+        add(
+          existing ?? {
+            label: category.name,
+            shortLabel: category.name,
+            href,
+            category: normalizeCategory(category.name),
+            slug: category.slug || categorySlug(category.name),
+            iconKey: getCategoryIconKey(category.name),
+            description: `Explore ${category.name.toLowerCase()} picks`,
+          },
+        );
+      });
+
+    return items.slice(0, 10);
+  }, [categories]);
 
   const activeBannerItem = banners[activeBanner];
   const productGridClass = "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
+  const trustBadges = [
+    { label: "Fast Delivery", detail: "Selected orders", icon: Truck },
+    { label: "Easy Return", detail: "7 days return", icon: RotateCcw },
+    { label: "Secure Payment", detail: "Protected checkout", icon: ShieldCheck },
+    { label: "Authentic Shops", detail: "Approved sellers", icon: BadgeCheck },
+  ];
   const showcaseItems = [
     {
       label: "Showcase",
@@ -289,11 +331,11 @@ export default function HomePageClient({
           />
           <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
             {displayCategories.map((category, index) => {
-              const Icon = getCategoryIcon(category.name);
+              const Icon = getCategoryIcon(category.iconKey);
               return (
                 <Link
                   key={category.slug}
-                  href={collectionHrefForCategory(category.name)}
+                  href={category.href}
                   className="min-w-[92px] text-center"
                 >
                   <div
@@ -302,10 +344,58 @@ export default function HomePageClient({
                   >
                     <Icon className="h-7 w-7" strokeWidth={1.8} />
                   </div>
-                  <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-text-secondary">{category.name}</div>
+                  <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-text-secondary">{category.shortLabel}</div>
                 </Link>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_360px]">
+          {[
+            {
+              eyebrow: "Men's Collection",
+              title: "Sharp daily fits",
+              href: "/collections/mens-fashion-nepal",
+              image: mostPopular[0]?.images?.[0] || activeBannerItem?.imageUrl,
+            },
+            {
+              eyebrow: "Women's Collection",
+              title: "Festive to everyday",
+              href: "/collections/womens-fashion-nepal",
+              image: mostPopular[1]?.images?.[0] || activeBannerItem?.imageUrl,
+            },
+          ].map((item) => (
+            <Link
+              key={item.eyebrow}
+              href={item.href}
+              className="group relative min-h-[176px] overflow-hidden rounded-[20px] bg-card shadow-[var(--shadow-card)]"
+            >
+              <SmartImage
+                src={item.image}
+                alt={item.eyebrow}
+                fill
+                sizes="(max-width: 1023px) 100vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,26,23,0.72)_0%,rgba(32,26,23,0.26)_68%,rgba(32,26,23,0)_100%)]" />
+              <div className="absolute inset-y-0 left-0 flex max-w-[16rem] flex-col justify-center p-5">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/76">{item.eyebrow}</p>
+                <h2 className="mt-2 text-[1.45rem] leading-tight text-white">{item.title}</h2>
+                <span className="mt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-white">Shop now</span>
+              </div>
+            </Link>
+          ))}
+          <div className="grid grid-cols-2 gap-3 rounded-[20px] border border-white/70 bg-card p-4 shadow-[var(--shadow-card)]">
+            {trustBadges.map((item) => (
+              <div key={item.label} className="min-w-0 rounded-[12px] bg-[var(--bg-surface)] p-3">
+                <item.icon className="h-5 w-5 text-fb-pink" strokeWidth={1.8} />
+                <p className="mt-3 truncate text-[13px] font-semibold text-text-primary">{item.label}</p>
+                <p className="mt-1 line-clamp-1 text-[11px] text-text-muted">{item.detail}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -393,6 +483,10 @@ export default function HomePageClient({
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="section">
+        <LaunchingSoonPromo />
       </section>
 
       <section className="section">

@@ -44,6 +44,7 @@ export async function GET(request: Request) {
             { name: { contains: q, mode: "insensitive" as const } },
             { slug: { contains: q, mode: "insensitive" as const } },
             { category: { contains: q, mode: "insensitive" as const } },
+            { homepageSlot: { contains: q, mode: "insensitive" as const } },
             { vendor: { shopName: { contains: q, mode: "insensitive" as const } } },
           ],
         }
@@ -110,6 +111,8 @@ export async function POST(request: Request) {
       isFeatured?: boolean;
       isFestivalSale?: boolean;
       isYearRoundSale?: boolean;
+      homepageSlot?: string;
+      homepagePriority?: number;
       isActive?: boolean;
       status?: string;
     };
@@ -149,6 +152,8 @@ export async function POST(request: Request) {
         isFeatured: Boolean(body.isFeatured),
         isFestivalSale: Boolean(body.isFestivalSale),
         isYearRoundSale: Boolean(body.isYearRoundSale),
+        homepageSlot: body.homepageSlot?.trim().toUpperCase() || "AUTO",
+        homepagePriority: Number(body.homepagePriority || 0),
         isActive: status === "ACTIVE",
         status,
       },

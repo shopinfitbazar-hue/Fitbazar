@@ -1,4 +1,4 @@
-import { categorySlug } from "./categories";
+import { collectionHrefForCategory } from "./categories";
 
 export type SearchSuggestion =
   | { type: "category"; name: string; slug: string }
@@ -6,9 +6,11 @@ export type SearchSuggestion =
   | { type: "product"; name: string; slug?: never };
 
 export const searchSuggestions = [
-  { type: "category", name: "Men", slug: "men" },
-  { type: "category", name: "Women", slug: "women" },
-  { type: "category", name: "Traditional Wear", slug: "ethnic" },
+  { type: "category", name: "Men's Fashion", slug: "mens-fashion-nepal" },
+  { type: "category", name: "Women's Fashion", slug: "womens-fashion-nepal" },
+  { type: "category", name: "Ethnic Wear", slug: "ethnic" },
+  { type: "category", name: "Footwear", slug: "footwear" },
+  { type: "category", name: "Accessories", slug: "accessories" },
   { type: "brand", name: "Himalayan Loom" },
   { type: "brand", name: "Kathmandu Threads" },
   { type: "product", name: "Silk Embroidered Kurta" },
@@ -17,20 +19,11 @@ export const searchSuggestions = [
 
 export const trendingSearches = [
   "Silk Kurta",
-  "Wool Sweater",
-  "Pashmina",
-  "Daura Suruwal",
-  "Dhoti",
+  "Sneakers",
+  "Hoodies",
+  "Kurta set",
+  "Watches",
 ];
-
-export function collectionHrefForCategory(name: string) {
-  const slug = categorySlug(name);
-  if (slug === "men") return "/collections/mens-fashion-nepal";
-  if (slug === "women") return "/collections/womens-fashion-nepal";
-  if (slug === "ethnic-wear") return "/collections/ethnic";
-  if (slug === "sports") return "/collections/streetwear-nepal";
-  return `/collections/${slug}`;
-}
 
 export function suggestionHref(item: SearchSuggestion) {
   if (item.type === "product") return `/products?q=${encodeURIComponent(item.name)}`;

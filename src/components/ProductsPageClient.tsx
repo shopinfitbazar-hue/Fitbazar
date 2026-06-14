@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import ProductCard, { type ProductCardProps } from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ui/Skeleton";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { normalizeCategory } from "@/lib/categories";
+import { fashionCategoryLinks, normalizeCategory } from "@/lib/categories";
 import { useLanguage } from "@/lib/LanguageContext";
 
 interface ProductApiItem {
@@ -82,6 +82,10 @@ const discountOptions = [
   { labelKey: "discount_40_above", value: "40" },
   { labelKey: "discount_50_above", value: "50" },
 ];
+
+const quickCategoryLinks = fashionCategoryLinks
+  .filter((item) => ["mens-fashion-nepal", "womens-fashion-nepal", "kids", "ethnic", "sportswear", "footwear", "accessories", "sale"].includes(item.slug))
+  .map((item) => ({ label: item.shortLabel, href: item.href }));
 
 function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPageClientProps) {
   const router = useRouter();
@@ -364,13 +368,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
           </h1>
           <p className="mt-2 max-w-[760px] text-[14px] leading-6 text-text-secondary">{pageIntro}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {[
-              { label: "Men", href: "/collections/men" },
-              { label: "Women", href: "/collections/women" },
-              { label: "Ethnic Wear", href: "/collections/ethnic" },
-              { label: "Sportswear", href: "/collections/sportswear" },
-              { label: "Sale", href: "/collections/sale" },
-            ].map((item) => (
+            {quickCategoryLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

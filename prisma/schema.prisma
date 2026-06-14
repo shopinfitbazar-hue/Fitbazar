@@ -114,6 +114,14 @@ model Vendor {
   isSuspended   Boolean   @default(false)
   isPartnered   Boolean   @default(false)
   isTopShop     Boolean   @default(false)
+  partnerStatus String    @default("NONE")
+  partnerPlan   String?
+  partnerRequestedAt DateTime?
+  partnerStartedAt   DateTime?
+  partnerExpiresAt   DateTime?
+  partnerRenewedAt   DateTime?
+  partnerPaymentDue  Float?
+  partnerPaymentNote String?
   commissionPct Float     @default(8.0)
   products      Product[]
   orders        Order[]
@@ -121,6 +129,8 @@ model Vendor {
   createdAt     DateTime  @default(now())
 
   @@index([isApproved, isSuspended, isPartnered])
+  @@index([isApproved, isSuspended])
+  @@index([partnerStatus, partnerExpiresAt])
   @@index([isTopShop, createdAt])
   @@index([createdAt])
   @@index([shopName])
@@ -165,6 +175,8 @@ model Product {
   isFestivalSale  Boolean  @default(false)
   isYearRoundSale Boolean  @default(false)
   isFeatured      Boolean  @default(false)
+  homepageSlot    String   @default("AUTO")
+  homepagePriority Int     @default(0)
   isActive        Boolean  @default(true)
   status          ProductStatus @default(DRAFT)
   tags            String[]
@@ -179,9 +191,15 @@ model Product {
   cartItems   CartItem[]
 
   @@index([status, isActive, createdAt])
+  @@index([status, isActive, totalSold])
+  @@index([status, isActive, category, totalSold])
+  @@index([status, isActive, category, createdAt])
+  @@index([status, isActive, discountPct, totalSold])
+  @@index([status, isActive, homepageSlot, homepagePriority])
   @@index([status, category])
   @@index([status, discountPct])
   @@index([status, totalSold])
+  @@index([homepageSlot, homepagePriority])
   @@index([vendorId, status])
   @@index([createdAt])
 }

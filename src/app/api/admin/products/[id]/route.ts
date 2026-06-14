@@ -39,7 +39,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const { id } = await params;
-    const body = (await request.json()) as { isFeatured?: boolean; isActive?: boolean; status?: string };
+    const body = (await request.json()) as {
+      isFeatured?: boolean;
+      isActive?: boolean;
+      status?: string;
+      homepageSlot?: string;
+      homepagePriority?: number;
+    };
 
     let nextStatus = body.status;
     if (!nextStatus && body.isActive !== undefined) {
@@ -72,6 +78,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { id },
       data: {
         ...(body.isFeatured !== undefined ? { isFeatured: body.isFeatured } : {}),
+        ...(body.homepageSlot !== undefined ? { homepageSlot: body.homepageSlot.trim().toUpperCase() || "AUTO" } : {}),
+        ...(body.homepagePriority !== undefined ? { homepagePriority: Number(body.homepagePriority || 0) } : {}),
         ...(derivedStatus !== undefined ? { status: derivedStatus, isActive: derivedStatus === "ACTIVE" } : {}),
         ...(derivedStatus === undefined && body.isActive !== undefined ? { isActive: body.isActive } : {}),
       },
@@ -148,6 +156,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       isFeatured?: boolean;
       isFestivalSale?: boolean;
       isYearRoundSale?: boolean;
+      homepageSlot?: string;
+      homepagePriority?: number;
       isActive?: boolean;
       status?: string;
     };
@@ -205,6 +215,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         ...(body.isFeatured !== undefined ? { isFeatured: body.isFeatured } : {}),
         ...(body.isFestivalSale !== undefined ? { isFestivalSale: body.isFestivalSale } : {}),
         ...(body.isYearRoundSale !== undefined ? { isYearRoundSale: body.isYearRoundSale } : {}),
+        ...(body.homepageSlot !== undefined ? { homepageSlot: body.homepageSlot.trim().toUpperCase() || "AUTO" } : {}),
+        ...(body.homepagePriority !== undefined ? { homepagePriority: Number(body.homepagePriority || 0) } : {}),
         ...(status !== undefined ? { status, isActive: status === "ACTIVE" } : {}),
       },
     });
