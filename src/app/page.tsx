@@ -56,8 +56,35 @@ async function getHomepageSiteSettings() {
   }
 }
 
+const homepageProductVendorFilter = {
+  isApproved: true,
+  isSuspended: false,
+};
+
+const homepageProductInclude = {
+  vendor: {
+    select: {
+      id: true,
+      shopName: true,
+      slug: true,
+      logo: true,
+      isPartnered: true,
+    },
+  },
+  reviews: {
+    select: {
+      rating: true,
+    },
+  },
+  _count: {
+    select: {
+      reviews: true,
+    },
+  },
+};
+
 async function queryHomepageData() {
-  const [banners, categories, mostPopular, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
+  const [banners, categories, mostPopular, allShopProducts, festivalConfig, siteSettings, yearRoundProducts, specialDiscounts, topShopVendors, partneredVendors] = await Promise.all([
     prisma.banner.findMany({
       where: {
         isActive: true,
@@ -77,103 +104,44 @@ async function queryHomepageData() {
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
-        vendor: {
-          isApproved: true,
-          isSuspended: false,
-          isPartnered: true,
-        },
+        isActive: true,
+        vendor: homepageProductVendorFilter,
       },
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-            isPartnered: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
+      include: homepageProductInclude,
       orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
-      take: 8,
+      take: 12,
+    }),
+    prisma.product.findMany({
+      where: {
+        status: ProductStatus.ACTIVE,
+        isActive: true,
+        vendor: homepageProductVendorFilter,
+      },
+      include: homepageProductInclude,
+      orderBy: [{ createdAt: "desc" }],
+      take: 12,
     }),
     getHomepageFestivalConfig(),
     getHomepageSiteSettings(),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
+        isActive: true,
         isYearRoundSale: true,
-        vendor: {
-          isApproved: true,
-          isSuspended: false,
-          isPartnered: true,
-        },
+        vendor: homepageProductVendorFilter,
       },
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-            isPartnered: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
+      include: homepageProductInclude,
       orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
       take: 8,
     }),
     prisma.product.findMany({
       where: {
         status: ProductStatus.ACTIVE,
+        isActive: true,
         discountPct: { gte: 20 },
-        vendor: {
-          isApproved: true,
-          isSuspended: false,
-          isPartnered: true,
-        },
+        vendor: homepageProductVendorFilter,
       },
-      include: {
-        vendor: {
-          select: {
-            id: true,
-            shopName: true,
-            slug: true,
-            logo: true,
-            isPartnered: true,
-          },
-        },
-        reviews: {
-          select: {
-            rating: true,
-          },
-        },
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
-      },
+      include: homepageProductInclude,
       orderBy: [{ discountPct: "desc" }, { totalSold: "desc" }],
       take: 8,
     }),
@@ -228,34 +196,11 @@ async function queryHomepageData() {
     ? await prisma.product.findMany({
         where: {
           status: ProductStatus.ACTIVE,
+          isActive: true,
           isFestivalSale: true,
-          vendor: {
-          isApproved: true,
-          isSuspended: false,
-          isPartnered: true,
+          vendor: homepageProductVendorFilter,
         },
-        },
-        include: {
-          vendor: {
-            select: {
-              id: true,
-              shopName: true,
-              slug: true,
-              logo: true,
-              isPartnered: true,
-            },
-          },
-          reviews: {
-            select: {
-              rating: true,
-            },
-          },
-          _count: {
-            select: {
-              reviews: true,
-            },
-          },
-        },
+        include: homepageProductInclude,
         orderBy: [{ totalSold: "desc" }, { createdAt: "desc" }],
         take: 8,
       })
@@ -267,6 +212,7 @@ async function queryHomepageData() {
     banners,
     categories,
     mostPopular,
+    allShopProducts,
     festivalConfig,
     siteSettings,
     yearRoundProducts,
@@ -290,6 +236,7 @@ export default async function HomePage() {
     banners,
     categories,
     mostPopular,
+    allShopProducts,
     festivalConfig,
     siteSettings,
     yearRoundProducts,
@@ -310,6 +257,7 @@ export default async function HomePage() {
         }))}
         categories={categories}
         mostPopular={mostPopular.map(mapProductToCard)}
+        allShopProducts={allShopProducts.map(mapProductToCard)}
         festivalProducts={festivalProducts.map(mapProductToCard)}
         yearRoundProducts={yearRoundProducts.map(mapProductToCard)}
         specialDiscounts={specialDiscounts.map(mapProductToCard)}

@@ -158,9 +158,9 @@ function ProductCard({
   return (
     <Link
       href={href}
-      className="product-card group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[24px] border border-white/70 bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
+      className="product-card group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[20px] border border-white/80 bg-card shadow-[0_12px_34px_rgba(76,53,37,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(76,53,37,0.11)]"
     >
-      <div className="relative aspect-[3/4] shrink-0 overflow-hidden bg-[var(--bg-surface)]">
+      <div className="relative aspect-[4/5] shrink-0 overflow-hidden bg-[var(--bg-surface)]">
         <SmartImage
           src={image}
           alt={name}
@@ -203,7 +203,7 @@ function ProductCard({
           </button>
         ) : null}
 
-        <div className="absolute inset-x-4 bottom-4 hidden translate-y-5 items-center justify-center rounded-full bg-[rgba(24,24,27,0.84)] px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 md:flex h-10 backdrop-blur-md">
+        <div className="absolute inset-x-4 bottom-4 hidden h-10 translate-y-5 items-center justify-center rounded-full bg-[rgba(32,26,23,0.76)] px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white opacity-0 backdrop-blur-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 md:flex">
           {t("view_details")}
         </div>
       </div>
@@ -221,14 +221,14 @@ function ProductCard({
         >
           {vendorName}
         </button>
-        <h3 className="mt-2 min-h-[41px] line-clamp-2 text-[15px] font-medium leading-[1.35] text-text-primary">{name}</h3>
+        <h3 className="mt-2 min-h-[41px] line-clamp-2 text-[15px] font-semibold leading-[1.35] text-text-primary">{name}</h3>
 
         <div className="mt-3 flex min-h-[44px] flex-wrap items-start gap-2">
-          <span className="text-[16px] font-semibold tracking-[-0.03em] text-text-primary">{formatPrice(price)}</span>
+          <span className="text-[17px] font-bold leading-none text-[var(--text-price)]">{formatPrice(price)}</span>
           {originalPrice && originalPrice > price ? (
             <>
               <span className="text-[12px] text-text-muted line-through">{formatPrice(originalPrice)}</span>
-              <span className="rounded-full bg-[rgba(196,78,30,0.08)] px-2 py-1 text-[11px] font-semibold text-fb-orange">{discountPercent || 0}% OFF</span>
+              <span className="rounded-full bg-fb-pink-bg px-2 py-1 text-[11px] font-semibold text-fb-pink">{discountPercent || 0}% OFF</span>
             </>
           ) : null}
         </div>
@@ -238,24 +238,24 @@ function ProductCard({
         </div>
 
         {canShop ? (
-          <div className="mt-auto grid gap-2 pt-3 sm:grid-cols-2">
+          <div className="mt-auto grid grid-cols-2 gap-1.5 pt-3 sm:gap-2">
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex h-9 items-center justify-center gap-1.5 rounded-full border border-border-default bg-[rgba(255,255,255,0.84)] px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-primary"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full border border-fb-pink/30 bg-white px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-fb-pink hover:bg-fb-pink-bg sm:px-3 sm:text-[11px]"
               aria-label={t("add_to_cart")}
             >
               <ShoppingBag className="h-3.5 w-3.5" />
-              <span>{addedToCart ? t("added_check") : t("cart")}</span>
+              <span className="truncate">{addedToCart ? t("added_check") : t("cart")}</span>
             </button>
             <button
               type="button"
               onClick={handleBuyNow}
-              className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-text-primary px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-[var(--shadow-sm)]"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full bg-fb-pink px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_10px_24px_rgba(196,63,87,0.22)] hover:bg-[#b7354d] sm:px-3 sm:text-[11px]"
               aria-label={t("buy_now")}
             >
               <Zap className="h-3.5 w-3.5" />
-              <span>{t("buy_now")}</span>
+              <span className="truncate">{t("buy_now")}</span>
             </button>
           </div>
         ) : null}

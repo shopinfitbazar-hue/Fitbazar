@@ -35,6 +35,7 @@ interface HomePageClientProps {
     slug: string;
   }>;
   mostPopular: ProductCardProps[];
+  allShopProducts: ProductCardProps[];
   festivalProducts: ProductCardProps[];
   yearRoundProducts: ProductCardProps[];
   specialDiscounts: ProductCardProps[];
@@ -108,6 +109,7 @@ export default function HomePageClient({
   banners,
   categories,
   mostPopular,
+  allShopProducts,
   festivalProducts,
   yearRoundProducts,
   specialDiscounts,
@@ -158,6 +160,7 @@ export default function HomePageClient({
   );
 
   const activeBannerItem = banners[activeBanner];
+  const productGridClass = "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4";
   const showcaseItems = [
     {
       label: "Showcase",
@@ -315,13 +318,32 @@ export default function HomePageClient({
             subtitle="सबैभन्दा लोकप्रिय"
             actionHref="/products?sort=popularity"
           />
-          <div className="grid auto-cols-[180px] snap-x snap-mandatory grid-flow-col gap-4 overflow-x-auto overscroll-x-contain pb-2 lg:auto-cols-[240px] [&::-webkit-scrollbar]:hidden">
-          {mostPopular.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
+          <div className={productGridClass}>
+            {mostPopular.map((product) => (
+              <ProductCard key={product.id} {...product} />
+            ))}
           </div>
         </div>
       </section>
+
+      {allShopProducts.length ? (
+        <section className="section">
+          <div className="section-shell">
+            <SectionHeading
+              eyebrow="All Shops"
+              title="Fresh Finds From Every Approved Store"
+              subtitle="New drops, daily essentials, and fresh styles gathered across FitBazar."
+              actionHref="/products"
+              actionLabel={t("view_all")}
+            />
+            <div className={productGridClass}>
+              {allShopProducts.map((product) => (
+                <ProductCard key={product.id} {...product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {festival?.isActive && festivalProducts.length ? (
         <section className="section">
@@ -334,7 +356,7 @@ export default function HomePageClient({
               </div>
               <p className="text-sm text-text-secondary">{festival.nameNp}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className={productGridClass}>
               {festivalProducts.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}
@@ -349,7 +371,7 @@ export default function HomePageClient({
             <h2>Always On Sale</h2>
             <span className="badge badge-green">Live</span>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className={productGridClass}>
             {yearRoundProducts.map((product) => (
               <ProductCard key={product.id} {...product} />
             ))}
@@ -365,10 +387,10 @@ export default function HomePageClient({
             actionHref="/collections/sale"
             actionLabel={t("view_all")}
           />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {specialDiscounts.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
+          <div className={productGridClass}>
+            {specialDiscounts.map((product) => (
+              <ProductCard key={product.id} {...product} />
+            ))}
           </div>
         </div>
       </section>

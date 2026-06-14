@@ -483,7 +483,7 @@ export default function ProductDetailClient({
           </div>
 
           <div className="mt-4 flex flex-wrap items-end gap-3">
-            <span className="text-[1.85rem] font-bold leading-none tracking-[-0.04em] text-text-primary">{formatPriceNpr(product.price)}</span>
+            <span className="text-[1.85rem] font-bold leading-none text-[var(--text-price)]">{formatPriceNpr(product.price)}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price ? (
               <>
                 <span className="text-[14px] text-text-muted line-through">{formatPriceNpr(product.compareAtPrice)}</span>
@@ -627,7 +627,7 @@ export default function ProductDetailClient({
           <div className="py-1">
             <div className="flex flex-wrap items-end gap-2">
               <span className="text-[12px] text-text-muted">MRP:</span>
-              <span className="text-[22px] font-bold text-text-primary md:text-[24px]">{formatPriceNpr(product.price)}</span>
+              <span className="text-[22px] font-bold text-[var(--text-price)] md:text-[24px]">{formatPriceNpr(product.price)}</span>
               {product.compareAtPrice && product.compareAtPrice > product.price ? (
                 <>
                   <span className="text-[14px] text-text-muted line-through">{formatPriceNpr(product.compareAtPrice)}</span>
