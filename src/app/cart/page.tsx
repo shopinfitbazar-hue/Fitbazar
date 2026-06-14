@@ -124,7 +124,7 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center rounded-[20px] border border-border-default">
+                        <div className="flex items-center rounded-[4px] border border-border-default">
                           <button type="button" onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 py-1.5">
                             <Minus className="h-4 w-4" />
                           </button>
@@ -198,7 +198,7 @@ export default function CartPage() {
               </Link>
               </aside>
             </div>
-            <div className="fixed inset-x-0 bottom-12 z-[900] border-t border-border-light bg-card/95 px-3 py-3 shadow-[0_-12px_30px_rgba(32,26,23,0.12)] backdrop-blur lg:hidden">
+            <div className="fixed inset-x-0 bottom-12 z-[900] border-t border-border-light bg-card/95 px-3 py-3 shadow-[0_-12px_30px_rgba(16,24,39,0.1)] backdrop-blur lg:hidden">
               <div className="mx-auto flex max-w-site items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("total_amount")}</p>

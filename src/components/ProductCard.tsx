@@ -158,7 +158,7 @@ function ProductCard({
   return (
     <Link
       href={href}
-      className="product-card group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[20px] border border-white/80 bg-card shadow-[0_12px_34px_rgba(76,53,37,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(76,53,37,0.11)]"
+      className="product-card group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[8px] border border-border-light bg-card shadow-[0_10px_28px_rgba(17,24,39,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(17,24,39,0.09)]"
     >
       <div className="relative aspect-[4/5] shrink-0 overflow-hidden bg-[var(--bg-surface)]">
         <SmartImage
@@ -203,7 +203,7 @@ function ProductCard({
           </button>
         ) : null}
 
-        <div className="absolute inset-x-4 bottom-4 hidden h-10 translate-y-5 items-center justify-center rounded-full bg-[rgba(32,26,23,0.76)] px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white opacity-0 backdrop-blur-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 md:flex">
+        <div className="absolute inset-x-4 bottom-4 hidden h-10 translate-y-5 items-center justify-center rounded-[4px] bg-[rgba(16,24,39,0.86)] px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white opacity-0 backdrop-blur-md transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 md:flex">
           {t("view_details")}
         </div>
       </div>
@@ -242,7 +242,7 @@ function ProductCard({
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full border border-fb-pink/30 bg-white px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-fb-pink hover:bg-fb-pink-bg sm:px-3 sm:text-[11px]"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[4px] border border-[#101827]/20 bg-white px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#101827] hover:bg-[var(--bg-surface)] sm:px-3 sm:text-[11px]"
               aria-label={t("add_to_cart")}
             >
               <ShoppingBag className="h-3.5 w-3.5" />
@@ -251,7 +251,7 @@ function ProductCard({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full bg-fb-pink px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_10px_24px_rgba(196,63,87,0.22)] hover:bg-[#b7354d] sm:px-3 sm:text-[11px]"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-[4px] bg-[#101827] px-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_10px_24px_rgba(16,24,39,0.18)] hover:bg-[#182337] sm:px-3 sm:text-[11px]"
               aria-label={t("buy_now")}
             >
               <Zap className="h-3.5 w-3.5" />

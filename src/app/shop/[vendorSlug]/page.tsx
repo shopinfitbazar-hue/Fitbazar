@@ -272,12 +272,12 @@ export default async function VendorStorePage({
               <p className="mt-1 text-[13px] text-text-muted">{products.length} {t("items_from_store", lang)}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href={`/shop/${vendor.slug}`} className={`rounded-[20px] border px-3 py-1 text-[12px] ${!category ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}>{t("all", lang)}</Link>
+              <Link href={`/shop/${vendor.slug}`} className={`rounded-[4px] border px-3 py-1 text-[12px] ${!category ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}>{t("all", lang)}</Link>
               {categories.map((item) => (
                 <a
                   key={item.category}
                   href={`/shop/${vendor.slug}?category=${encodeURIComponent(item.category)}`}
-                  className={`rounded-[20px] border px-3 py-1 text-[12px] ${category === item.category ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                  className={`rounded-[4px] border px-3 py-1 text-[12px] ${category === item.category ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                 >
                   {item.category}
                 </a>
@@ -286,7 +286,7 @@ export default async function VendorStorePage({
           </div>
 
           {products.length ? (
-            <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
               {products.map((product) => (
                 <ProductCard key={product.id} {...mapProductToCard(product)} />
               ))}

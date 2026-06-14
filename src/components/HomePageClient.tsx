@@ -10,6 +10,7 @@ import {
   Dumbbell,
   Footprints,
   Gem,
+  Grid3X3,
   RotateCcw,
   ShieldCheck,
   Shirt,
@@ -203,26 +204,48 @@ export default function HomePageClient({
     { label: "Secure Payment", detail: "Protected checkout", icon: ShieldCheck },
     { label: "Authentic Shops", detail: "Approved sellers", icon: BadgeCheck },
   ];
-  const showcaseItems = [
-    {
-      label: "Showcase",
-      title: mostPopular[0]?.name || "Fresh outfit showcase",
-      href: mostPopular[0] ? `/products/${mostPopular[0].slug || mostPopular[0].id}` : "/products",
-      image: mostPopular[0]?.images?.[0] || activeBannerItem?.imageUrl,
-    },
-    {
-      label: "Trends",
-      title: mostPopular[1]?.name || "Trending picks",
-      href: "/products?sort=popularity",
-      image: mostPopular[1]?.images?.[0] || activeBannerItem?.imageUrl,
-    },
-  ];
-
   return (
     <div className="container py-6">
       <section className="section">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="hero-shell relative min-h-[340px] overflow-hidden rounded-[24px] p-5 md:min-h-[420px] md:p-8">
+        <div className="grid gap-4 xl:grid-cols-[230px_minmax(0,1fr)]">
+          <aside className="hidden rounded-[8px] border border-border-light bg-white p-4 shadow-[var(--shadow-card)] xl:block">
+            <div className="mb-3 flex items-center gap-2 text-[12px] font-semibold text-[#b98745]">
+              <Grid3X3 className="h-4 w-4" strokeWidth={1.8} />
+              Shop by Category
+            </div>
+            <div className="space-y-1">
+              {displayCategories.slice(0, 9).map((category) => {
+                const Icon = getCategoryIcon(category.iconKey);
+                return (
+                  <Link
+                    key={`rail-${category.slug}`}
+                    href={category.href}
+                    className="grid grid-cols-[24px_minmax(0,1fr)] items-center gap-3 rounded-[6px] px-2 py-2 text-[13px] text-text-secondary hover:bg-[var(--bg-surface)] hover:text-[#101827]"
+                  >
+                    <Icon className="h-4 w-4 text-[#101827]" strokeWidth={1.7} />
+                    <span className="truncate">{category.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link href="/launching-soon" className="mt-4 grid grid-cols-[42px_minmax(0,1fr)] gap-3 rounded-[8px] bg-[var(--bg-surface)] p-3">
+              <span className="relative h-12 w-[42px] overflow-hidden rounded-[6px] bg-[#101827]">
+                <SmartImage
+                  src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=240&q=70"
+                  alt="Launching Soon"
+                  fill
+                  sizes="42px"
+                  className="object-cover opacity-80"
+                />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[12px] font-semibold text-[#101827]">Launching Soon</span>
+                <span className="mt-0.5 block line-clamp-2 text-[11px] leading-4 text-text-muted">India to Nepal delivery</span>
+              </span>
+            </Link>
+          </aside>
+
+          <div className="hero-shell relative min-h-[300px] overflow-hidden rounded-[8px] p-5 md:min-h-[380px] md:p-8">
             <div className="absolute inset-0">
               {banners.length ? (
                 <SmartImage
@@ -234,8 +257,8 @@ export default function HomePageClient({
                   className="object-cover"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(34,24,20,0.76)_0%,rgba(34,24,20,0.45)_42%,rgba(34,24,20,0.1)_100%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,transparent_0%,rgba(34,24,20,0.38)_100%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,250,243,0.92)_0%,rgba(255,250,243,0.72)_40%,rgba(16,24,39,0.08)_100%)]" />
+              <div className="absolute inset-y-0 right-0 w-1/2 bg-[linear-gradient(90deg,rgba(255,250,243,0)_0%,rgba(16,24,39,0.18)_100%)]" />
             </div>
 
             {activeBannerItem?.linkUrl ? (
@@ -246,23 +269,30 @@ export default function HomePageClient({
               />
             ) : null}
 
-            <div className="relative z-[1] max-w-[34rem]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/45 bg-white/18 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-md">
-                <Sparkles className="h-3.5 w-3.5 text-white" />
+            <div className="relative z-[1] max-w-[32rem]">
+              <div className="inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#b98745]">
+                <Sparkles className="h-3.5 w-3.5 text-[#b98745]" />
                 {hero.eyebrow}
               </div>
-              <h1 className="mt-4 text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.62)] md:mt-5">{hero.title}</h1>
-              <p className="mt-3 max-w-[30rem] text-[0.95rem] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)] md:text-[1rem]">
+              <h1 className="mt-4 max-w-[28rem] text-[#101827] md:mt-5">{hero.title}</h1>
+              <p className="mt-3 max-w-[28rem] text-[0.95rem] font-medium text-text-secondary md:text-[1rem]">
                 {hero.subtitle}
               </p>
               <div className="relative z-[2] mt-6 flex flex-wrap gap-3">
                 <Link href={hero.primaryHref} className="btn-primary">
                   {hero.primaryLabel}
                 </Link>
-                <Link href={hero.secondaryHref} className="btn-ghost border-white/20 bg-white/10 text-white hover:text-text-primary">
+                <Link href={hero.secondaryHref} className="btn-ghost bg-white text-[#101827] hover:text-[#101827]">
                   {hero.secondaryLabel}
                 </Link>
               </div>
+            </div>
+
+            <div className="absolute bottom-8 right-8 z-[2] hidden w-[190px] rounded-[8px] border border-white/30 bg-[#b98745]/90 p-4 text-white shadow-[var(--shadow-card)] backdrop-blur-md md:block">
+              <p className="text-[12px] font-semibold text-white">Exclusive Offer</p>
+              <p className="mt-5 text-[13px] text-white/88">Up to</p>
+              <p className="text-[2rem] font-bold leading-none text-white">50% OFF</p>
+              <p className="mt-1 text-[12px] text-white">On selected items</p>
             </div>
 
             {banners.length > 1 ? (
@@ -284,40 +314,17 @@ export default function HomePageClient({
               </>
             ) : null}
 
-            <div className="absolute bottom-6 left-5 z-[2] flex gap-2 md:left-8">
+            <div className="absolute bottom-5 left-5 z-[2] flex gap-2 md:left-8">
               {(banners.length ? banners : [null]).map((_, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => setActiveBanner(index)}
-                  className={`rounded-full transition-all ${index === activeBanner ? "h-2.5 w-8 bg-white" : "h-2.5 w-2.5 bg-white/38"}`}
+                  className={`rounded-full transition-all ${index === activeBanner ? "h-2.5 w-8 bg-[#b98745]" : "h-2.5 w-2.5 bg-[#101827]/20"}`}
                   aria-label={t("go_to_banner", { index: String(index + 1) })}
                 />
               ))}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 lg:grid-rows-2">
-            {showcaseItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="group relative min-h-[154px] overflow-hidden rounded-[24px] border border-white/70 bg-card shadow-[var(--shadow-card)] lg:min-h-0"
-              >
-                <SmartImage
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  sizes="(max-width: 1023px) 50vw, 320px"
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(32,26,23,0.02)_0%,rgba(32,26,23,0.72)_100%)]" />
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/82">{item.label}</p>
-                  <h3 className="mt-1 line-clamp-2 text-[1rem] font-semibold leading-tight text-white">{item.title}</h3>
-                </div>
-              </Link>
-            ))}
           </div>
         </div>
       </section>
@@ -339,12 +346,12 @@ export default function HomePageClient({
                   className="min-w-[92px] text-center"
                 >
                   <div
-                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-white/80 text-text-primary shadow-[var(--shadow-sm)]"
+                    className="mx-auto flex h-16 w-16 items-center justify-center rounded-[8px] border border-border-light text-text-primary shadow-[var(--shadow-sm)]"
                     style={{ backgroundColor: ["#f8dcd7", "#f7e7d5", "#e3efe9", "#e9edf7"][index % 4] }}
                   >
-                    <Icon className="h-7 w-7" strokeWidth={1.8} />
+                    <Icon className="h-6 w-6" strokeWidth={1.8} />
                   </div>
-                  <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-text-secondary">{category.shortLabel}</div>
+                  <div className="mt-3 text-[12px] font-medium uppercase tracking-[0.08em] text-text-secondary">{category.shortLabel}</div>
                 </Link>
               );
             })}
@@ -371,7 +378,7 @@ export default function HomePageClient({
             <Link
               key={item.eyebrow}
               href={item.href}
-              className="group relative min-h-[176px] overflow-hidden rounded-[20px] bg-card shadow-[var(--shadow-card)]"
+              className="group relative min-h-[176px] overflow-hidden rounded-[8px] bg-card shadow-[var(--shadow-card)]"
             >
               <SmartImage
                 src={item.image}
@@ -382,15 +389,15 @@ export default function HomePageClient({
               />
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,26,23,0.72)_0%,rgba(32,26,23,0.26)_68%,rgba(32,26,23,0)_100%)]" />
               <div className="absolute inset-y-0 left-0 flex max-w-[16rem] flex-col justify-center p-5">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/76">{item.eyebrow}</p>
+                <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/76">{item.eyebrow}</p>
                 <h2 className="mt-2 text-[1.45rem] leading-tight text-white">{item.title}</h2>
-                <span className="mt-4 text-[12px] font-semibold uppercase tracking-[0.14em] text-white">Shop now</span>
+                <span className="mt-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-white">Shop now</span>
               </div>
             </Link>
           ))}
-          <div className="grid grid-cols-2 gap-3 rounded-[20px] border border-white/70 bg-card p-4 shadow-[var(--shadow-card)]">
+          <div className="grid grid-cols-2 gap-3 rounded-[8px] border border-border-light bg-card p-4 shadow-[var(--shadow-card)]">
             {trustBadges.map((item) => (
-              <div key={item.label} className="min-w-0 rounded-[12px] bg-[var(--bg-surface)] p-3">
+              <div key={item.label} className="min-w-0 rounded-[6px] bg-[var(--bg-surface)] p-3">
                 <item.icon className="h-5 w-5 text-fb-pink" strokeWidth={1.8} />
                 <p className="mt-3 truncate text-[13px] font-semibold text-text-primary">{item.label}</p>
                 <p className="mt-1 line-clamp-1 text-[11px] text-text-muted">{item.detail}</p>

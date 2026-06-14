@@ -295,7 +295,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
                       setSelectedSizes(nextSizes);
                       updateParams({ sizes: nextSizes });
                     }}
-                    className={`rounded-[20px] border px-3 py-1 text-[12px] ${active ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                    className={`rounded-[4px] border px-3 py-1 text-[12px] ${active ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                   >
                     {size}
                   </button>
@@ -322,7 +322,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
                       setSelectedColors(nextColors);
                       updateParams({ colors: nextColors });
                     }}
-                    className={`rounded-[20px] border px-3 py-1 text-[12px] ${active ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                    className={`rounded-[4px] border px-3 py-1 text-[12px] ${active ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                   >
                     {color}
                   </button>
@@ -346,7 +346,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
                     setSelectedDiscount(nextValue);
                     updateParams({ minDiscount: nextValue });
                   }}
-                  className={`rounded-[20px] border px-3 py-1 text-[12px] ${selectedDiscount === discount.value ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                  className={`rounded-[4px] border px-3 py-1 text-[12px] ${selectedDiscount === discount.value ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                 >
                   {t(discount.labelKey)}
                 </button>
@@ -363,7 +363,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
       <div className="container pb-20 pt-4 lg:pb-4">
         <section className="mb-4 rounded-[8px] bg-card px-4 py-5 shadow-[var(--shadow-sm)] md:px-6">
           <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">FitBazar Nepal</p>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-text-primary md:text-[36px]">
+          <h1 className="mt-2 text-[28px] font-semibold tracking-normal text-text-primary md:text-[36px]">
             {pageHeading}
           </h1>
           <p className="mt-2 max-w-[760px] text-[14px] leading-6 text-text-secondary">{pageIntro}</p>
@@ -372,7 +372,7 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
               >
                 {item.label}
               </Link>
@@ -408,11 +408,11 @@ function ProductsPageInner({ initialData, initialQueryString = "" }: ProductsPag
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-3 lg:grid-cols-4">
                 <ProductGridSkeleton />
               </div>
             ) : products.length ? (
-              <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-3 lg:grid-cols-4">
                 {products.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}

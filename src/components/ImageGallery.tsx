@@ -53,9 +53,9 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
           <button
             key={idx}
             onClick={() => setSelectedIndex(idx)}
-            className={`relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[16px] border transition-all sm:h-16 sm:w-16 lg:h-24 lg:w-24 lg:rounded-[20px] ${
+            className={`relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-[8px] border transition-all sm:h-16 sm:w-16 lg:h-24 lg:w-24 ${
               selectedIndex === idx
-                ? "border-fb-pink shadow-[0_10px_30px_rgba(255,63,108,0.16)]"
+                ? "border-fb-pink shadow-[0_10px_30px_rgba(16,24,39,0.1)]"
                 : "border-transparent opacity-70 hover:opacity-100"
             }`}
           >
@@ -66,7 +66,7 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
 
       <div className="flex-1 relative">
         <div
-          className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-[22px] border border-white/70 bg-[linear-gradient(180deg,#f8f5f1,#f0ece6)] md:aspect-[16/10] lg:aspect-[1/1.05] lg:rounded-[32px]"
+          className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-[8px] border border-border-light bg-[linear-gradient(180deg,#f8f5f1,#f0ece6)] md:aspect-[16/10] lg:aspect-[1/1.05]"
           onMouseEnter={() => setIsZoomed(true)}
           onMouseLeave={() => setIsZoomed(false)}
           onMouseMove={handleMouseMove}

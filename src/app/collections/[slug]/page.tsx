@@ -265,8 +265,8 @@ export default async function CollectionPage({
         </nav>
 
         <section className="rounded-[8px] bg-card px-4 py-6 shadow-[var(--shadow-sm)] md:px-6">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">FitBazar Collection</p>
-          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.05em] text-text-primary md:text-[44px]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-fb-pink">FitBazar Collection</p>
+          <h1 className="mt-2 text-[30px] font-semibold tracking-normal text-text-primary md:text-[44px]">
             {definition.title}
           </h1>
           <p className="mt-3 max-w-[760px] text-[15px] leading-7 text-text-secondary">{definition.description}</p>
@@ -275,7 +275,7 @@ export default async function CollectionPage({
               <Link
                 key={collection.slug}
                 href={`/collections/${collection.slug}`}
-                className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
               >
                 {collection.title.replace(" in Nepal", "")}
               </Link>
@@ -297,7 +297,7 @@ export default async function CollectionPage({
           </div>
 
           {productCards.length ? (
-            <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-3 lg:grid-cols-4">
               {productCards.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}
@@ -323,7 +323,7 @@ export default async function CollectionPage({
                 More fashion picks that help shoppers compare styles, prices, and stores across FitBazar.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
               {relatedProductCards.map((product) => (
                 <ProductCard key={`related-${product.id}`} {...product} />
               ))}
@@ -338,7 +338,7 @@ export default async function CollectionPage({
               <Link
                 key={collection.slug}
                 href={`/collections/${collection.slug}`}
-                className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
               >
                 {collection.title}
               </Link>

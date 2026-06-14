@@ -366,19 +366,19 @@ function CheckoutPageInner() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-[12px] font-semibold uppercase tracking-[0.18em] text-text-muted">Secure checkout</div>
-              <h1 className="mt-2 text-[32px] font-semibold tracking-[-0.04em]">{t("checkout")}</h1>
+              <h1 className="mt-2 text-[32px] font-semibold tracking-normal">{t("checkout")}</h1>
               <p className="mt-2 text-[14px] text-text-muted">Delivery, payment, and review in one clean flow.</p>
             </div>
             <div className="grid gap-2 text-[12px] text-text-secondary sm:grid-cols-3">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+              <span className="inline-flex items-center gap-2 rounded-[4px] bg-[var(--bg-surface)] px-3 py-2">
                 <CheckCircle2 className="h-4 w-4 text-success" />
                 Address
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+              <span className="inline-flex items-center gap-2 rounded-[4px] bg-[var(--bg-surface)] px-3 py-2">
                 <Truck className="h-4 w-4 text-fb-orange" />
                 Delivery
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-surface)] px-3 py-2">
+              <span className="inline-flex items-center gap-2 rounded-[4px] bg-[var(--bg-surface)] px-3 py-2">
                 <ShieldCheck className="h-4 w-4 text-fb-pink" />
                 Payment
               </span>
@@ -395,7 +395,7 @@ function CheckoutPageInner() {
                     <MapPin className="h-5 w-5 text-fb-pink" />
                     {t("delivery_address")}
                   </h2>
-                  <span className="rounded-full bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-success">Kathmandu</span>
+                  <span className="rounded-[4px] bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-success">Kathmandu</span>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -494,7 +494,7 @@ function CheckoutPageInner() {
                     <Wallet className="h-5 w-5 text-fb-pink" />
                     {t("payment_method")}
                   </h2>
-                  <span className="rounded-full bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-success">
+                  <span className="rounded-[4px] bg-[var(--green-bg)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-success">
                     COD recommended
                   </span>
                 </div>
@@ -533,14 +533,14 @@ function CheckoutPageInner() {
                         }}
                         className="h-[18px] w-[18px]"
                       />
-                      <span className={`flex h-10 w-10 items-center justify-center rounded-full ${method.recommended ? "bg-white text-success" : "bg-[var(--bg-surface)] text-fb-pink"}`}>
+                      <span className={`flex h-10 w-10 items-center justify-center rounded-[6px] ${method.recommended ? "bg-white text-success" : "bg-[var(--bg-surface)] text-fb-pink"}`}>
                         <Icon className="h-5 w-5" />
                       </span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-[15px] font-semibold leading-5 text-text-primary">{method.name}</p>
                           {method.recommended ? (
-                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-success">
+                            <span className="rounded-[4px] bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-success">
                               Preferred
                             </span>
                           ) : null}

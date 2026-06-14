@@ -166,21 +166,21 @@ function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageCli
       <div className="container py-4">
         <div className="rounded-[8px] bg-card p-4">
           <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">FitBazar Search</p>
-          <h1 className="mt-2 text-[26px] font-semibold tracking-[-0.04em] text-text-primary md:text-[34px]">
+          <h1 className="mt-2 text-[26px] font-semibold tracking-normal text-text-primary md:text-[34px]">
             {heading}
           </h1>
           <p className="mb-4 mt-2 max-w-[720px] text-[14px] text-text-secondary">
             Find clothing, shoes, ethnic wear, sportswear, accessories, and trusted fashion stores across Nepal.
           </p>
-          <form onSubmit={onSubmit} className="flex items-center gap-3 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-4">
+          <form onSubmit={onSubmit} className="flex items-center gap-3 rounded-[6px] border border-border-default bg-[var(--bg-surface)] px-4">
             <Search className="h-4 w-4 shrink-0 text-text-muted" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("search")} className="min-w-0 flex-1 !border-none !bg-transparent !px-0 py-3 !shadow-none focus:!border-none focus:!shadow-none" />
           </form>
           <div className="mt-4 flex gap-2">
-            <button type="button" onClick={() => setTab("products")} className={`rounded-[20px] px-4 py-2 text-[13px] font-medium ${tab === "products" ? "bg-fb-pink text-white" : "bg-[var(--bg-surface)] text-text-secondary"}`}>
+            <button type="button" onClick={() => setTab("products")} className={`rounded-[4px] px-4 py-2 text-[13px] font-medium ${tab === "products" ? "bg-fb-pink text-white" : "bg-[var(--bg-surface)] text-text-secondary"}`}>
               {t("products")}
             </button>
-            <button type="button" onClick={() => setTab("vendors")} className={`rounded-[20px] px-4 py-2 text-[13px] font-medium ${tab === "vendors" ? "bg-fb-pink text-white" : "bg-[var(--bg-surface)] text-text-secondary"}`}>
+            <button type="button" onClick={() => setTab("vendors")} className={`rounded-[4px] px-4 py-2 text-[13px] font-medium ${tab === "vendors" ? "bg-fb-pink text-white" : "bg-[var(--bg-surface)] text-text-secondary"}`}>
               {t("vendors")}
             </button>
           </div>
@@ -199,7 +199,7 @@ function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageCli
                   key={category.id}
                   type="button"
                   onClick={() => router.push(collectionHrefForCategory(category.name))}
-                  className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                  className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] text-text-secondary hover:border-fb-pink hover:text-fb-pink"
                 >
                   {category.name}
                 </button>
@@ -213,7 +213,7 @@ function SearchPageInner({ initialData, initialQueryString = "" }: SearchPageCli
             </div>
           ) : tab === "products" ? (
             productCards.length ? (
-              <div className="mt-4 grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
                 {productCards.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}

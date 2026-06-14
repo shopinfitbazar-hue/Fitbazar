@@ -9,6 +9,8 @@ import { buildMetadata } from "@/config/site";
 import { getBlogCategory, getBlogCategories, getPostsByCategory } from "@/lib/blog";
 import { breadcrumbJsonLd, canonicalUrl, itemListJsonLd } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return getBlogCategories().map((category) => ({ slug: category.slug }));
 }
@@ -97,8 +99,8 @@ export default async function BlogCategoryPage({
         </nav>
 
         <section className="rounded-[8px] bg-card px-4 py-6 shadow-[var(--shadow-sm)] md:px-6 md:py-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">FitBazar Blog Category</p>
-          <h1 className="mt-2 text-[34px] font-semibold tracking-[-0.04em] text-text-primary md:text-[52px]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-fb-pink">FitBazar Blog Category</p>
+          <h1 className="mt-2 text-[34px] font-semibold tracking-normal text-text-primary md:text-[52px]">
             {category.title}
           </h1>
           <p className="mt-4 max-w-[760px] text-[15px] leading-7 text-text-secondary">{category.description}</p>
@@ -107,7 +109,7 @@ export default async function BlogCategoryPage({
               <Link
                 key={item.slug}
                 href={`/blog/category/${item.slug}`}
-                className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
               >
                 {item.title}
               </Link>

@@ -415,7 +415,7 @@ export default function ProductDetailClient({
               setMobileZoomOpen(true);
             }
           }}
-          className="relative aspect-[16/10] overflow-hidden rounded-[20px] bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]"
+          className="relative aspect-[16/10] overflow-hidden rounded-[8px] bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]"
           aria-label={`Zoom ${product.name} image`}
         >
           <SmartImage
@@ -467,7 +467,7 @@ export default function ProductDetailClient({
               {product.vendor.shopName}
             </span>
           )}
-          <h1 className="mt-1 text-[1.85rem] font-bold leading-tight tracking-[-0.03em] text-text-primary">{product.name}</h1>
+          <h1 className="mt-1 text-[1.85rem] font-bold leading-tight tracking-normal text-text-primary">{product.name}</h1>
 
           <div className="mt-3 flex items-center gap-2">
             <div className="flex items-center gap-0.5 text-[#FFC94A]">
@@ -515,7 +515,7 @@ export default function ProductDetailClient({
                   onClick={() => setSelectedSize(size)}
                   className={`flex h-14 min-w-14 items-center justify-center rounded-full border px-5 text-[15px] font-semibold ${
                     selectedSize === size
-                      ? "border-fb-pink bg-fb-pink text-white shadow-[0_12px_22px_rgba(255,63,108,0.22)]"
+                      ? "border-fb-pink bg-fb-pink text-white shadow-[0_12px_22px_rgba(16,24,39,0.12)]"
                       : "border-border-light bg-white text-text-primary"
                   }`}
                 >
@@ -552,7 +552,7 @@ export default function ProductDetailClient({
           </div>
         ) : null}
 
-        <div className="mt-6 grid grid-cols-4 gap-2 rounded-[18px] bg-[var(--bg-surface)] p-3">
+        <div className="mt-6 grid grid-cols-4 gap-2 rounded-[8px] bg-[var(--bg-surface)] p-3">
           {mobileServices.map((item) => {
             const Icon = item.icon;
             return (
@@ -566,18 +566,18 @@ export default function ProductDetailClient({
         </div>
 
         {blocksShopping ? (
-          <div className="mt-5 rounded-[14px] border border-border-light bg-[var(--bg-surface)] p-4">
+          <div className="mt-5 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
             <p className="text-[14px] font-semibold text-text-primary">{t("customer_account_required")}</p>
             <p className="mt-1 text-[13px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
           </div>
         ) : null}
 
-        <div className="mt-5 rounded-[18px] border border-border-light bg-white p-4">
+        <div className="mt-5 rounded-[8px] border border-border-light bg-white p-4">
           <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("product_details")}</div>
           <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{productSummary}</p>
         </div>
 
-        <div className="mt-4 rounded-[18px] border border-border-light bg-white p-4">
+        <div className="mt-4 rounded-[8px] border border-border-light bg-white p-4">
           <div className="mb-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-text-muted">{t("delivery")}</div>
           <div className="flex gap-2">
             <input value={pincode} onChange={(event) => setPincode(event.target.value)} placeholder={t("enter_pincode")} />
@@ -604,7 +604,7 @@ export default function ProductDetailClient({
               {product.vendor.shopName}
             </span>
           )}
-          <h1 className="mt-1 text-[1.45rem] font-semibold leading-tight tracking-[-0.03em] text-text-primary md:mt-2 md:text-[2rem] md:tracking-[-0.05em]">{product.name}</h1>
+          <h1 className="mt-1 text-[1.45rem] font-semibold leading-tight tracking-normal text-text-primary md:mt-2 md:text-[2rem]">{product.name}</h1>
 
           <div className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-text-secondary md:mt-3">
             <div className="flex items-center gap-1">
@@ -652,7 +652,7 @@ export default function ProductDetailClient({
                     key={size}
                     type="button"
                     onClick={() => setSelectedSize(size)}
-                    className={`rounded-[20px] border px-4 py-2 text-[12px] font-medium ${selectedSize === size ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                    className={`rounded-[4px] border px-4 py-2 text-[12px] font-medium ${selectedSize === size ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                   >
                     {size}
                   </button>
@@ -672,7 +672,7 @@ export default function ProductDetailClient({
                     key={color}
                     type="button"
                     onClick={() => setSelectedColor(color)}
-                    className={`rounded-[20px] border px-3 py-2 text-[12px] font-medium ${selectedColor === color ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
+                    className={`rounded-[4px] border px-3 py-2 text-[12px] font-medium ${selectedColor === color ? "border-fb-pink bg-fb-pink-bg text-fb-pink" : "border-border-default text-text-secondary"}`}
                   >
                     {color}
                   </button>
@@ -683,7 +683,7 @@ export default function ProductDetailClient({
 
           <div className="mt-4 flex flex-wrap items-center gap-3 md:mt-5">
             <span className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("quantity_short")}:</span>
-            <div className="flex items-center rounded-[20px] border border-border-default">
+            <div className="flex items-center rounded-[4px] border border-border-default">
               <button
                 type="button"
                 disabled={quantity === 1}
@@ -724,12 +724,12 @@ export default function ProductDetailClient({
             </div>
           )}
 
-          <div className="mt-5 rounded-[20px] border border-border-light bg-[var(--bg-surface)] p-4">
+          <div className="mt-5 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
             <div className="text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("product_details")}</div>
             <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">{productSummary}</p>
           </div>
 
-          <div className="mt-5 rounded-[24px] border border-border-light p-4">
+          <div className="mt-5 rounded-[8px] border border-border-light p-4">
             <div className="mb-2 text-[12px] font-semibold uppercase tracking-[1px] text-text-muted">{t("delivery")}</div>
             <div className="flex gap-2">
               <input value={pincode} onChange={(event) => setPincode(event.target.value)} placeholder={t("enter_pincode")} />
@@ -757,8 +757,8 @@ export default function ProductDetailClient({
             </div>
           ))}
 
-          <div className="mt-4 flex items-center gap-3 rounded-[24px] border border-border-light p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-fb-pink-bg text-[14px] font-bold text-fb-pink">
+          <div className="mt-4 flex items-center gap-3 rounded-[8px] border border-border-light p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[6px] bg-fb-pink-bg text-[14px] font-bold text-fb-pink">
               {product.vendor.shopName.charAt(0)}
             </div>
             <div className="flex-1">
@@ -770,7 +770,7 @@ export default function ProductDetailClient({
                 {t("visit_shop")}
               </Link>
             ) : (
-              <span className="rounded-[20px] border border-border-default px-3 py-2 text-[12px] font-semibold text-text-muted">
+              <span className="rounded-[4px] border border-border-default px-3 py-2 text-[12px] font-semibold text-text-muted">
                 {t("verified_fitbazar_store")}
               </span>
             )}
@@ -784,7 +784,7 @@ export default function ProductDetailClient({
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex h-14 items-center justify-center gap-2 rounded-[18px] border border-fb-pink bg-white px-3 text-[14px] font-bold text-fb-pink"
+              className="flex h-14 items-center justify-center gap-2 rounded-[4px] border border-[#101827]/25 bg-white px-3 text-[14px] font-bold text-[#101827]"
             >
               <ShoppingBag className="h-4 w-4" />
               {added ? t("added_check") : t("add_to_cart")}
@@ -792,7 +792,7 @@ export default function ProductDetailClient({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="flex h-14 items-center justify-center gap-2 rounded-[18px] bg-fb-pink px-3 text-[14px] font-bold text-white shadow-[0_14px_26px_rgba(255,63,108,0.28)]"
+              className="flex h-14 items-center justify-center gap-2 rounded-[4px] bg-[#101827] px-3 text-[14px] font-bold text-white shadow-[0_14px_26px_rgba(16,24,39,0.18)]"
             >
               <Zap className="h-4 w-4" />
               {t("buy_now")}
@@ -945,7 +945,7 @@ export default function ProductDetailClient({
         <div className="mb-4 px-4 md:px-6">
           <h2>{t("similar_products")}</h2>
         </div>
-        <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
           {similarProducts.map((item) => (
             <ProductCard key={item.id} {...item} />
           ))}
@@ -956,7 +956,7 @@ export default function ProductDetailClient({
         <div className="mb-4 px-4 md:px-6">
           <h2>{t("customers_also_bought")}</h2>
         </div>
-        <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
           {alsoBoughtProducts.map((item) => (
             <ProductCard key={`alt-${item.id}`} {...item} />
           ))}

@@ -432,7 +432,7 @@ export default function OrdersPage() {
                       <div className="min-w-0">
                         <div className="mb-2 flex flex-wrap items-center gap-3">
                           <h2 className="text-[18px] font-semibold text-text-primary">{order.orderNumber}</h2>
-                          <span className={`rounded-[20px] px-3 py-1 text-[12px] font-semibold ${config.bgColor} ${config.color}`}>
+                          <span className={`rounded-[4px] px-3 py-1 text-[12px] font-semibold ${config.bgColor} ${config.color}`}>
                             {t(config.label)}
                           </span>
                         </div>

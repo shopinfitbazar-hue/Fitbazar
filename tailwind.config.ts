@@ -5,17 +5,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "fb-pink": "#FF3F6C",
-        "fb-pink-light": "#FF6B8A",
-        "fb-pink-bg": "#FFF0F3",
-        "fb-orange": "#FF905A",
-        page: "#F4F4F4",
+        "fb-pink": "#B98745",
+        "fb-pink-light": "#D7A864",
+        "fb-pink-bg": "#FFF4DF",
+        "fb-orange": "#C98C42",
+        page: "#FBF8F3",
         card: "#FFFFFF",
-        "text-primary": "#282C3F",
-        "text-secondary": "#45424D",
-        "text-muted": "#625D68",
-        "border-default": "#D4D5D9",
-        "border-light": "#EAEAEC",
+        "text-primary": "#101827",
+        "text-secondary": "#343B4A",
+        "text-muted": "#667085",
+        "border-default": "#E6DED2",
+        "border-light": "#F0E7DC",
         success: "#03A685",
       },
       fontFamily: {

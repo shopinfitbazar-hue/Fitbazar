@@ -412,12 +412,12 @@ export default function AdminDashboard() {
     supportEmail: "support@fitbazar.com",
     supportPhone: "+977 9800000000",
     supportHours: "Sun-Fri, 10am-6pm",
-    heroEyebrow: "Nepal's premium fashion marketplace",
-    heroTitle: "Discover sharper style, faster shopping, and curated Nepal-first fashion.",
-    heroSubtitle: "Mobile-first discovery, partner-led fashion drops, and cleaner product storytelling built for modern shoppers.",
-    heroPrimaryLabel: "Shop New Arrivals",
+    heroEyebrow: "New Collection 2026",
+    heroTitle: "Discover Style that Defines You",
+    heroSubtitle: "Premium quality products for every occasion. Shop the latest trends now.",
+    heroPrimaryLabel: "Shop Now",
     heroPrimaryHref: "/products",
-    heroSecondaryLabel: "Explore Collections",
+    heroSecondaryLabel: "Explore Collection",
     heroSecondaryHref: "/discover",
     seoImage: "/opengraph-image",
   });
@@ -1773,7 +1773,7 @@ export default function AdminDashboard() {
                       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,max-content)] 2xl:items-center">
                         <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(260px,0.85fr)_minmax(0,1.4fr)] xl:items-center">
                           <div className="flex min-w-0 items-center gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fb-pink-bg">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[8px] bg-fb-pink-bg">
                               <ShoppingCart className="h-6 w-6 text-fb-pink" />
                             </div>
                             <div className="min-w-0">
@@ -1851,7 +1851,7 @@ export default function AdminDashboard() {
                                 key={statusOption}
                                 type="button"
                                 onClick={() => void updateOrderStatus(order.id, statusOption)}
-                                className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
+                                className={`rounded-[4px] px-3 py-1.5 text-xs font-bold transition-colors ${
                                   order.status === statusOption
                                     ? "bg-fb-pink text-white"
                                     : "border border-border-default bg-card hover:border-fb-pink"

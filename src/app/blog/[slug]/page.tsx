@@ -199,10 +199,10 @@ export default async function BlogArticlePage({
 
         <article className="rounded-[8px] bg-card shadow-[var(--shadow-sm)]">
           <header className="px-4 py-6 md:px-8 md:py-8">
-            <Link href={`/blog/category/${post.category}`} className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">
+            <Link href={`/blog/category/${post.category}`} className="text-[12px] font-semibold uppercase tracking-[0.12em] text-fb-pink">
               {categoryTitle}
             </Link>
-            <h1 className="mt-3 max-w-[980px] text-[34px] font-semibold leading-[1.02] tracking-[-0.04em] text-text-primary md:text-[58px]">
+            <h1 className="mt-3 max-w-[980px] text-[34px] font-semibold leading-[1.02] tracking-normal text-text-primary md:text-[58px]">
               {post.title}
             </h1>
             <p className="mt-4 max-w-[800px] text-[16px] leading-7 text-text-secondary">{post.description}</p>
@@ -242,7 +242,7 @@ export default async function BlogArticlePage({
                       <Link
                         key={link.slug}
                         href={link.href}
-                        className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                        className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
                       >
                         {link.label}
                       </Link>
@@ -270,7 +270,7 @@ export default async function BlogArticlePage({
                 Browse all products
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
               {productCards.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}

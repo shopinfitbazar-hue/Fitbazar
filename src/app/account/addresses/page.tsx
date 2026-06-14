@@ -167,7 +167,7 @@ export default function AddressesPage() {
             {addresses.map((address) => (
               <div key={address.id} className={`relative rounded-[8px] bg-card p-6 shadow-[var(--shadow-sm)] ${address.isDefault ? "ring-2 ring-fb-pink" : ""}`}>
                 {address.isDefault ? (
-                  <span className="absolute right-4 top-4 rounded-[20px] bg-fb-pink px-3 py-1 text-xs font-semibold text-white">
+                  <span className="absolute right-4 top-4 rounded-[4px] bg-fb-pink px-3 py-1 text-xs font-semibold text-white">
                     {t("default_address")}
                   </span>
                 ) : null}

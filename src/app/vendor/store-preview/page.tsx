@@ -123,7 +123,7 @@ export default function VendorStorePreviewPage() {
               <h2 className="text-[16px] font-semibold text-text-primary">{t("products")}</h2>
               <span className="text-[13px] text-text-muted">{data?.products.length || 0} {t("products").toLowerCase()}</span>
             </div>
-            <div className="grid grid-cols-2 gap-[1px] bg-page md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 bg-page md:grid-cols-4">
               {data?.products.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}

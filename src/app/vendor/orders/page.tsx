@@ -163,7 +163,7 @@ export default function VendorOrdersPage() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${status.color}`}>
+                      <span className={`rounded-[4px] px-3 py-1 text-xs font-bold ${status.color}`}>
                         {status.label}
                       </span>
                       <span className="text-lg font-bold text-text-primary">{formatPriceNpr(order.totalAmount)}</span>
@@ -192,7 +192,7 @@ export default function VendorOrdersPage() {
                             <button
                               key={statusOption}
                               onClick={() => updateOrderStatus(order.id, statusOption)}
-                              className="rounded-full bg-fb-pink px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                              className="rounded-[4px] bg-fb-pink px-3 py-1.5 text-xs font-bold text-white transition-opacity hover:opacity-90"
                             >
                               {vendorActionLabels[statusOption] || statusOption}
                             </button>

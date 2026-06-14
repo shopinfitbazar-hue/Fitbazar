@@ -38,9 +38,9 @@ export default function VendorCard({
   return (
     <Link
       href={`/shop/${vendorSlug}`}
-      className="flex h-full flex-col rounded-[24px] border border-white/70 bg-card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
+      className="flex h-full flex-col rounded-[8px] border border-border-light bg-card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card-lg)]"
     >
-      <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-[8px] border border-border-light bg-[var(--bg-surface)] shadow-[var(--shadow-sm)]">
         {logo ? (
           <SmartImage
             src={getSafeImageUrl(logo, FALLBACK_VENDOR_IMAGE)}

@@ -274,8 +274,11 @@ export default function Header() {
   return (
     <>
       {showAnnouncement && (
-        <div className="relative bg-fb-pink px-10 py-2 text-center text-[12px] text-white">
-          <span className="block truncate pr-6 text-white">{announcementText}</span>
+        <div className="relative bg-[#101827] px-10 py-2 text-center text-[12px] text-white">
+          <span className="inline-flex max-w-full items-center gap-2 truncate pr-6 text-white">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-[#d7a864]" strokeWidth={1.8} />
+            <span className="truncate">{announcementText}</span>
+          </span>
           <button
             type="button"
             onClick={() => setShowAnnouncement(false)}
@@ -288,13 +291,13 @@ export default function Header() {
       )}
 
       <header className="sticky top-0 z-[1000] border-b border-border-light bg-card/95 backdrop-blur-md shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <div className="hidden border-b border-white/10 bg-[#201a17] text-white xl:block">
+        <div className="hidden border-b border-white/10 bg-[#101827] text-white xl:block">
           <div className="container flex h-8 items-center justify-between gap-6 text-[12px]">
             <span className="truncate text-white/86">Welcome to Fit Bazar</span>
             <div className="flex min-w-0 items-center gap-5 text-white/86">
-              <span className="hidden 2xl:inline">Free shipping on selected orders</span>
-              <span className="hidden 2xl:inline">7 days easy returns</span>
-              <Link href="/launching-soon" className="whitespace-nowrap text-white/86 hover:text-white">
+              <span className="hidden 2xl:inline">Free Shipping on Orders Over NPR 2,000</span>
+              <span className="hidden 2xl:inline">7 Days Easy Returns</span>
+              <Link href="/launching-soon" className="whitespace-nowrap rounded-[4px] bg-[#b98745] px-2.5 py-1 text-white hover:bg-[#d7a864] hover:text-white">
                 Launching Soon
               </Link>
               <Link href="/account/orders" className="whitespace-nowrap text-white/86 hover:text-white">
@@ -309,8 +312,13 @@ export default function Header() {
         <div className="container hidden py-3 xl:block">
           <div className="grid min-h-[72px] grid-cols-[auto_auto_minmax(0,1fr)_minmax(220px,0.65fr)_auto] items-center gap-x-3 2xl:grid-cols-[auto_auto_minmax(0,1.1fr)_minmax(260px,0.95fr)_auto] 2xl:gap-x-5">
             <Link href="/" className="shrink-0 py-2">
-              <div className="text-[24px] font-bold leading-[0.9] tracking-[0.08em] text-[#111827]">FIT BAZAR</div>
-              <div className="mt-1 text-[10px] leading-none text-text-muted">Premium Style. Delivered to Nepal.</div>
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-[#b98745]" strokeWidth={1.8} />
+                <div className="text-[25px] font-bold leading-[0.9] tracking-[0.1em]">
+                  <span className="text-[#b98745]">FIT</span> <span className="text-[#101827]">BAZAR</span>
+                </div>
+              </div>
+              <div className="mt-1 text-[10px] leading-none text-text-muted">Premium Style. Trusted Quality.</div>
             </Link>
 
             <div
@@ -321,7 +329,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setShowCategoryMenu((current) => !current)}
-                className="flex h-10 items-center gap-2 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-text-primary hover:border-fb-pink"
+                className="flex h-10 items-center gap-2 rounded-[4px] border border-border-default bg-[var(--bg-surface)] px-4 text-[12px] font-semibold text-text-primary hover:border-fb-pink"
               >
                 <Menu className="h-4 w-4" />
                 All Categories
@@ -340,9 +348,9 @@ export default function Header() {
                           key={item.slug}
                           href={item.href}
                           onClick={() => setShowCategoryMenu(false)}
-                          className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-[8px] p-3 hover:bg-[var(--bg-surface)]"
+                          className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-[6px] p-3 hover:bg-[var(--bg-surface)]"
                         >
-                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-fb-pink-bg text-fb-pink">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-[6px] bg-fb-pink-bg text-fb-pink">
                             <Icon className="h-4 w-4" strokeWidth={1.8} />
                           </span>
                           <span className="min-w-0">
@@ -382,17 +390,19 @@ export default function Header() {
             <div className="relative min-w-0 w-full max-w-[320px] justify-self-end 2xl:max-w-[480px]">
               <form
                 onSubmit={submitSearch}
-                className={`flex h-10 w-full items-center gap-2 rounded-[20px] border px-4 ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-[#F8F8F8]"}`}
+                className={`flex h-10 w-full items-center overflow-hidden rounded-[4px] border ${searchFocused ? "border-fb-pink bg-card" : "border-border-default bg-white"}`}
               >
-                <Search className="h-4 w-4 text-text-muted" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
                   placeholder={t("search")}
-                  className="min-w-0 flex-1 !border-none !bg-transparent !px-0 !py-0 !shadow-none focus:!border-none focus:!shadow-none"
+                  className="min-w-0 flex-1 !border-none !bg-transparent !px-4 !py-0 !shadow-none focus:!border-none focus:!shadow-none"
                 />
+                <button type="submit" className="flex h-10 w-11 shrink-0 items-center justify-center bg-[#101827] text-white">
+                  <Search className="h-4 w-4 text-white" />
+                </button>
               </form>
               {searchFocused && (
                 <div className="absolute left-0 right-0 top-[46px] z-[1001] overflow-hidden rounded-[8px] border border-border-light bg-card shadow-[var(--shadow-md)]">
@@ -418,7 +428,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setLang(lang === "en" ? "ne" : "en")}
-                className="whitespace-nowrap rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
+                className="whitespace-nowrap rounded-[4px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
               >
                 EN | नेपाली
               </button>
@@ -482,11 +492,11 @@ export default function Header() {
         <div className="xl:hidden">
           <div className="container flex h-[58px] items-center gap-2">
             <Link href="/" className="shrink-0 py-2" aria-label="Fit Bazar home">
-              <div className="text-[18px] font-bold leading-none tracking-[0.08em] text-[#111827]">FIT BAZAR</div>
+              <div className="text-[18px] font-bold leading-none tracking-[0.08em]"><span className="text-[#b98745]">FIT</span> <span className="text-[#101827]">BAZAR</span></div>
             </Link>
             <form
               onSubmit={submitSearch}
-              className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3"
+              className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-[18px] border border-border-default bg-[var(--bg-surface)] px-3"
             >
               <Search className="h-4 w-4 shrink-0 text-text-muted" />
               <input
@@ -558,7 +568,7 @@ export default function Header() {
                     onClick={() => setMobileOpen(false)}
                     className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-[14px] font-medium text-text-primary"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-fb-pink-bg text-fb-pink">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-fb-pink-bg text-fb-pink">
                       <Icon className="h-4 w-4" strokeWidth={1.8} />
                     </span>
                     <span className="min-w-0 truncate">{link.label}</span>
@@ -647,7 +657,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setLang(lang === "en" ? "ne" : "en")}
-            className="rounded-[20px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
+            className="rounded-[4px] border border-border-default bg-[var(--bg-surface)] px-3 py-1 text-[12px] font-medium text-text-secondary"
           >
             EN | नेपाली
           </button>

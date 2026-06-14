@@ -35,7 +35,7 @@ export default function WishlistPage() {
 
         {items.length > 0 ? (
           <>
-            <div className="mb-8 grid grid-cols-2 gap-[1px] bg-page md:grid-cols-3 lg:grid-cols-4">
+            <div className="mb-8 grid grid-cols-2 gap-3 bg-page md:grid-cols-3 lg:grid-cols-4">
               {items.map((product) => (
                 <ProductCard key={product.id} id={product.productId} slug={product.slug} name={product.name} price={product.price} originalPrice={product.originalPrice} images={[product.image]} vendorName={product.vendorName} vendorSlug={product.vendorSlug} />
               ))}

@@ -46,12 +46,12 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="mt-8 bg-[#282C3F] pb-20 pt-10 text-white lg:pb-8">
+    <footer className="mt-8 bg-[#101827] pb-20 pt-10 text-white lg:pb-8">
       <div className="container">
         <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr] gap-10 md:grid">
           <div>
-            <Link href="/" className="text-[24px] font-bold tracking-tight text-white">
-              fit<span className="text-fb-pink">bazar</span>
+            <Link href="/" className="text-[24px] font-bold tracking-[0.1em] text-white">
+              <span className="text-[#d7a864]">FIT</span> BAZAR
             </Link>
             <p className="mt-4 max-w-[260px] text-[14px] text-[#D7D9E0]">
               {t("footer_brand_blurb")}
@@ -93,8 +93,8 @@ export default function Footer() {
 
         <div className="space-y-3 md:hidden">
           <div>
-            <Link href="/" className="text-[24px] font-bold tracking-tight text-white">
-              fit<span className="text-fb-pink">bazar</span>
+            <Link href="/" className="text-[24px] font-bold tracking-[0.1em] text-white">
+              <span className="text-[#d7a864]">FIT</span> BAZAR
             </Link>
             <p className="mt-3 text-[14px] text-[#D7D9E0]">{t("footer_brand_short")}</p>
           </div>

@@ -70,8 +70,8 @@ export default function BlogPage() {
         </nav>
 
         <section className="rounded-[8px] bg-card px-4 py-6 shadow-[var(--shadow-sm)] md:px-6 md:py-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-fb-pink">FitBazar Editorial</p>
-          <h1 className="mt-2 max-w-[920px] text-[34px] font-semibold tracking-[-0.04em] text-text-primary md:text-[56px]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-fb-pink">FitBazar Editorial</p>
+          <h1 className="mt-2 max-w-[920px] text-[34px] font-semibold tracking-normal text-text-primary md:text-[56px]">
             Fashion Blog Nepal
           </h1>
           <p className="mt-4 max-w-[780px] text-[15px] leading-7 text-text-secondary">
@@ -82,7 +82,7 @@ export default function BlogPage() {
               <Link
                 key={category.slug}
                 href={`/blog/category/${category.slug}`}
-                className="rounded-[20px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
+                className="rounded-[4px] border border-border-default px-3 py-1 text-[12px] font-medium text-text-secondary hover:border-fb-pink hover:text-fb-pink"
               >
                 {category.title}
               </Link>
