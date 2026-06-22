@@ -1,0 +1,11 @@
+import { useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "@/api/client";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { Screen } from "@/components/Screen";
+import { colors, radius, spacing } from "@/styles/theme";
+import { money } from "@/utils/format";
+
+export default function CouponsScreen(){const[code,setCode]=useState("");const[subtotal,setSubtotal]=useState("1000");const validate=useMutation({mutationFn:()=>api.validateCoupon(code.trim().toUpperCase(),Number(subtotal)||0),onError:(error)=>Alert.alert("Coupon not available",error instanceof Error?error.message:"Try another code")});return <Screen contentStyle={styles.screen}><Text style={styles.title}>Coupons</Text><Text style={styles.subtitle}>Check a FitBazar coupon before checkout.</Text><View style={styles.form}><TextInput value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="Coupon code" placeholderTextColor={colors.inkMuted} style={styles.input}/><TextInput value={subtotal} onChangeText={setSubtotal} keyboardType="numeric" placeholder="Cart subtotal" placeholderTextColor={colors.inkMuted} style={styles.input}/><PrimaryButton loading={validate.isPending} onPress={()=>validate.mutate()}>Check Coupon</PrimaryButton></View>{validate.data?.coupon?<View style={styles.result}><Text style={styles.resultTitle}>{validate.data.coupon.code} works</Text><Text style={styles.resultText}>{validate.data.coupon.discountPct}% off · Save {money(validate.data.coupon.discountAmount)}</Text></View>:null}</Screen>}
+const styles=StyleSheet.create({screen:{paddingTop:spacing.sm},title:{color:colors.ink,fontSize:26,fontWeight:"900"},subtitle:{color:colors.inkMuted},form:{gap:spacing.sm,borderWidth:1,borderColor:colors.line,borderRadius:radius.md,backgroundColor:colors.surface,padding:spacing.lg},input:{minHeight:48,borderWidth:1,borderColor:colors.line,borderRadius:radius.sm,color:colors.ink,paddingHorizontal:spacing.md},result:{gap:spacing.xs,borderWidth:1,borderColor:colors.success,borderRadius:radius.md,backgroundColor:colors.surface,padding:spacing.lg},resultTitle:{color:colors.success,fontSize:18,fontWeight:"900"},resultText:{color:colors.ink}});

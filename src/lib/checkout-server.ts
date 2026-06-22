@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { allocateAmountAcrossSubtotals, calculateOrderAmounts, groupItemsByVendor, roundCurrency, type CanonicalOrderItem } from "@/lib/order-routing";
 import { isSupportedPaymentMethod, type SupportedPaymentMethod } from "@/lib/payment-types";
 import { getShippingAmount, isDeliveryMethod, type DeliveryMethod } from "@/lib/shipping";
-import { publicProductVendorFilter } from "@/lib/public-storefront";
+import { publicProductVendorFilter, publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { ProductStatus } from "@prisma/client";
 import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { renderOrderBillEmail, renderVendorOrderEmail } from "@/lib/email-templates";
@@ -11,6 +11,7 @@ import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
 import { resolvePincode } from "@/lib/pincode";
 import { getPublicVendorName } from "@/lib/public-vendor-identity";
 import { revalidateStorefrontCache } from "@/lib/storefront-cache";
+import { logger } from "@/lib/logger";
 
 export type CheckoutItemInput = {
   productId: string;
@@ -309,32 +310,17 @@ export async function createOrdersFromCheckoutPayload(input: {
     }
 
     if (context.coupon) {
-      const latestCoupon = await tx.coupon.findUnique({
-        where: { id: context.coupon.id },
-        select: {
-          id: true,
-          code: true,
-          discountPct: true,
-          usedCount: true,
-          maxUses: true,
-          isActive: true,
-          expiresAt: true,
-        },
-      });
+      const claimedCouponUses = await tx.$executeRaw`
+        UPDATE "Coupon"
+        SET "usedCount" = "usedCount" + 1
+        WHERE "id" = ${context.coupon.id}
+          AND "isActive" = true
+          AND "usedCount" < "maxUses"
+          AND ("expiresAt" IS NULL OR "expiresAt" > NOW())
+      `;
 
-      if (!normalizeCoupon(latestCoupon)) {
+      if (claimedCouponUses !== 1) {
         throw buildCheckoutError("COUPON_INVALID", "Coupon is no longer valid.");
-      }
-    }
-
-    for (const item of context.items) {
-      const currentProduct = await tx.product.findUnique({
-        where: { id: item.productId },
-        select: { stock: true },
-      });
-
-      if (!currentProduct || currentProduct.stock < item.quantity) {
-        throw buildCheckoutError("INSUFFICIENT_STOCK", "Insufficient stock for one or more items.");
       }
     }
 
@@ -398,13 +384,21 @@ export async function createOrdersFromCheckoutPayload(input: {
       createdOrders.push(createdOrder);
 
       for (const item of vendorItems) {
-        await tx.product.update({
-          where: { id: item.productId },
+        const updatedStock = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            stock: { gte: item.quantity },
+            ...publicProductVisibilityFilter,
+          },
           data: {
             stock: { decrement: item.quantity },
             totalSold: { increment: item.quantity },
           },
         });
+
+        if (!updatedStock.count) {
+          throw buildCheckoutError("INSUFFICIENT_STOCK", "Insufficient stock for one or more items.");
+        }
       }
 
       await tx.notification.createMany({
@@ -427,22 +421,13 @@ export async function createOrdersFromCheckoutPayload(input: {
       });
     }
 
-    if (context.coupon) {
-      await tx.coupon.update({
-        where: { id: context.coupon.id },
-        data: {
-          usedCount: { increment: 1 },
-        },
-      });
-    }
-
     didCreateOrders = true;
     return createdOrders;
   });
 
   if (didCreateOrders && hasConfiguredMailTransport()) {
     await sendOrderEmails(context, orders).catch((error) => {
-      console.error("[orders] Failed to send order email:", error);
+      logger.error("[orders] Failed to send order email", error);
     });
   }
 
@@ -534,7 +519,7 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
     });
 
     if (!customerMail.delivered) {
-      console.error("[orders] Customer bill email was not delivered:", {
+      logger.error("[orders] Customer bill email was not delivered", undefined, {
         orderNumbers,
         reason: customerMail.reason,
       });
@@ -556,7 +541,7 @@ async function sendOrderEmails(context: PreparedCheckoutContext, orders: OrderFo
       });
 
       if (!vendorMail.delivered) {
-        console.error("[orders] Vendor order email was not delivered:", {
+        logger.error("[orders] Vendor order email was not delivered", undefined, {
           orderNumber: order.orderNumber,
           reason: vendorMail.reason,
         });

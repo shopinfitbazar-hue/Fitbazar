@@ -9,7 +9,9 @@ import {
 } from "../src/lib/admin-notifications";
 import { categoryQueryValue, normalizeCategory } from "../src/lib/categories";
 import { runCartStateTests } from "./cart-state.test";
+import { isPrivateNoStorePath, privateNoStoreHeaders, publicCacheHeaders } from "../src/lib/cache-control";
 import { getGoogleOAuthCallbackUrls, hasConfiguredGoogleOAuth } from "../src/lib/google-auth";
+import { redactSensitiveValue, safeErrorMessage } from "../src/lib/log-redaction";
 import { hasConfiguredMailTransport } from "../src/lib/mailer";
 import { getSafeImageUrl } from "../src/lib/media";
 import { hasConfiguredConnectIps, hasConfiguredEsewa, hasConfiguredFonepay, hasConfiguredKhalti, hasConfiguredLocalCards } from "../src/lib/payment-config";
@@ -30,6 +32,7 @@ import { getShippingAmount } from "../src/lib/shipping";
 import { buildAppUrl, hashOpaqueToken } from "../src/lib/tokens";
 import { t } from "../src/lib/translations";
 import { getVendorAccessState } from "../src/lib/vendor-access";
+import { formatPriceNpr as formatSharedPriceNpr, toQueryString } from "../packages/shared-utils/src";
 
 function run(name: string, fn: () => void) {
   fn();
@@ -48,6 +51,37 @@ function restoreEnv(previous: Record<string, string | undefined>) {
 }
 
 runCartStateTests(run);
+
+run("cache headers keep public CDN cache and private no-store separate", () => {
+  assert.deepEqual(publicCacheHeaders(120), {
+    "Cache-Control": "public, s-maxage=120, stale-while-revalidate=1440",
+    "CDN-Cache-Control": "public, s-maxage=120, stale-while-revalidate=1440",
+    "Vercel-CDN-Cache-Control": "public, s-maxage=120, stale-while-revalidate=1440",
+  });
+  assert.deepEqual(privateNoStoreHeaders(), {
+    "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+    "CDN-Cache-Control": "no-store",
+    "Vercel-CDN-Cache-Control": "no-store",
+  });
+  assert.equal(isPrivateNoStorePath("/api/payments/initiate"), true);
+  assert.equal(isPrivateNoStorePath("/api/mobile/v1/customer/orders"), true);
+  assert.equal(isPrivateNoStorePath("/api/products"), false);
+});
+
+run("log redaction masks secrets, tokens, and database urls", () => {
+  const redacted = redactSensitiveValue({
+    DATABASE_URL: "postgresql://user:password@host/db?schema=public",
+    headers: { authorization: "Bearer abc.def.ghi" },
+    redirectUrl: "https://example.com/callback?token=raw-token&pidx=visible",
+    message: "password=secret token=abc",
+  }) as Record<string, unknown>;
+
+  assert.equal(redacted.DATABASE_URL, "[REDACTED]");
+  assert.deepEqual(redacted.headers, { authorization: "[REDACTED]" });
+  assert.equal(redacted.redirectUrl, "https://example.com/callback?token=***&pidx=***");
+  assert.equal(redacted.message, "password=*** token=***");
+  assert.equal(safeErrorMessage(new Error("postgresql://user:password@host/db failed")), "postgresql://user:***@host/db failed");
+});
 
 run("category aliases normalize to canonical values", () => {
   assert.equal(normalizeCategory("men"), "Men");
@@ -242,6 +276,11 @@ run("shipping logic respects delivery type and free-delivery threshold", () => {
   assert.equal(getShippingAmount({ subtotal: 2500, deliveryMethod: "standard", freeDeliveryThreshold: 2000 }), 0);
   assert.equal(getShippingAmount({ subtotal: 900, deliveryMethod: "express", freeDeliveryThreshold: 2000 }), 250);
   assert.equal(getShippingAmount({ subtotal: 900, deliveryMethod: "pickup", freeDeliveryThreshold: 2000 }), 0);
+});
+
+run("shared utilities format NPR and build stable query strings", () => {
+  assert.equal(formatSharedPriceNpr(1299), "NPR\u00a01,299");
+  assert.equal(toQueryString({ q: "shirt", page: 2, empty: "", color: ["Black", "Gold"] }), "?q=shirt&page=2&color=Black&color=Gold");
 });
 
 run("product status derivation keeps hidden, draft, and stock rules deterministic", () => {

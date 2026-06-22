@@ -4,8 +4,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter } from "@/lib/public-storefront";
 import { pickBestProductLookupCandidate, publicProductAliasWhere, publicProductIdentityWhere } from "@/lib/product-lookup";
-import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
+import { PUBLIC_CATALOG_REVALIDATE_SECONDS, publicCatalogCacheHeaders, publicCatalogRedisKey } from "@/lib/public-catalog";
 import { getPublicVendorName, getPublicVendorSlug, type PublicVendorIdentityInput } from "@/lib/public-vendor-identity";
+import { getOrSetRedisJson } from "@/lib/redis-cache";
 
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_CATALOG_REVALIDATE_SECONDS;
@@ -158,11 +159,16 @@ function withPublicProductVendor<T extends { vendor?: PublicVendorIdentityInput 
   };
 }
 
-function getCachedPublicProductDetail(slug: string) {
-  return unstable_cache(() => queryPublicProductDetail(slug), ["public-product-api", slug], {
-    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
-    tags: ["public-product-detail"],
-  })();
+async function getCachedPublicProductDetail(slug: string) {
+  return getOrSetRedisJson({
+    key: await publicCatalogRedisKey("product-detail", { slug }),
+    ttlSeconds: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    compute: () =>
+      unstable_cache(() => queryPublicProductDetail(slug), ["public-product-api", slug], {
+        revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+        tags: ["public-product-detail"],
+      })(),
+  });
 }
 
 export async function GET(_: Request, { params }: { params: Promise<{ slug: string }> }) {

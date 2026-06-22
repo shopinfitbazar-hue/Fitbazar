@@ -79,7 +79,7 @@ export async function GET(request: Request) {
           COUNT(*) FILTER (WHERE "eventType" = 'page_view')::integer AS "pageViews",
           COUNT(DISTINCT COALESCE("userId", "anonymousId"))::integer AS "uniqueVisitors",
           COUNT(DISTINCT "userId")::integer AS "signedInVisitors",
-          COUNT(*) FILTER (WHERE "channel" IN ('CUSTOMER_APP', 'VENDOR_APP'))::integer AS "mobileEvents"
+          COUNT(*) FILTER (WHERE "channel" IN ('CUSTOMER_APP', 'VENDOR_APP', 'DELIVERY_APP'))::integer AS "mobileEvents"
         FROM "AnalyticsEvent"
         WHERE "createdAt" >= ${startDate}
       `,

@@ -83,7 +83,7 @@ const searchSuggestions = [
 
 type HeaderSessionUser = {
   id?: string;
-  role?: "ADMIN" | "VENDOR" | "CUSTOMER";
+  role?: "ADMIN" | "VENDOR" | "DELIVERY" | "CUSTOMER";
   name?: string | null;
   email?: string | null;
 };
@@ -148,6 +148,8 @@ export default function Header() {
   const canShop = !sessionUser || role === "CUSTOMER";
   const userName = sessionUser?.name || t("welcome");
   const userEmail = sessionUser?.email || "Shop smarter with Fit Bazar";
+  const dashboardHref = role === "ADMIN" ? "/admin" : role === "VENDOR" ? "/vendor/dashboard" : "/unauthorized";
+  const dashboardLabel = role === "ADMIN" ? t("admin_panel") : t("dashboard");
 
   const profileLinks = useMemo(() => {
     if (!sessionUser) {
@@ -209,6 +211,27 @@ export default function Header() {
           { label: "Partner Center", href: "/vendor/partner" },
           { label: t("my_products"), href: "/vendor/products" },
           { label: t("my_orders"), href: "/vendor/orders" },
+          { label: t("notifications"), href: "/account/notifications" },
+          { label: t("help_support"), href: "/help" },
+          { label: t("logout"), href: "#logout" },
+        ],
+      };
+    }
+
+    if (role === "DELIVERY") {
+      return {
+        header: (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-[14px] font-bold text-text-primary">{userName}</h3>
+                <p className="mt-1 text-[12px] text-text-muted">{userEmail}</p>
+              </div>
+              <span className="badge badge-amber">Delivery</span>
+            </div>
+          </>
+        ),
+        items: [
           { label: t("notifications"), href: "/account/notifications" },
           { label: t("help_support"), href: "/help" },
           { label: t("logout"), href: "#logout" },
@@ -481,7 +504,7 @@ export default function Header() {
                   </IconLink>
                 </>
               ) : (
-                <IconLink href={role === "ADMIN" ? "/admin" : "/vendor/dashboard"} label={role === "ADMIN" ? t("admin_panel") : t("dashboard")}>
+                <IconLink href={dashboardHref} label={dashboardLabel}>
                   <LayoutDashboard className="h-[22px] w-[22px]" />
                 </IconLink>
               )}
@@ -506,7 +529,7 @@ export default function Header() {
                 className="min-w-0 flex-1 !border-none !bg-transparent !px-0 !py-0 text-[13px] !shadow-none focus:!border-none focus:!shadow-none"
               />
             </form>
-            <Link href={canShop ? "/cart" : role === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={canShop ? t("bag") : t("dashboard")}>
+            <Link href={canShop ? "/cart" : dashboardHref} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-default bg-[var(--bg-surface)]" aria-label={canShop ? t("bag") : dashboardLabel}>
               {canShop ? <ShoppingBag className="h-5 w-5 text-text-primary" /> : <LayoutDashboard className="h-5 w-5 text-text-primary" />}
               {canShop && bagCount > 0 ? (
                 <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-fb-pink px-1 text-[9px] font-semibold text-white">

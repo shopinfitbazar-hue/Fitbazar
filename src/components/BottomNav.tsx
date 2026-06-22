@@ -38,13 +38,18 @@ const adminItems: BottomNavItem[] = [
   { href: "/account/notifications", icon: Bell, labelKey: "notifications" },
 ];
 
+const deliveryItems: BottomNavItem[] = [
+  { href: "/unauthorized", icon: LayoutDashboard, labelKey: "dashboard" },
+  { href: "/account/notifications", icon: Bell, labelKey: "notifications" },
+];
+
 export default function BottomNav() {
   const pathname = usePathname() ?? "";
   const { itemCount } = useCart();
   const { t } = useLanguage();
   const { data: session } = useSession();
   const role = session?.user?.role;
-  const items = role === "VENDOR" ? vendorItems : role === "ADMIN" ? adminItems : customerItems;
+  const items = role === "VENDOR" ? vendorItems : role === "ADMIN" ? adminItems : role === "DELIVERY" ? deliveryItems : customerItems;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border-light bg-card lg:hidden">

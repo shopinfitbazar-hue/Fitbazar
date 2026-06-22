@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { buildAbsoluteAppUrl } from "@/lib/app-url";
 import { renderVendorUpdateEmail } from "@/lib/email-templates";
 import { hasConfiguredMailTransport, sendMail } from "@/lib/mailer";
+import { buildPaginationMeta, getPagination } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 import { slugify } from "@/lib/slug";
@@ -37,24 +38,38 @@ export async function GET(request: Request) {
 
     const { vendor } = auth;
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q");
-
-    const products = await prisma.product.findMany({
-      where: {
-        vendorId: vendor.id,
-        ...(q
-          ? {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { category: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { createdAt: "desc" },
+    const q = (searchParams.get("q") || "").trim().slice(0, 120);
+    const { page, pageSize, skip, take } = getPagination(searchParams, {
+      defaultPageSize: 25,
+      maxPageSize: 100,
     });
+    const where = {
+      vendorId: vendor.id,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" as const } },
+              { category: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    };
 
-    return NextResponse.json({ products, vendor });
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      products,
+      vendor,
+      pagination: buildPaginationMeta(total, page, pageSize),
+    });
   } catch (error) {
     console.error("Error fetching vendor products:", error);
     return NextResponse.json({ error: "Failed to fetch vendor products" }, { status: 500 });

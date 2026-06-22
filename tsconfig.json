@@ -18,9 +18,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@fitbazar/shared-api": ["./packages/shared-api/src"],
+      "@fitbazar/shared-types": ["./packages/shared-types/src"],
+      "@fitbazar/shared-utils": ["./packages/shared-utils/src"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "apps/*"]
 }

@@ -160,7 +160,9 @@ export default function ProductDetailClient({
   const [mobileZoomOpen, setMobileZoomOpen] = useState(false);
   const [mobileZoomScale, setMobileZoomScale] = useState(1);
   const accountRole = session?.user?.role;
-  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
+  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN" || accountRole === "DELIVERY";
+  const roleHomeHref = accountRole === "ADMIN" ? "/admin" : accountRole === "VENDOR" ? "/vendor/dashboard" : "/unauthorized";
+  const roleHomeLabel = accountRole === "ADMIN" ? t("admin_panel") : accountRole === "VENDOR" ? t("go_to_vendor_dashboard") : t("dashboard");
   const wishlisted = isInWishlist(product.id);
   const vendorHref = product.vendor.slug ? `/shop/${product.vendor.slug}` : null;
   const productSummary =
@@ -709,8 +711,8 @@ export default function ProductDetailClient({
             <div className="mt-6 rounded-[8px] border border-border-light bg-[var(--bg-surface)] p-4">
               <p className="text-[14px] font-semibold text-text-primary">{t("customer_account_required")}</p>
               <p className="mt-1 text-[13px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
-              <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-4 inline-flex">
-                {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+              <Link href={roleHomeHref} className="btn-primary mt-4 inline-flex">
+                {roleHomeLabel}
               </Link>
             </div>
           ) : (

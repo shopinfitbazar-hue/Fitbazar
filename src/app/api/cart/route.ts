@@ -1,75 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { addCustomerCartItem, clearCustomerCart, getCustomerCartItems } from "@/lib/cart-server";
 import { requireCustomerSession } from "@/lib/server-auth";
-import { getSafeImageUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/media";
-import { isPublicProductStatus } from "@/lib/product-status";
-import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
 
 export const dynamic = "force-dynamic";
 
 function authStatus(error: string) {
   return error === "Unauthorized" ? 401 : 403;
-}
-
-function serializeCartItem(item: {
-  id: string;
-  quantity: number;
-  size: string | null;
-  color: string | null;
-  product: {
-    id: string;
-    slug: string;
-    name: string;
-    price: number;
-    compareAtPrice: number | null;
-    images: string[];
-    vendorId: string;
-    vendor: { shopName: string; slug: string; isPartnered?: boolean | null };
-  };
-}) {
-  return {
-    id: item.id,
-    productId: item.product.id,
-    slug: item.product.slug,
-    name: item.product.name,
-    price: item.product.price,
-    originalPrice: item.product.compareAtPrice ?? undefined,
-    image: getSafeImageUrl(
-      item.product.images[0],
-      FALLBACK_PRODUCT_IMAGE,
-    ),
-    vendorId: item.product.vendorId,
-    vendorName: getPublicVendorName(item.product.vendor),
-    vendorSlug: getPublicVendorSlug(item.product.vendor),
-    quantity: item.quantity,
-    size: item.size || undefined,
-    color: item.color || undefined,
-  };
-}
-
-async function fetchProductsForCart(productIds: string[]) {
-  if (!productIds.length) {
-    return new Map<string, null>();
-  }
-
-  const products = await prisma.product.findMany({
-    where: {
-      id: { in: productIds },
-    },
-    include: {
-      vendor: {
-        select: {
-          shopName: true,
-          slug: true,
-          isPartnered: true,
-          isApproved: true,
-          isSuspended: true,
-        },
-      },
-    },
-  });
-
-  return new Map(products.map((product) => [product.id, product]));
 }
 
 export async function GET() {
@@ -79,34 +15,9 @@ export async function GET() {
       return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
-    const items = await prisma.cartItem.findMany({
-      where: { userId: auth.session.user.id },
-      orderBy: { createdAt: "desc" },
-    });
+    const items = await getCustomerCartItems(auth.session.user.id);
 
-    const productsById = await fetchProductsForCart(items.map((item) => item.productId));
-
-    const validItems = items
-      .map((item) => {
-        const product = productsById.get(item.productId);
-        if (!product || !isPublicProductStatus(product.status) || !product.vendor.isApproved || product.vendor.isSuspended) {
-          return null;
-        }
-
-        return serializeCartItem({
-          ...item,
-          product,
-        });
-      })
-      .filter((item): item is ReturnType<typeof serializeCartItem> => item !== null);
-
-    const validIdSet = new Set(validItems.map((item) => item.id));
-    const staleIds = items.filter((item) => !validIdSet.has(item.id)).map((item) => item.id);
-    if (staleIds.length) {
-      await prisma.cartItem.deleteMany({ where: { id: { in: staleIds } } }).catch(() => undefined);
-    }
-
-    return NextResponse.json({ items: validItems });
+    return NextResponse.json({ items });
   } catch (error) {
     console.error("Error fetching cart:", error);
     return NextResponse.json({ error: "Failed to fetch cart" }, { status: 500 });
@@ -120,97 +31,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
-    const body = (await request.json()) as {
-      productId?: string;
-      quantity?: number;
-      size?: string;
-      color?: string;
-    };
+    const result = await addCustomerCartItem(auth.session.user.id, await request.json());
 
-    if (!body.productId) {
-      return NextResponse.json({ error: "productId is required" }, { status: 400 });
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    const quantity = Number(body.quantity || 1);
-    if (!Number.isFinite(quantity) || quantity < 1) {
-      return NextResponse.json({ error: "Quantity must be at least 1" }, { status: 400 });
-    }
-
-    const product = await prisma.product.findFirst({
-      where: {
-        id: body.productId,
-        status: "ACTIVE",
-        vendor: {
-          isApproved: true,
-          isSuspended: false,
-        },
-      },
-      select: {
-        id: true,
-        stock: true,
-      },
-    });
-
-    if (!product) {
-      return NextResponse.json({ error: "Product is not available" }, { status: 404 });
-    }
-
-    const existing = await prisma.cartItem.findFirst({
-      where: {
-        userId: auth.session.user.id,
-        productId: body.productId,
-        size: body.size || null,
-        color: body.color || null,
-      },
-      select: {
-        id: true,
-        quantity: true,
-      },
-    });
-
-    const nextQuantity = (existing?.quantity || 0) + quantity;
-    if (product.stock > 0 && nextQuantity > product.stock) {
-      return NextResponse.json({ error: "Requested quantity exceeds stock" }, { status: 400 });
-    }
-
-    const item = existing
-      ? await prisma.cartItem.update({
-          where: { id: existing.id },
-          data: { quantity: nextQuantity },
-        })
-      : await prisma.cartItem.create({
-          data: {
-            userId: auth.session.user.id,
-            productId: body.productId,
-            quantity,
-            size: body.size?.trim() || null,
-            color: body.color?.trim() || null,
-          },
-        });
-
-    const productDetails = await prisma.product.findUnique({
-      where: { id: body.productId },
-      include: {
-        vendor: {
-          select: {
-            shopName: true,
-            slug: true,
-            isPartnered: true,
-          },
-        },
-      },
-    });
-
-    if (!productDetails) {
-      return NextResponse.json({ error: "Product is not available" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      item: serializeCartItem({
-        ...item,
-        product: productDetails,
-      }),
-    }, { status: existing ? 200 : 201 });
+    return NextResponse.json({ item: result.item }, { status: result.status });
   } catch (error) {
     console.error("Error adding cart item:", error);
     return NextResponse.json({ error: "Failed to add cart item" }, { status: 500 });
@@ -224,9 +51,7 @@ export async function DELETE() {
       return NextResponse.json({ error: auth.error }, { status: authStatus(auth.error) });
     }
 
-    await prisma.cartItem.deleteMany({
-      where: { userId: auth.session.user.id },
-    });
+    await clearCustomerCart(auth.session.user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

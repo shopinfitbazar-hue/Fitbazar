@@ -322,8 +322,8 @@ function CheckoutPageInner() {
           <div className="rounded-[8px] bg-card p-8 text-center shadow-[var(--shadow-sm)]">
             <h1>{t("customer_account_required")}</h1>
             <p className="mx-auto mt-3 max-w-lg text-[14px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
-            <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-5 inline-flex">
-              {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+            <Link href={accountRole === "ADMIN" ? "/admin" : accountRole === "VENDOR" ? "/vendor/dashboard" : "/unauthorized"} className="btn-primary mt-5 inline-flex">
+              {accountRole === "ADMIN" ? t("admin_panel") : accountRole === "VENDOR" ? t("go_to_vendor_dashboard") : t("dashboard")}
             </Link>
           </div>
         </div>

@@ -25,7 +25,9 @@ export default function CartPage() {
   const delivery = total > 2000 ? 0 : 100;
   const finalTotal = total - couponDiscount + delivery;
   const accountRole = session?.user?.role;
-  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN";
+  const blocksShopping = accountRole === "VENDOR" || accountRole === "ADMIN" || accountRole === "DELIVERY";
+  const roleHomeHref = accountRole === "ADMIN" ? "/admin" : accountRole === "VENDOR" ? "/vendor/dashboard" : "/unauthorized";
+  const roleHomeLabel = accountRole === "ADMIN" ? t("admin_panel") : accountRole === "VENDOR" ? t("go_to_vendor_dashboard") : t("dashboard");
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -76,8 +78,8 @@ export default function CartPage() {
             </div>
             <h2 className="mt-4 text-[18px] font-semibold text-text-primary">{t("customer_account_required")}</h2>
             <p className="mx-auto mt-2 max-w-md text-[14px] text-text-muted">{t("vendor_account_shopping_blocked")}</p>
-            <Link href={accountRole === "ADMIN" ? "/admin" : "/vendor/dashboard"} className="btn-primary mt-5 inline-flex">
-              {accountRole === "ADMIN" ? t("admin_panel") : t("go_to_vendor_dashboard")}
+            <Link href={roleHomeHref} className="btn-primary mt-5 inline-flex">
+              {roleHomeLabel}
             </Link>
           </div>
         ) : items.length === 0 ? (

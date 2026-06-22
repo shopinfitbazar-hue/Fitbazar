@@ -1,4 +1,5 @@
 import { revalidatePath, revalidateTag } from "next/cache";
+import { bumpRedisCacheVersion } from "@/lib/redis-cache";
 
 const STOREFRONT_CACHE_TAGS = [
   "public-homepage",
@@ -25,4 +26,5 @@ const STOREFRONT_CACHE_PATHS: Array<[string, "page" | "layout" | undefined]> = [
 export function revalidateStorefrontCache() {
   STOREFRONT_CACHE_TAGS.forEach((tag) => revalidateTag(tag));
   STOREFRONT_CACHE_PATHS.forEach(([path, type]) => revalidatePath(path, type));
+  void bumpRedisCacheVersion("public");
 }

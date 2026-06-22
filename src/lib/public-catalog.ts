@@ -1,10 +1,13 @@
 import { unstable_cache } from "next/cache";
+import { createHash } from "crypto";
 import { Prisma } from "@prisma/client";
 import { normalizeCategory } from "@/lib/categories";
 import { expireExpiredPartnerships } from "@/lib/partner-program";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/lib/public-storefront";
 import { getPublicVendorName, getPublicVendorSlug, type PublicVendorIdentityInput } from "@/lib/public-vendor-identity";
+import { publicCacheHeaders } from "@/lib/cache-control";
+import { getOrSetRedisJson, getRedisCacheVersion } from "@/lib/redis-cache";
 
 export const PUBLIC_CATALOG_REVALIDATE_SECONDS = 300;
 export const PUBLIC_SEARCH_REVALIDATE_SECONDS = 120;
@@ -75,6 +78,11 @@ function readAllParams(
 
 function stableKey(value: unknown) {
   return JSON.stringify(value);
+}
+
+export async function publicCatalogRedisKey(namespace: string, value: unknown) {
+  const version = await getRedisCacheVersion("public");
+  return `public:v${version}:${namespace}:${createHash("sha256").update(stableKey(value)).digest("hex")}`;
 }
 
 export function productQueryKey(input: PublicProductQueryInput) {
@@ -434,28 +442,41 @@ async function queryPublicVendors(input: PublicVendorQueryInput) {
 }
 
 export async function getCachedPublicProducts(input: PublicProductQueryInput) {
-  return unstable_cache(() => queryPublicProducts(input), ["public-products", productQueryKey(input)], {
-    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
-    tags: ["public-products"],
-  })();
+  return getOrSetRedisJson({
+    key: await publicCatalogRedisKey("products", input),
+    ttlSeconds: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    compute: () =>
+      unstable_cache(() => queryPublicProducts(input), ["public-products", productQueryKey(input)], {
+        revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+        tags: ["public-products"],
+      })(),
+  });
 }
 
 export async function getCachedPublicSearch(input: PublicSearchQueryInput) {
-  return unstable_cache(() => queryPublicSearch(input), ["public-search", searchQueryKey(input)], {
-    revalidate: PUBLIC_SEARCH_REVALIDATE_SECONDS,
-    tags: ["public-search"],
-  })();
+  return getOrSetRedisJson({
+    key: await publicCatalogRedisKey("search", input),
+    ttlSeconds: PUBLIC_SEARCH_REVALIDATE_SECONDS,
+    compute: () =>
+      unstable_cache(() => queryPublicSearch(input), ["public-search", searchQueryKey(input)], {
+        revalidate: PUBLIC_SEARCH_REVALIDATE_SECONDS,
+        tags: ["public-search"],
+      })(),
+  });
 }
 
 export async function getCachedPublicVendors(input: PublicVendorQueryInput) {
-  return unstable_cache(() => queryPublicVendors(input), ["public-vendors", vendorQueryKey(input)], {
-    revalidate: PUBLIC_VENDOR_REVALIDATE_SECONDS,
-    tags: ["public-vendors"],
-  })();
+  return getOrSetRedisJson({
+    key: await publicCatalogRedisKey("vendors", input),
+    ttlSeconds: PUBLIC_VENDOR_REVALIDATE_SECONDS,
+    compute: () =>
+      unstable_cache(() => queryPublicVendors(input), ["public-vendors", vendorQueryKey(input)], {
+        revalidate: PUBLIC_VENDOR_REVALIDATE_SECONDS,
+        tags: ["public-vendors"],
+      })(),
+  });
 }
 
 export function publicCatalogCacheHeaders(revalidateSeconds = PUBLIC_CATALOG_REVALIDATE_SECONDS) {
-  return {
-    "Cache-Control": `public, s-maxage=${revalidateSeconds}, stale-while-revalidate=${revalidateSeconds * 6}`,
-  };
+  return publicCacheHeaders(revalidateSeconds);
 }

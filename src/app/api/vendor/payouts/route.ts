@@ -1,10 +1,12 @@
+import { OrderStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { buildPaginationMeta, getPagination } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { requireVendorSession } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await requireVendorSession({ allowPending: true });
     if ("error" in auth) {
@@ -12,40 +14,70 @@ export async function GET() {
     }
 
     const { vendor } = auth;
-    const orders = await prisma.order.findMany({
-      where: {
-        vendorId: vendor.id,
-        status: {
-          in: ["PACKED", "HANDED_TO_DELIVERY", "DELIVERED"],
-        },
-      },
-      select: {
-        id: true,
-        orderNumber: true,
-        vendorPayout: true,
-        totalAmount: true,
-        status: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
+    const { searchParams } = new URL(request.url);
+    const { page, pageSize, skip, take } = getPagination(searchParams, {
+      defaultPageSize: 25,
+      maxPageSize: 100,
     });
-
-    const totals = orders.reduce(
-      (summary, order) => {
-        summary.totalPayout += order.vendorPayout;
-        if (order.status === "DELIVERED") {
-          summary.released += order.vendorPayout;
-        } else {
-          summary.pending += order.vendorPayout;
-        }
-        return summary;
+    const payoutStatuses: OrderStatus[] = [OrderStatus.PACKED, OrderStatus.HANDED_TO_DELIVERY, OrderStatus.DELIVERED];
+    const payoutWhere: Prisma.OrderWhereInput = {
+      vendorId: vendor.id,
+      status: {
+        in: payoutStatuses,
       },
-      { totalPayout: 0, released: 0, pending: 0 },
-    );
+    };
+
+    const [orders, total, totalPayout, releasedPayout, pendingPayout] = await Promise.all([
+      prisma.order.findMany({
+        where: payoutWhere,
+        select: {
+          id: true,
+          orderNumber: true,
+          vendorPayout: true,
+          totalAmount: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.order.count({ where: payoutWhere }),
+      prisma.order.aggregate({
+        where: payoutWhere,
+        _sum: {
+          vendorPayout: true,
+        },
+      }),
+      prisma.order.aggregate({
+        where: {
+          vendorId: vendor.id,
+          status: OrderStatus.DELIVERED,
+        },
+        _sum: {
+          vendorPayout: true,
+        },
+      }),
+      prisma.order.aggregate({
+        where: {
+          vendorId: vendor.id,
+          status: {
+            in: [OrderStatus.PACKED, OrderStatus.HANDED_TO_DELIVERY],
+          },
+        },
+        _sum: {
+          vendorPayout: true,
+        },
+      }),
+    ]);
 
     return NextResponse.json({
       vendor,
-      totals,
+      totals: {
+        totalPayout: totalPayout._sum?.vendorPayout || 0,
+        released: releasedPayout._sum?.vendorPayout || 0,
+        pending: pendingPayout._sum?.vendorPayout || 0,
+      },
       payouts: orders.map((order) => ({
         id: order.id,
         orderNumber: order.orderNumber,
@@ -54,6 +86,7 @@ export async function GET() {
         status: order.status === "DELIVERED" ? "RELEASED" : "PENDING",
         createdAt: order.createdAt,
       })),
+      pagination: buildPaginationMeta(total, page, pageSize),
     });
   } catch (error) {
     console.error("Error fetching vendor payouts:", error);

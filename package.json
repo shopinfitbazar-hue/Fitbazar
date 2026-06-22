@@ -2,6 +2,10 @@
   "name": "fit-bazar",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && next build",
@@ -10,6 +14,12 @@
     "lint": "next lint",
     "test": "npx ts-node --project tests/tsconfig.json tests/run-tests.ts",
     "load:test": "node scripts/load-test.mjs",
+    "load:test:public": "LOAD_TEST_PATHS='/,/products,/api/products,/api/search?q=shirt,/api/vendors' node scripts/load-test.mjs",
+    "load:test:public-fast": "LOAD_TEST_READ_BODY=false LOAD_TEST_PATHS='/,/products,/api/products,/api/search?q=shirt,/api/vendors' node scripts/load-test.mjs",
+    "load:k6": "k6 run tests/k6/fitbazar-100k.js",
+    "db:explain:public": "node scripts/explain-public-queries.mjs",
+    "mobile:typecheck": "npm run typecheck -w apps/customer",
+    "mobile:customer": "npm run start -w apps/customer",
     "seed": "npx ts-node --project prisma/tsconfig.seed.json prisma/seed.ts",
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",

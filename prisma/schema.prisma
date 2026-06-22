@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   CUSTOMER
   VENDOR
+  DELIVERY
   ADMIN
 }
 
@@ -27,6 +28,21 @@ enum ProductStatus {
   ACTIVE
   HIDDEN
   OUT_OF_STOCK
+}
+
+enum DeliveryAssignmentStatus {
+  ASSIGNED
+  PICKUP_CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum DeliveryEarningStatus {
+  PENDING
+  RELEASED
+  CANCELLED
 }
 
 model Account {
@@ -56,6 +72,77 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model MobileSession {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app              String    @default("CUSTOMER_APP")
+  deviceId         String?
+  accessTokenHash  String    @unique
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  refreshExpiresAt DateTime
+  revokedAt        DateTime?
+  lastUsedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId, revokedAt])
+  @@index([app, createdAt])
+  @@index([accessTokenHash, expiresAt])
+  @@index([refreshTokenHash, refreshExpiresAt])
+}
+
+model MobileAuthCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model DeviceToken {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app        String
+  platform   String
+  deviceId   String
+  pushToken  String   @unique
+  provider   String
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, app, deviceId])
+  @@index([userId, app])
+  @@index([app, platform])
+}
+
+model IdempotencyKey {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope       String
+  key         String
+  requestHash String
+  status      String   @default("PROCESSING")
+  statusCode  Int?
+  response    Json?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, scope, key])
+  @@index([expiresAt])
+  @@index([userId, scope, status])
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -69,64 +156,92 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  vendorProfile Vendor?
-  orders        Order[]
-  reviews       Review[]
-  vendorReviews VendorReview[]
-  wishlist      Wishlist[]
-  addresses     Address[]
-  notifications Notification[]
-  paymentAttempts PaymentAttempt[]
-  supportTickets SupportTicket[]
-  cartItems      CartItem[]
-  supportMessages SupportMessage[]
-  analyticsEvents AnalyticsEvent[]
+  accounts           Account[]
+  sessions           Session[]
+  vendorProfile      Vendor?
+  deliveryProfile    DeliveryPartner?
+  orders             Order[]
+  reviews            Review[]
+  vendorReviews      VendorReview[]
+  wishlist           Wishlist[]
+  addresses          Address[]
+  notifications      Notification[]
+  paymentAttempts    PaymentAttempt[]
+  supportTickets     SupportTicket[]
+  cartItems          CartItem[]
+  supportMessages    SupportMessage[]
+  analyticsEvents    AnalyticsEvent[]
   performanceMetrics PerformanceMetric[]
+  mobileSessions     MobileSession[]
+  mobileAuthCodes    MobileAuthCode[]
+  deviceTokens       DeviceToken[]
+  idempotencyKeys    IdempotencyKey[]
+  deliveryEvents     DeliveryStatusEvent[]
 
   @@index([role, createdAt])
   @@index([role, isBanned])
 }
 
-model Vendor {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id])
-  shopName      String
-  slug          String    @unique
-  logo          String?
-  banner        String?
-  description   String?
-  category      String?
+model DeliveryPartner {
+  id            String               @id @default(cuid())
+  userId        String               @unique
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName   String?
   phone         String?
-  address       String?
-  zone          String?
-  district      String?
-  panNumber     String?
-  bankAccount   String?
-  bankName      String?
-  accountNumber String?
-  accountHolder String?
-  verificationStatus String @default("PENDING")
-  adminNotes    String?
-  isApproved    Boolean   @default(false)
-  isSuspended   Boolean   @default(false)
-  isPartnered   Boolean   @default(false)
-  isTopShop     Boolean   @default(false)
-  partnerStatus String    @default("NONE")
-  partnerPlan   String?
+  provider      String               @default("FITBAZAR")
+  vehicleType   String?
+  vehicleNumber String?
+  currentZone   String?
+  isActive      Boolean              @default(true)
+  isSuspended   Boolean              @default(false)
+  assignments   DeliveryAssignment[]
+  earnings      DeliveryEarning[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([isActive, isSuspended])
+  @@index([provider, isActive])
+  @@index([currentZone])
+}
+
+model Vendor {
+  id                 String         @id @default(cuid())
+  userId             String         @unique
+  user               User           @relation(fields: [userId], references: [id])
+  shopName           String
+  slug               String         @unique
+  logo               String?
+  banner             String?
+  description        String?
+  category           String?
+  phone              String?
+  address            String?
+  zone               String?
+  district           String?
+  panNumber          String?
+  bankAccount        String?
+  bankName           String?
+  accountNumber      String?
+  accountHolder      String?
+  verificationStatus String         @default("PENDING")
+  adminNotes         String?
+  isApproved         Boolean        @default(false)
+  isSuspended        Boolean        @default(false)
+  isPartnered        Boolean        @default(false)
+  isTopShop          Boolean        @default(false)
+  partnerStatus      String         @default("NONE")
+  partnerPlan        String?
   partnerRequestedAt DateTime?
   partnerStartedAt   DateTime?
   partnerExpiresAt   DateTime?
   partnerRenewedAt   DateTime?
   partnerPaymentDue  Float?
   partnerPaymentNote String?
-  commissionPct Float     @default(8.0)
-  products      Product[]
-  orders        Order[]
-  reviews       VendorReview[]
-  createdAt     DateTime  @default(now())
+  commissionPct      Float          @default(8.0)
+  products           Product[]
+  orders             Order[]
+  reviews            VendorReview[]
+  createdAt          DateTime       @default(now())
 
   @@index([isApproved, isSuspended, isPartnered])
   @@index([isApproved, isSuspended])
@@ -157,31 +272,31 @@ model Category {
 }
 
 model Product {
-  id              String   @id @default(cuid())
-  vendorId        String
-  vendor          Vendor   @relation(fields: [vendorId], references: [id])
-  name            String
-  slug            String   @unique
-  description     String?
-  price           Float
-  compareAtPrice  Float?
-  discountPct     Int      @default(0)
-  images          String[]
-  category        String
-  sizes           String[]
-  colors          String[]
-  stock           Int      @default(0)
-  totalSold       Int      @default(0)
-  isFestivalSale  Boolean  @default(false)
-  isYearRoundSale Boolean  @default(false)
-  isFeatured      Boolean  @default(false)
-  homepageSlot    String   @default("AUTO")
-  homepagePriority Int     @default(0)
-  isActive        Boolean  @default(true)
-  status          ProductStatus @default(DRAFT)
-  tags            String[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String        @id @default(cuid())
+  vendorId         String
+  vendor           Vendor        @relation(fields: [vendorId], references: [id])
+  name             String
+  slug             String        @unique
+  description      String?
+  price            Float
+  compareAtPrice   Float?
+  discountPct      Int           @default(0)
+  images           String[]
+  category         String
+  sizes            String[]
+  colors           String[]
+  stock            Int           @default(0)
+  totalSold        Int           @default(0)
+  isFestivalSale   Boolean       @default(false)
+  isYearRoundSale  Boolean       @default(false)
+  isFeatured       Boolean       @default(false)
+  homepageSlot     String        @default("AUTO")
+  homepagePriority Int           @default(0)
+  isActive         Boolean       @default(true)
+  status           ProductStatus @default(DRAFT)
+  tags             String[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   categoryRef Category?   @relation(fields: [categoryId], references: [id])
   categoryId  String?
@@ -205,32 +320,94 @@ model Product {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  checkoutGroupId String?
-  customerId      String
-  customer        User        @relation(fields: [customerId], references: [id])
-  vendorId        String
-  vendor          Vendor      @relation(fields: [vendorId], references: [id])
-  items           OrderItem[]
-  totalAmount     Float
-  commissionAmt   Float
-  vendorPayout    Float
-  status          OrderStatus @default(PENDING)
-  paymentMethod   String
-  paymentStatus   String      @default("PENDING")
-  paymentReference String?
-  deliveryAddress Json
-  trackingNumber  String?
-  adminNote       String?
-  isDisputed      Boolean     @default(false)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  vendorReviews   VendorReview[]
+  id                 String              @id @default(cuid())
+  orderNumber        String              @unique
+  checkoutGroupId    String?
+  customerId         String
+  customer           User                @relation(fields: [customerId], references: [id])
+  vendorId           String
+  vendor             Vendor              @relation(fields: [vendorId], references: [id])
+  items              OrderItem[]
+  totalAmount        Float
+  commissionAmt      Float
+  vendorPayout       Float
+  status             OrderStatus         @default(PENDING)
+  paymentMethod      String
+  paymentStatus      String              @default("PENDING")
+  paymentReference   String?
+  deliveryAddress    Json
+  trackingNumber     String?
+  adminNote          String?
+  isDisputed         Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  vendorReviews      VendorReview[]
+  deliveryAssignment DeliveryAssignment?
 
   @@index([checkoutGroupId])
+  @@index([customerId, createdAt])
+  @@index([vendorId, createdAt])
+  @@index([vendorId, status, createdAt])
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+model DeliveryAssignment {
+  id              String                   @id @default(cuid())
+  orderId         String                   @unique
+  order           Order                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  partnerId       String?
+  partner         DeliveryPartner?         @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  status          DeliveryAssignmentStatus @default(ASSIGNED)
+  pickupCode      String?
+  deliveryCode    String?
+  pickupAt        DateTime?
+  inTransitAt     DateTime?
+  deliveredAt     DateTime?
+  failedAt        DateTime?
+  failureReason   String?
+  proofImageUrl   String?
+  customerContact String?
+  routeNote       String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  events          DeliveryStatusEvent[]
+  earning         DeliveryEarning?
+
+  @@index([partnerId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model DeliveryStatusEvent {
+  id           String                   @id @default(cuid())
+  assignmentId String
+  assignment   DeliveryAssignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  actorUserId  String?
+  actorUser    User?                    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  status       DeliveryAssignmentStatus
+  note         String?
+  location     Json?
+  createdAt    DateTime                 @default(now())
+
+  @@index([assignmentId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([status, createdAt])
+}
+
+model DeliveryEarning {
+  id           String                @id @default(cuid())
+  assignmentId String                @unique
+  assignment   DeliveryAssignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  partnerId    String
+  partner      DeliveryPartner       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount       Float
+  status       DeliveryEarningStatus @default(PENDING)
+  releasedAt   DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([partnerId, status, createdAt])
 }
 
 model OrderItem {
@@ -374,19 +551,19 @@ model Notification {
 }
 
 model SupportTicket {
-  id            String    @id @default(cuid())
+  id            String           @id @default(cuid())
   userId        String?
-  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   name          String
   email         String
   topic         String
   orderNumber   String?
   message       String
-  status        String    @default("OPEN")
+  status        String           @default("OPEN")
   adminResponse String?
   resolvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
   messages      SupportMessage[]
 
   @@index([status, createdAt])
@@ -421,22 +598,22 @@ model CartItem {
 }
 
 model PaymentAttempt {
-  id                String   @id @default(cuid())
-  checkoutId        String   @unique
+  id                String    @id @default(cuid())
+  checkoutId        String    @unique
   customerId        String
-  customer          User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer          User      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   paymentMethod     String
   amount            Float
-  currency          String   @default("NPR")
-  tokenHash         String   @unique
+  currency          String    @default("NPR")
+  tokenHash         String    @unique
   payload           Json
-  status            String   @default("PENDING")
+  status            String    @default("PENDING")
   providerReference String?
   providerPayload   Json?
   expiresAt         DateTime
   completedAt       DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([customerId, status])
 }

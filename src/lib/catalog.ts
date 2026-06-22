@@ -1,6 +1,7 @@
 import type { Product, Review, Vendor } from "@prisma/client";
 import type { ProductCardProps } from "@/components/ProductCard";
 import { getPublicVendorName, getPublicVendorSlug } from "@/lib/public-vendor-identity";
+import { formatPriceNpr as formatSharedPriceNpr } from "@fitbazar/shared-utils";
 
 type ProductWithVendor = Product & {
   vendor: Pick<Vendor, "id" | "shopName" | "slug" | "logo"> & Pick<Partial<Vendor>, "isPartnered">;
@@ -23,11 +24,7 @@ type VendorWithCounts = Vendor & {
 };
 
 export function formatPriceNpr(price: number) {
-  return new Intl.NumberFormat("en-NP", {
-    style: "currency",
-    currency: "NPR",
-    maximumFractionDigits: 0,
-  }).format(price);
+  return formatSharedPriceNpr(price);
 }
 
 export function mapProductToCard(product: ProductWithVendor): ProductCardProps {

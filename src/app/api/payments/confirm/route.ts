@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { createOrdersFromCheckoutPayload, mapCheckoutErrorToResponse, prepareCheckoutContext } from "@/lib/checkout-server";
 import { cancelPaymentAttemptByToken, claimPaymentAttempt, failPaymentAttemptByToken, finalizePaymentAttempt, loadPaymentAttemptByToken, verifyConnectIpsPayment, verifyEsewaPayment, verifyFonepayPayment, verifyKhaltiPayment } from "@/lib/payment-server";
 import { isSupportedPaymentMethod } from "@/lib/payment-types";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -151,7 +152,7 @@ export async function POST(req: Request) {
       redirectUrl: `/order-confirmation?order=${encodeURIComponent(orders[0]?.orderNumber || "FB-ORDER")}`,
     });
   } catch (error) {
-    console.error("Error confirming payment:", error);
+    logger.error("Error confirming payment", error, { method: body?.method });
     if (body?.token) {
       await failPaymentAttemptByToken(body.token).catch(() => undefined);
     }

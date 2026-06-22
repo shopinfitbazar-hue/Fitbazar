@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { applyHeaders, isPrivateNoStorePath, privateNoStoreHeaders } from "@/lib/cache-control";
 
 type RateLimitBucket = {
   count: number;
@@ -44,6 +45,24 @@ const rateLimitBuckets = new Map<string, RateLimitBucket>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const MAX_RATE_LIMIT_BUCKETS = 10_000;
 
+function getRequestId(req: NextRequest) {
+  return (
+    req.headers.get("x-request-id") ||
+    req.headers.get("x-correlation-id") ||
+    `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+  );
+}
+
+function secureResponse(response: NextResponse, path?: string, requestId?: string) {
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(self), payment=(self)");
+  if (requestId) response.headers.set("X-Request-Id", requestId);
+  if (path && isPrivateNoStorePath(path)) applyHeaders(response.headers, privateNoStoreHeaders());
+  return response;
+}
+
 function isPublicRoute(path: string): boolean {
   return PUBLIC_ROUTES.some(
     (route) => path === route || path.startsWith(`${route}/`),
@@ -71,6 +90,7 @@ function getRequestIp(req: NextRequest) {
 function getRateLimit(path: string) {
   if (
     path.startsWith("/api/auth") ||
+    path.startsWith("/api/mobile/v1/auth") ||
     path === "/login" ||
     path === "/signup" ||
     path === "/forgot-password" ||
@@ -82,6 +102,10 @@ function getRateLimit(path: string) {
 
   if (path.startsWith("/api/admin") || path.startsWith("/admin")) return 300;
   if (path.startsWith("/api/vendor") || path.startsWith("/vendor")) return 300;
+  if (path.startsWith("/api/mobile/v1/customer")) return 240;
+  if (path.startsWith("/api/mobile/v1/vendor")) return 240;
+  if (path.startsWith("/api/mobile/v1/delivery")) return 240;
+  if (path.startsWith("/api/mobile/v1/devices")) return 120;
   if (path.startsWith("/api/analytics/track")) return 240;
 
   if (
@@ -118,7 +142,7 @@ function pruneRateLimitBuckets(now: number) {
   }
 }
 
-function rateLimit(req: NextRequest, path: string) {
+function rateLimit(req: NextRequest, path: string, requestId: string) {
   if (req.method === "OPTIONS" || req.method === "HEAD") return null;
 
   const now = Date.now();
@@ -146,58 +170,59 @@ function rateLimit(req: NextRequest, path: string) {
   response.headers.set("Retry-After", String(retryAfter));
   response.headers.set("X-RateLimit-Limit", String(limit));
   response.headers.set("X-RateLimit-Remaining", "0");
-  return response;
+  return secureResponse(response, path, requestId);
 }
 
-function redirectToLogin(req: NextRequest) {
+function redirectToLogin(req: NextRequest, requestId: string) {
   const loginUrl = new URL("/login", req.url);
   loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
-  return NextResponse.redirect(loginUrl);
+  return secureResponse(NextResponse.redirect(loginUrl), req.nextUrl.pathname, requestId);
 }
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const requestId = getRequestId(req);
 
   if (isSensitivePath(path)) {
-    return new NextResponse("Not found", { status: 404 });
+    return secureResponse(new NextResponse("Not found", { status: 404 }), path, requestId);
   }
 
-  const rateLimitResponse = rateLimit(req, path);
+  const rateLimitResponse = rateLimit(req, path, requestId);
   if (rateLimitResponse) return rateLimitResponse;
 
   if (isPublicRoute(path)) {
-    return NextResponse.next();
+    return secureResponse(NextResponse.next(), path, requestId);
   }
 
   if (!isProtectedRoute(path)) {
-    return NextResponse.next();
+    return secureResponse(NextResponse.next(), path, requestId);
   }
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   if (!token) {
-    return redirectToLogin(req);
+    return redirectToLogin(req, requestId);
   }
 
   if (path.startsWith("/admin") && token.role !== "ADMIN") {
     const unauthorizedUrl = new URL("/unauthorized", req.url);
-    return NextResponse.redirect(unauthorizedUrl);
+    return secureResponse(NextResponse.redirect(unauthorizedUrl), path, requestId);
   }
 
   if (path.startsWith("/vendor") && token.role !== "VENDOR" && token.role !== "ADMIN") {
     const unauthorizedUrl = new URL("/unauthorized", req.url);
-    return NextResponse.redirect(unauthorizedUrl);
+    return secureResponse(NextResponse.redirect(unauthorizedUrl), path, requestId);
   }
 
   if (path.startsWith("/api/admin") && token.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return secureResponse(NextResponse.json({ error: "Forbidden" }, { status: 403 }), path, requestId);
   }
 
   if (path.startsWith("/api/vendor") && token.role !== "VENDOR" && token.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return secureResponse(NextResponse.json({ error: "Forbidden" }, { status: 403 }), path, requestId);
   }
 
-  return NextResponse.next();
+  return secureResponse(NextResponse.next(), path, requestId);
 }
 
 export const config = {

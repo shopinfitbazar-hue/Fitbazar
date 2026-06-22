@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { getVendorAccessState } from "@/lib/vendor-access";
 
 type AuthError =
-  | { error: "Unauthorized" | "Forbidden" | "Account suspended" | "Customer account required" | "Vendor account not linked" | "Vendor not found" }
+  | { error: "Unauthorized" | "Forbidden" | "Account suspended" | "Customer account required" | "Vendor account not linked" | "Vendor not found" | "Delivery account not linked" }
   | { error: "Vendor suspended" }
-  | { error: "Vendor pending approval" };
+  | { error: "Vendor pending approval" }
+  | { error: "Delivery partner suspended" };
 type UserSessionResult = { session: Session };
 type VendorSessionResult = {
   session: Session;
@@ -18,6 +19,15 @@ type VendorSessionResult = {
     isApproved: boolean;
     isSuspended: boolean;
     commissionPct: number;
+  };
+};
+type DeliverySessionResult = {
+  session: Session;
+  deliveryPartner: {
+    id: string;
+    isActive: boolean;
+    isSuspended: boolean;
+    provider: string;
   };
 };
 
@@ -136,4 +146,35 @@ export async function requireAdminSession(): Promise<AuthError | UserSessionResu
   }
 
   return { session };
+}
+
+export async function requireDeliverySession(): Promise<AuthError | DeliverySessionResult> {
+  const sessionResult = await requireUserSession();
+  if ("error" in sessionResult) return sessionResult;
+
+  const { session } = sessionResult;
+
+  if (session.user.role !== "DELIVERY" && session.user.role !== "ADMIN") {
+    return { error: "Forbidden" };
+  }
+
+  const deliveryPartner = await prisma.deliveryPartner.findUnique({
+    where: { userId: session.user.id },
+    select: {
+      id: true,
+      isActive: true,
+      isSuspended: true,
+      provider: true,
+    },
+  });
+
+  if (!deliveryPartner) {
+    return { error: "Delivery account not linked" };
+  }
+
+  if (!deliveryPartner.isActive || deliveryPartner.isSuspended) {
+    return { error: "Delivery partner suspended" };
+  }
+
+  return { session, deliveryPartner };
 }

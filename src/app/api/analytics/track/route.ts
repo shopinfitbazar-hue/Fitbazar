@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const CHANNELS = new Set(["WEB", "CUSTOMER_APP", "VENDOR_APP", "ADMIN"]);
+const CHANNELS = new Set(["WEB", "CUSTOMER_APP", "VENDOR_APP", "DELIVERY_APP", "ADMIN"]);
 
 function cleanString(value: unknown, maxLength: number) {
   if (typeof value !== "string") return null;

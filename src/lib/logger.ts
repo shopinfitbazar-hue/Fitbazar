@@ -1,3 +1,5 @@
+import { redactSensitiveValue } from "@/lib/log-redaction";
+
 type LogLevel = "info" | "warn" | "error";
 
 interface LogMeta {
@@ -20,7 +22,7 @@ function write(level: LogLevel, message: string, meta?: LogMeta) {
   const payload = {
     level,
     message,
-    meta,
+    meta: redactSensitiveValue(meta),
     timestamp: new Date().toISOString(),
   };
 

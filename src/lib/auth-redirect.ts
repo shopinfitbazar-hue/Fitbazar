@@ -27,6 +27,7 @@ export function normalizeAuthCallbackPath(value: string | null | undefined, fall
 export function getDefaultPostLoginPath(role?: string | null) {
   if (role === "ADMIN") return "/admin";
   if (role === "VENDOR") return "/vendor/dashboard";
+  if (role === "DELIVERY") return "/unauthorized";
   return "/account/dashboard";
 }
 

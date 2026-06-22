@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { publicProductVisibilityFilter, publicVendorVisibilityFilter } from "@/lib/public-storefront";
-import { PUBLIC_VENDOR_REVALIDATE_SECONDS, publicCatalogCacheHeaders } from "@/lib/public-catalog";
+import { PUBLIC_VENDOR_REVALIDATE_SECONDS, publicCatalogCacheHeaders, publicCatalogRedisKey } from "@/lib/public-catalog";
+import { getOrSetRedisJson } from "@/lib/redis-cache";
 
 export const dynamic = "force-dynamic";
 export const revalidate = PUBLIC_VENDOR_REVALIDATE_SECONDS;
@@ -97,15 +98,20 @@ async function queryPublicVendorDetail(slug: string, category: string | null, so
   return { vendor, products };
 }
 
-function getCachedPublicVendorDetail(slug: string, category: string | null, sort: string) {
-  return unstable_cache(
-    () => queryPublicVendorDetail(slug, category, sort),
-    ["public-vendor-api", slug, category || "all", sort],
-    {
-      revalidate: PUBLIC_VENDOR_REVALIDATE_SECONDS,
-      tags: ["public-vendors"],
-    },
-  )();
+async function getCachedPublicVendorDetail(slug: string, category: string | null, sort: string) {
+  return getOrSetRedisJson({
+    key: await publicCatalogRedisKey("vendor-detail", { slug, category, sort }),
+    ttlSeconds: PUBLIC_VENDOR_REVALIDATE_SECONDS,
+    compute: () =>
+      unstable_cache(
+        () => queryPublicVendorDetail(slug, category, sort),
+        ["public-vendor-api", slug, category || "all", sort],
+        {
+          revalidate: PUBLIC_VENDOR_REVALIDATE_SECONDS,
+          tags: ["public-vendors"],
+        },
+      )(),
+  });
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {

@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "FitBazar",
+    "slug": "fitbazar-customer",
+    "scheme": "fitbazar",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6F7F9"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fitbazar.customer"
+    },
+    "android": {
+      "package": "com.fitbazar.customer",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#101827"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-image"
+    ],
+    "extra": {
+      "apiBaseUrl": "https://www.fit-bazar.com",
+      "sentryDsn": "",
+      "router": {},
+      "eas": {
+        "projectId": "576f3b2e-6267-4496-9110-7da36ff4fb4e"
+      }
+    }
+  }
+}

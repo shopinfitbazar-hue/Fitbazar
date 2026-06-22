@@ -1,0 +1,27 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@fitbazar/shared-api": [
+        "../../packages/shared-api/src"
+      ],
+      "@fitbazar/shared-types": [
+        "../../packages/shared-types/src"
+      ],
+      "@fitbazar/shared-utils": [
+        "../../packages/shared-utils/src"
+      ]
+    }
+  },
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}
